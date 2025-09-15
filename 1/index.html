@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Project 1 — Images of the Russian Empire (Prokudin‑Gorskii)</title>
+  <title>Project 1 — Images of the Russian Empire (Prokudin-Gorskii)</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -14,7 +14,7 @@
     html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6}
     a{color:var(--accent);text-decoration:none}
     a:hover{text-decoration:underline}
-    .container{max-width:1100px;margin:0 auto;padding:32px 20px 80px}
+    .container{max-width:1280px;margin:0 auto;padding:32px 20px 80px}
     header.hero{background:linear-gradient(180deg,rgba(122,162,255,.08),rgba(122,162,255,0));padding:40px 0 10px}
     .title{font-size:clamp(26px,3.4vw,44px);font-weight:800;letter-spacing:-.02em;margin:0 0 8px}
     .subtitle{color:var(--muted);margin:0 0 24px}
@@ -24,7 +24,6 @@
     .section h2{font-size:clamp(22px,2.6vw,28px);margin:0 0 12px;letter-spacing:-.01em}
     .prose{padding:16px 18px}
     .prose p{margin:8px 0}
-    .tip{border-left:3px solid var(--accent);background:color-mix(in oklab, var(--accent) 8%, transparent);color:var(--muted);padding:10px 12px;border-radius:10px;margin-top:8px}
     figure{margin:0}
     figcaption{color:var(--muted);font-size:14px;margin-top:10px}
     .grid{display:grid;gap:var(--gap)}
@@ -33,18 +32,21 @@
     .card{padding:14px}
     .media{position:relative;overflow:hidden;border-radius:calc(var(--radius) - 6px);border:1px solid var(--border);background:#000}
     img{display:block;width:100%;height:auto}
-    /* Gallery */
-    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--gap)}
+
+    /* Bigger gallery thumbs */
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:calc(var(--gap) + 6px)}
     .thumb{cursor:pointer}
     .thumb:hover{outline:2px solid color-mix(in oklab, var(--accent) 50%, transparent)}
     .cap{display:flex;justify-content:space-between;gap:10px;align-items:center}
     .cap small{color:var(--muted)}
+
     /* Lightbox */
     .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
     .lightbox.open{display:flex}
     .lightbox img{max-width:95vw;max-height:90vh}
     .lightbox .close{position:absolute;top:14px;right:18px;background:#0009;border:1px solid #fff3;color:#fff;padding:6px 10px;border-radius:10px;cursor:pointer}
     .kbd{font:600 12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;background:#0009;color:#fff;padding:4px 8px;border-radius:6px;border:1px solid #ffffff33}
+
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
     tbody tr:hover{background:rgba(255,255,255,.025)}
@@ -54,16 +56,10 @@
   </style>
 </head>
 <body>
-  <!-- HOW TO USE
-    1) Put your compressed outputs (JPG/PNG/WEBP/GIF/MP4) in media/p1/ using the file names below, or edit the dataset in the JS section.
-    2) Fill in the offsets you computed (dx, dy) for G and R relative to B for each image.
-    3) Add your own extra examples at the bottom.
-  -->
-
   <header class="hero">
     <div class="container">
-      <h1 class="title">Images of the Russian Empire — Prokudin‑Gorskii</h1>
-      <p class="subtitle">Aligning B/G/R plates into modern RGB photographs using <strong>binarized high‑pass features</strong> scored with NCC, with a second iteration that refines shifts coarse → fine.</p>
+      <h1 class="title">Images of the Russian Empire — Prokudin-Gorskii</h1>
+      <p class="subtitle">Aligning B/G/R plates into modern RGB photographs using <strong>binarized high-pass features</strong> scored with NCC, with a second iteration that refines shifts coarse → fine.</p>
       <div class="meta">
         <span><strong>Student:</strong> Eduardo</span><span>•</span>
         <span><strong>Course:</strong> CS180 — Fall 2025</span><span>•</span>
@@ -77,149 +73,29 @@
     <section class="section">
       <div class="panel prose">
         <h2>Overview</h2>
-        <p>The goal of this assignment is to take the digitized Prokudin‑Gorskii glass‑plate images and automatically produce a color image with as few artifacts as possible. Each glass plate contains three grayscale exposures captured through different color filters stacked vertically (from top to bottom: <strong>B, G, R</strong>). I extract the three channels, align G and R to B under an (x, y) translation model, and compose an RGB image.</p>
-        <p>Full‑resolution <code>.tif</code> plates are large, so I begin with smaller images (e.g., <em>monastery.jpg</em>, <em>cathedral.jpg</em>) or downsampled versions, then scale up via a <em>coarse‑to‑fine image pyramid</em>. For each image I report the displacement vectors used to align G→B and R→B.</p>
-        <p class="tip"><strong>Note:</strong> The filter order in the raw plate is BGR (top→bottom). Outputs below are compressed formats only (JPG/PNG/GIF/WebP). Large <code>.tif</code> inputs are not hosted here.</p>
+        <p>The goal is to take the digitized Prokudin-Gorskii glass-plate images and automatically produce a color image with as few artifacts as possible. Each plate contains three grayscale exposures captured through different color filters stacked vertically (top→bottom: <strong>B, G, R</strong>). I extract the three channels, align G and R to B under an (x, y) translation model, and compose an RGB image.</p>
+        <p>Full-resolution plates are large, so I begin with smaller images or downsampled versions, then scale up via a <em>coarse-to-fine image pyramid</em>. For each image I report the displacement vectors used to align G→B and R→B.</p>
       </div>
     </section>
 
-    <!-- Core Idea: Binarization (Front and Center) -->
+    <!-- Core Idea -->
     <section class="section">
-      <h2>Core Idea — Binarized High‑Pass Features (Why This Works)</h2>
+      <h2>Core Idea — Binarized High-Pass Features</h2>
       <div class="panel prose">
-        <p>Binarization is the distinctive choice in my pipeline. Instead of comparing raw intensities across channels (which often differ in brightness/contrast), I compare <em>structure</em> by computing a high‑pass map, taking absolute value, and thresholding to a binary mask:</p>
-        <pre style="white-space:pre-wrap;overflow:auto"><code>F(img) = 1{ | highpass(img) | ≥ τ }   with   τ = 0.01375</code></pre>
-        <p><strong>Justification.</strong></p>
-        <ul>
-          <li><strong>Illumination &amp; cross‑channel robustness:</strong> Brightness differences (e.g., Emir) break raw‑pixel matching. High‑pass + binarization emphasizes edges/texture that are present in all channels but at different intensities.</li>
-          <li><strong>NCC synergy:</strong> NCC on binary structure is effectively a normalized overlap of salient edges, making the score less sensitive to gain/offset changes.</li>
-          <li><strong>Outlier resistance:</strong> Thresholding suppresses low‑contrast background and plate borders, reducing their influence on the similarity score.</li>
-        </ul>
-        <p><strong>Trade‑offs &amp; knobs.</strong> The threshold τ balances recall vs. precision of structure; too low admits noise, too high drops thin edges. In practice, τ = 0.01375 worked well across the dataset. When needed, a small border crop is applied before scoring (Iteration 2).</p>
+        <p>Binarization is the distinctive choice in my pipeline. Rather than comparing raw intensities across channels (which often differ in brightness/contrast), I compare <em>structure</em> by computing a high-pass map, taking absolute value, and thresholding to a binary mask. This emphasizes edges/texture that are present in all channels and works well with normalized cross-correlation (NCC) to reduce sensitivity to gain/offset changes.</p>
       </div>
       <div class="panel" style="padding:14px">
-        <h3 style="margin:8px 6px 10px">Example: Raw → High‑Pass → Binarized</h3>
-        <div class="tip"><strong>Base folder:</strong> <code>binarization/</code>. Filenames: <code>harvesters_redplate</code>, <code>harvesters_redplate_highpass</code>, <code>harvesters_redplate_binarized</code>.</div>
+        <h3 style="margin:8px 6px 10px">Example: Raw → High-Pass → Binarized</h3>
         <div id="binFeat" class="gallery"></div>
       </div>
     </section>
 
-    <!-- Setup: Where to put images -->
-    <section class="section">
-      <h2>Setup — Where to put images & file names</h2>
-      <div class="panel prose">
-        <p>Put your <strong>compressed outputs</strong> (JPG/PNG/WebP/GIF) into the folders below. If you change file names, edit the small JS datasets at the bottom of this page (look for <code>// EDIT HERE: filenames</code>).</p>
-        <ul>
-          <li><strong>Iteration 1 results:</strong> <code>media/iteration_1/</code> (e.g., <code>church.jpg</code>, <code>emir.jpg</code>, ...)</li>
-          <li><strong>Iteration 2 results:</strong> <code>media/iteration_2/</code> (same names as Iteration 1)</li>
-          <li><strong>Binarization example (front-of-page):</strong> <code>binarization/</code> → <code>harvesters_redplate</code>, <code>harvesters_redplate_highpass</code>, <code>harvesters_redplate_binarized</code></li>
-          <li><strong>Iteration 2 debug levels:</strong> <code>media/p1/iter2_debug/</code> → <code>example_L11.png</code>, <code>example_L10.png</code>, <code>example_L9.png</code>, <code>example_L8.png</code>, <code>example_L7.png</code></li>
-        </ul>
-        <p class="tip"><strong>Tip:</strong> You only need to update the arrays named <code>results</code>, <code>results2</code>, <code>binFeat</code>, and <code>debugLevels</code> if your filenames differ. Base paths are defined as constants in the JS for easy changes.</p>
-      </div>
-    </section>
-
-    <!-- Approach -->
+    <!-- Approach (kept as high-level content) -->
     <section class="section">
       <h2>Approach</h2>
       <div class="panel prose">
-        <p><strong>Single‑scale baseline.</strong> For a given plate, I split B/G/R strips and align G and R to B by exhaustively searching displacements <code>i, j ∈ [-20, 20]</code> (rows, cols) using <em>Normalized Cross‑Correlation (NCC)</em> on <em>high‑pass, binarized</em> features. Concretely: <code>highpass → |·| → threshold (τ=0.01375) → NCC</code>. The best‑scoring shift is applied to the original channel (no cropping) and used to compose RGB.</p>
-        <p><strong>Coarse‑to‑fine pyramid.</strong> To handle large displacements on high‑res plates, I build an image pyramid (scale ≈ ×2 per level), align at the coarsest level, and propagate/refine the estimate down to finer levels. At each level I search a small window around the upsampled displacement. This yields accurate alignments with far fewer evaluations.</p>
-        <p><strong>Additional refinements.</strong> I crop borders (when needed) before scoring to avoid strong plate edges; I optionally apply Gaussian blur for the low‑pass in the high‑pass step. Because channel brightness can differ (e.g., Emir), using high‑pass binarized features with NCC is more robust than raw‑pixel similarity. </p>
-        <div class="tip"><strong>My implementation:</strong> I used <code>gaussian_filter</code> for low/high‑pass separation, downsampled for pyramid levels, binarized high‑pass magnitudes to emphasize structure, then performed NCC across a translation window. See code notes below.</div>
-      </div>
-    </section>
-
-    <!-- Code Notes -->
-    <section class="section">
-      <h2>Implementation Notes &amp; Pseudocode</h2>
-      <div class="panel prose">
-        <h3>My Implementation (Detailed)</h3>
-        <p>This section documents the exact algorithm and design choices I implemented (function and variable names follow my code). The core idea is to align G and R to B using <em>normalized cross‑correlation (NCC)</em> on <em>high‑pass, binarized features</em> across a few downsampled levels, then compose RGB.</p>
-
-        <h4>1) Preprocessing</h4>
-        <ul>
-          <li><code>lowpass(img, sigma=3)</code>: Gaussian blur via <code>scipy.ndimage.gaussian_filter</code>.</li>
-          <li><code>highpass(img, sigma=1)</code>: Compute <code>img - lowpass(img, sigma)</code> (default <code>sigma=1</code>) to emphasize edges/structure and reduce brightness bias across channels.</li>
-          <li><code>downsample(img, factor)</code>: Stride‑based subsampling <code>img[::factor, ::factor]</code> (nearest‑neighbor). This provides fast, coarse levels.</li>
-          <li><strong>Binarization:</strong> After taking absolute value of the high‑pass, apply a fixed threshold <code>0.01375</code>:
-            <pre><code>F = |highpass(img)|
-F[F < 0.01375]  = 0
-F[F >= 0.01375] = 1</code></pre>
-            This converts features into a simple structural mask to stabilize NCC under cross‑channel intensity changes (e.g., the Emir image).</li>
-        </ul>
-
-        <h4>2) Similarity (NCC)</h4>
-        <p><code>compare_similarity(img1, img2)</code> flattens both feature maps and computes a normalized dot product:
-        <pre><code>v1 = img1.flatten(); v1 /= (||v1|| + 1e-16)
-v2 = img2.flatten(); v2 /= (||v2|| + 1e-16)
-score = v1 · v2   // range ~[-1, 1]</code></pre>
-        Using NCC makes the metric scale‑invariant and relatively robust to per‑channel brightness differences.</p>
-
-        <h4>3) Single‑Level Alignment</h4>
-        <p><code>align(img1, img2, level)</code> aligns <code>img1</code> to <code>img2</code> at a given downsampling factor <code>level</code>:</p>
-        <ol>
-          <li>Compute high‑pass → |·| → thresholded binary features for both images, then downsample by <code>level</code>.</li>
-          <li>Exhaustively search a translation window <strong>i, j ∈ [-20, 20]</strong> using <code>np.roll</code> to shift <code>img1</code> and score against <code>img2</code> with NCC.</li>
-          <li>Track the best score and shift <code>(best_i, best_j)</code> at the downsampled scale.</li>
-          <li>Scale the winning shift back to full resolution: <code>alignment = (best_i * level, best_j * level)</code>, and apply it to the original (unfiltered) <code>img1</code> to produce the aligned output for composition.</li>
-        </ol>
-        <p><em>Note:</em> <code>np.roll</code> wraps around image borders (cyclic shift). This is fast but can introduce wrap artifacts at the edges; in practice, the high‑pass + threshold reduces the effect, but cropping margins is a possible improvement.</p>
-
-        <h4>4) Multi‑Scale Selection</h4>
-        <p><code>search_alignment(img1, img2)</code> evaluates several downsampled levels and selects the single best result rather than doing a classical coarse‑to‑fine refinement:</p>
-        <ul>
-          <li>Compute <code>min_level = max(1, max(img.shape)//500)</code> to pick a starting downsampling factor based on image size (~one dimension ≈ 500 px).</li>
-          <li>Loop <code>level ∈ {min_level, …, min_level + 4}</code>:</li>
-          <li class="tip">For each level, call <code>align</code> (with the fixed ±20 px search) and record <code>(score, alignment)</code>.</li>
-          <li>Keep the alignment with the highest NCC score across all tested levels (this often catches large true shifts that are easiest to recover at coarser scales).</li>
-        </ul>
-
-        <h4>5) Composition & Reporting</h4>
-        <ul>
-          <li>Split the plate (top→bottom) into <strong>B</strong>, <strong>G</strong>, <strong>R</strong> thirds.</li>
-          <li>Align <strong>G→B</strong> and <strong>R→B</strong> independently using <code>search_alignment</code>.</li>
-          <li>Compose color with <code>np.dstack([R_aligned, G_aligned, B])</code> and save/display the result. For each image, record the final displacement vectors (dx, dy) for G→B and R→B.</li>
-        </ul>
-
-        <h4>6) Parameters (as used)</h4>
-        <ul>
-          <li>High‑pass sigma: <code>σ_lowpass = 1</code> (for <code>highpass</code>), low‑pass helper uses <code>σ = 3</code> when called directly.</li>
-          <li>Threshold: <code>τ = 0.01375</code> on |high‑pass|.</li>
-          <li>Search window per level: <code>i, j ∈ [-20, 20]</code> (inclusive).</li>
-          <li>Levels tested: <code>{min_level, …, min_level + 4}</code> with <code>min_level = max(1, ⌊max(H,W)/500⌋)</code>.</li>
-        </ul>
-
-        <h4>7) Complexity</h4>
-        <p>Let the downsampled image at a level have N pixels and the window size be W = (2·20+1)^2 = 1681 shifts. Each candidate computes one NCC over N values → O(N·W) per level. Testing L levels yields ~O(L·N·W). Since N drops quadratically with level, coarse evaluations are inexpensive and help recover large shifts.</p>
-
-        <h4>8) Strengths & Limitations</h4>
-        <ul>
-          <li><strong>Strengths:</strong> Simple implementation; robust to per‑channel brightness differences via high‑pass + NCC; multi‑level evaluation recovers large motions without implementing a full recursive pyramid.</li>
-          <li><strong>Limitations:</strong> Fixed threshold may be image‑dependent; <code>np.roll</code> wraparound can bias similarity unless borders are cropped; stride downsampling is fast but can alias; selection across levels is not a true coarse→fine refinement (no local window narrowing around a propagated estimate).</li>
-        </ul>
-
-        <h4>9) Potential Improvements (Future Work)</h4>
-        <ul>
-          <li><strong>True pyramid refinement:</strong> Start coarse, upsample the displacement, and refine in a smaller window at the next level for fewer evaluations and better precision.</li>
-          <li><strong>Edge/gradient features:</strong> Use Sobel/Scharr magnitude (optionally with local contrast normalization) instead of binary thresholding.</li>
-          <li><strong>Border handling:</strong> Crop 5–10% margins before scoring to avoid plate edges; compare only overlapping regions (avoid wrap).</li>
-          <li><strong>Anti‑aliased downsampling:</strong> Gaussian‑blur before stride or use <code>skimage.transform.rescale</code> to reduce aliasing.</li>
-          <li><strong>Robust metrics:</strong> Zero‑mean NCC (ZNCC), Huber/Charbonnier on gradients, or phase correlation for very large shifts.</li>
-        </ul>
-
-        <h4>Pseudocode (as implemented)</h4>
-        <pre style="white-space:pre-wrap;overflow:auto"><code>for img in images:
-  plate = skio.imread(img); plate = sk.img_as_float(plate)
-  H = floor(plate.shape[0] / 3)
-  B, G, R = plate[:H], plate[H:2*H], plate[2*H:3*H]
-
-  G_aligned = search_alignment(G, B)  // evaluates several levels, picks best
-  R_aligned = search_alignment(R, B)
-
-  RGB = dstack([R_aligned, G_aligned, B])
-  save/display RGB and record (dx, dy) for G→B and R→B
-        </code></pre>
+        <p><strong>Single-scale baseline.</strong> Split B/G/R strips and align G and R to B by exhaustively searching displacements within a window using NCC on high-pass binarized features. Apply the best shift to the original channel and compose RGB.</p>
+        <p><strong>Coarse-to-fine pyramid.</strong> For large displacements, build an image pyramid, estimate at coarse scale, and refine toward full resolution. Cropping a small border before scoring helps avoid plate-edge bias.</p>
       </div>
     </section>
 
@@ -227,16 +103,13 @@ score = v1 · v2   // range ~[-1, 1]</code></pre>
     <section class="section">
       <h2>Iteration 1 — Results (Baseline)</h2>
       <div class="panel prose">
-        <p>Below are the aligned outputs for the required set, with displacements <em>(dx, dy)</em> reported as <strong>G→B</strong> and <strong>R→B</strong>. Click any thumbnail to view larger.</p>
-        <p class="tip"><strong>Base folder:</strong> <code>media/iteration_1/</code> (edit file names in the <code>results</code> dataset in the JS).</p>
+        <p>Aligned outputs for the required set. Displacements <em>(dx, dy)</em> are reported for <strong>G→B</strong> and <strong>R→B</strong>. Click any thumbnail to view larger.</p>
       </div>
       <div class="panel" style="padding:14px">
         <div id="gallery" class="gallery"></div>
       </div>
       <div class="panel" style="margin-top:var(--gap);padding:14px">
         <h3 style="margin:8px 6px 10px">Displacement Offsets</h3>
-        <p class="hint" style="margin:0 6px 8px; color: var(--muted); font-size: 13px;">Edit the <code>results</code> dataset in the JS (near the bottom of this page) with your measured G→B and R→B shifts for <em>Iteration 1</em>. Convention: <strong>(dx, dy)</strong>, where +dx = right and +dy = down.</p>
-        <div class="tip">Enter your measured offsets in the dataset below (JS section) — the table updates automatically.</div>
         <div style="overflow:auto">
           <table id="offsetsTable">
             <thead>
@@ -248,99 +121,17 @@ score = v1 · v2   // range ~[-1, 1]</code></pre>
       </div>
     </section>
 
-    <!-- Iteration 2: Results -->
+    <!-- Iteration 2 -->
     <section class="section">
-      <h2>Iteration 2 — Results (Coarse‑to‑Fine + Simple Crop)</h2>
+      <h2>Iteration 2 — Results (Coarse-to-Fine + Simple Crop)</h2>
       <div class="panel prose">
-        <p>This second iteration implements a coarse‑to‑fine alignment wrapper that (a) accumulates shifts from coarse → fine using pre‑rolling and (b) applies a simple symmetric inner crop (10%) once per level to suppress plate borders. It reuses the same <em>high‑pass + threshold + NCC</em> matching and ±20 pixel search per level as Iteration 1.</p>
-        <p class="tip"><strong>Base folder:</strong> <code>media/iteration_2/</code> (edit file names in the <code>results2</code> dataset in the JS).</p>
-        <details><summary><strong>Show Iteration 2 code</strong></summary>
-          <pre style="white-space:pre-wrap;overflow:auto"><code>from scipy.ndimage import gaussian_filter 
-
-def lowpass(img, sigma=3):
-  return gaussian_filter(img, sigma)
-
-def highpass(img, sigma=1):
-  low = lowpass(img, sigma)
-  high = img - low
-  return high
-
-def downsample(img, factor):
-  return img[::factor, ::factor]
-
-def compare_similarity(img1, img2):
-  vec_img1 = img1.flatten()
-  norm_vec_img1 = vec_img1 / (np.linalg.norm(vec_img1) + 1e-16)
-
-  vec_img2 = img2.flatten()
-  norm_vec_img2 = vec_img2 / (np.linalg.norm(vec_img2) + 1e-16)
-
-  score = norm_vec_img1 @ norm_vec_img2
-  return score
-
-def align(img1, img2, level):
-  original_img1 = img1.copy()
-  original_img2 = img2.copy()
-
-  img1 = highpass(img1)
-  img1 = downsample(img1, level)
-  img1 = np.abs(img1)
-  img1[img1 &lt; 0.01375] = 0
-  img1[img1 &gt;= 0.01375] = 1
-
-  img2 = highpass(img2)
-  img2 = downsample(img2, level)
-  img2 = np.abs(img2)
-  img2[img2 &lt; 0.01375] = 0
-  img2[img2 &gt;= 0.01375] = 1
-
-  max_score = -1
-  for i in range(-20, 21):
-    for j in range(-20, 21):
-      rolled_img1 = np.roll(img1, (i, j), (0, 1))
-      score = compare_similarity(rolled_img1, img2)
-      if score &gt; max_score:
-        max_score = score
-        best_i = i
-        best_j = j
-
-  alignment = (best_i*level, best_j*level)
-  aligned_img1 = np.roll(original_img1, alignment, (0, 1))
-  return aligned_img1, max_score, alignment
-
-def crop_inner(img, frac):
-  h, w = img.shape
-  th = int(h * frac)
-  tw = int(w * frac)
-  return img[th:h - th, tw:w - tw]
-
-def search_alignment(img, ref):
-  min_level = max(1, max(img.shape)//500)
-  levels = list(range(min_level + 4, min_level - 1, -1))
-  print("Levels: ", levels)
-
-  dy, dx = 0, 0 
-  for level in levels:
-    pre = np.roll(img, (dy, dx), (0, 1))
-    pre_m = crop_inner(pre, frac=0.1)
-    ref_m = crop_inner(ref, frac=0.1)
-    _, score, residual = align(pre_m, ref_m, level)
-    dy = dy + residual[0]
-    dx = dx + residual[1]
-    print(f"Alignment at Level {level}: ({dy}, {dx})")
-
-  final_img1 = np.roll(img, (dy, dx), (0, 1))
-  print("Coarse-to-fine total alignment (dy, dx):", (dy, dx))
-  return final_img1</code></pre>
-        </details>
+        <p>A coarse-to-fine alignment wrapper that accumulates shifts from coarse → fine (with a simple inner crop to suppress plate borders), reusing the same high-pass + threshold + NCC matching.</p>
       </div>
       <div class="panel" style="padding:14px">
         <div id="gallery2" class="gallery"></div>
       </div>
       <div class="panel" style="margin-top:var(--gap);padding:14px">
         <h3 style="margin:8px 6px 10px">Displacement Offsets (Iteration 2)</h3>
-        <p class="hint" style="margin:0 6px 8px; color: var(--muted); font-size: 13px;">Edit the <code>results2</code> dataset in the JS (near the bottom of this page) with your measured G→B and R→B shifts for <em>Iteration 2</em>. Convention: <strong>(dx, dy)</strong>, where +dx = right and +dy = down.</p>
-        <div class="tip">Enter your measured offsets for Iteration 2 in the dataset below (JS section) — the table updates automatically.</div>
         <div style="overflow:auto">
           <table id="offsetsTable2">
             <thead>
@@ -355,9 +146,6 @@ def search_alignment(img, ref):
     <!-- Extra Examples -->
     <section class="section">
       <h2>Additional Examples from the Collection</h2>
-      <div class="panel prose">
-        <p>I downloaded a few additional plates from the Library of Congress Prokudin‑Gorskii collection and ran them through the same pipeline. The examples below illustrate typical success cases and a failure case (strong brightness/contrast differences between channels).</p>
-      </div>
       <div class="panel" style="padding:14px">
         <div id="galleryExtra" class="gallery"></div>
       </div>
@@ -367,35 +155,23 @@ def search_alignment(img, ref):
     <section class="section">
       <h2>Discussion: Failures &amp; Fixes</h2>
       <div class="panel prose">
-        <p><strong>Brightness mismatch (e.g., Emir).</strong> Cross‑channel intensity differences can still confuse raw‑pixel similarity, which is why I rely on <em>high‑pass binarized</em> features with NCC. If artifacts remain, increasing the crop margin or using gradient magnitude (Sobel/Scharr) for the feature map helps.</p>
+        <p><strong>Brightness mismatch (e.g., Emir).</strong> Cross-channel intensity differences can still confuse raw-pixel similarity, which is why high-pass binarized features with NCC help. Increasing the crop margin or using gradient magnitude can further improve robustness.</p>
         <p><strong>Border artifacts.</strong> Strong horizontal borders from plate edges can dominate similarity. Cropping a fixed margin (e.g., 5–10% per side) before scoring helps.</p>
-        <p><strong>Large shifts.</strong> Exhaustive search on full‑res images is slow. A pyramid with ±15 px windows per level was sufficient for the provided plates.</p>
+        <p><strong>Large shifts.</strong> A pyramid with smaller windows per level efficiently recovers large motions.</p>
       </div>
     </section>
 
-    <!-- Appendix -->
+    <!-- Appendix: Level Features -->
     <section class="section">
       <h2>Intermediate Features Across Levels (Iteration 2)</h2>
-      <div class="panel prose">
-        <p>This section showcases the <em>binarized high‑pass</em> feature maps used by Iteration 2 for a single example image while searching at pyramid levels <strong>11, 10, 9, 8, 7</strong>.</p>
-        <p class="tip"><strong>Base folder:</strong> <code>media/p1/iter2_debug/</code>. Expected files: <code>example_L11.png</code>, <code>example_L10.png</code>, <code>example_L9.png</code>, <code>example_L8.png</code>, <code>example_L7.png</code>.</p>
-      </div>
       <div class="panel" style="padding:14px">
         <div id="levelsDebug" class="gallery"></div>
       </div>
     </section>
 
-    <section class="section">
-      <h2>Appendix — Data &amp; Reproducibility</h2>
-      <div class="panel prose">
-        <p><strong>Inputs:</strong> Provided <code>.tif</code> and <code>.jpg</code> plates (not hosted here). My page hosts only compressed outputs in <code>media/p1/</code>.</p>
-        <p><strong>Outputs:</strong> All thumbnails link to full‑size compressed images (JPG/PNG/WebP or GIF where animated). File naming mirrors the source without extension differences.</p>
-      </div>
-    </section>
-
     <footer>
-      <p>© <span id="year"></span> Your Name • Project 1: Images of the Russian Empire</p>
-      <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write‑up are my own; I reviewed and verified technical details.</p>
+      <p>© <span id="year"></span> Eduardo • Project 1: Images of the Russian Empire</p>
+      <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write-up are my own; I reviewed and verified technical details.</p>
     </footer>
   </main>
 
@@ -409,13 +185,11 @@ def search_alignment(img, ref):
     document.getElementById('year').textContent = new Date().getFullYear();
 
     // ====== DATASET ======
-    // EDIT HERE: base paths for your images (change these four if you reorganize folders)
     const BASE_ITER1 = 'media/iteration_1';
     const BASE_ITER2 = 'media/iteration_2';
     const BASE_FEAT  = 'media/binarization';
     const BASE_DEBUG = 'media/debug';
 
-    // Fill in your measured offsets for each image (G→B and R→B). dx: right+, dy: down+
     const results = [
       { id:"church",          file:"church.png",          g:[0,24],   r:[-11,55] },
       { id:"icon",            file:"icon.png",            g:[16,40],   r:[22,88] },
@@ -433,7 +207,6 @@ def search_alignment(img, ref):
       { id:"self_portrait",    file:"self_portrait.png",   g:[28,77],   r:[36,180] }
     ];
 
-    // Iteration 2 dataset
     const results2 = [
       { id:"church",          file:"church.png",          g:[1,22],   r:[-8,55] },
       { id:"icon",            file:"icon.png",            g:[21,37],   r:[22,88] },
@@ -451,9 +224,8 @@ def search_alignment(img, ref):
       { id:"self_portrait",    file:"self_portrait.png",   g:[31,77],   r:[33,176] }
     ];
 
-    // Optional: extra examples you downloaded
     const extra = [
-      // Example: { id:"bridge", file:"bridge.jpg", g:[-12, 3], r:[-21, 7] }
+      // Add any extra examples here if desired
     ];
 
     // ====== RENDER GALLERY ======
@@ -476,12 +248,11 @@ def search_alignment(img, ref):
       wrap.appendChild(media);
       wrap.appendChild(cap);
 
-      // Lightbox
       media.addEventListener('click', ()=> openLightbox(`${basePath}/${item.file}`));
       return wrap;
     }
 
-    function renderGallery(list, elId, basePath = BASE_ITER1){
+    function renderGallery(list, elId, basePath){
       const el = document.getElementById(elId);
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeCard(basePath, item)));
@@ -489,7 +260,7 @@ def search_alignment(img, ref):
 
     renderGallery(results, 'gallery', BASE_ITER1);
     renderGallery(results2, 'gallery2', BASE_ITER2);
-    renderGallery(extra, 'galleryExtra');
+    renderGallery(extra, 'galleryExtra', BASE_ITER1);
 
     // ====== RENDER TABLE ======
     function renderTable(list, tableId){
@@ -520,7 +291,7 @@ def search_alignment(img, ref):
       media.className = 'media thumb';
       const img = document.createElement('img');
       img.loading = 'lazy';
-      img.alt = `Binarized high‑pass at level ${item.level}`;
+      img.alt = `Binarized high-pass at level ${item.level}`;
       img.src = `${basePath}/${item.file}`;
       media.appendChild(img);
       const cap = document.createElement('figcaption');
@@ -532,7 +303,7 @@ def search_alignment(img, ref):
       return wrap;
     }
 
-    function renderDebug(list, elId, basePath='media/p1/iter2_debug'){
+    function renderDebug(list, elId, basePath){
       const el = document.getElementById(elId);
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeDebugCard(basePath, item)));
@@ -543,7 +314,7 @@ def search_alignment(img, ref):
     // ====== Binarization example (front-of-page) ======
     const binFeat = [
       { label: 'Input (harvesters — red plate)', file: 'harvesters_redplate.png' },
-      { label: 'High‑pass |·|',                 file: 'harvesters_redplate_highpass.png'  },
+      { label: 'High-pass |·|',                 file: 'harvesters_redplate_highpass.png'  },
       { label: 'Binarized mask',                file: 'harvesters_redplate_binarized.png' }
     ];
 
@@ -559,14 +330,14 @@ def search_alignment(img, ref):
       media.appendChild(img);
       const cap = document.createElement('figcaption');
       cap.className = 'cap';
-      cap.innerHTML = `<span><strong>${item.label}</strong></span><small>Filenames configurable in JS</small>`;
+      cap.innerHTML = `<span><strong>${item.label}</strong></span>`;
       wrap.appendChild(media);
       wrap.appendChild(cap);
       media.addEventListener('click', ()=> openLightbox(`${basePath}/${item.file}`));
       return wrap;
     }
 
-    function renderFeat(list, elId, basePath='media/p1/feat'){
+    function renderFeat(list, elId, basePath){
       const el = document.getElementById(elId);
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeFeatCard(basePath, item)));
