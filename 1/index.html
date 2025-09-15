@@ -87,6 +87,7 @@
       <div class="panel" style="padding:14px">
         <h3 style="margin:8px 6px 10px">Example: Raw → High-Pass → Binarized</h3>
         <div id="binFeat" class="gallery"></div>
+        <div id="binFeat" class="gallery"></div>
       </div>
     </section>
 
@@ -312,10 +313,18 @@
     renderDebug(debugLevels, 'levelsDebug', BASE_DEBUG);
 
     // ====== Binarization example (front-of-page) ======
-    const binFeat = [
-      { label: 'Input (harvesters — red plate)', file: 'harvesters_redplate.png' },
-      { label: 'High-pass |·|',                 file: 'harvesters_redplate_highpass.png'  },
-      { label: 'Binarized mask',                file: 'harvesters_redplate_binarized.png' }
+    const binFeat1 = [
+      { label: 'Input (emir: red plate)', file: 'emir_redplate.png' },
+      { label: 'High-pass filtered',                 file: 'emir_redplate_highpass.png'  },
+      { label: 'High-pass filtered absolute',                file: 'emir_redplate_highpass_absolute.png' }
+      { label: 'Binarized)', file: 'emir_redplate_binarized.png' }
+    ];
+
+    const binFeat2 = [
+      { label: 'Input (emir: blue plate)', file: 'emir_blueplate.png' },
+      { label: 'High-pass filtered',                 file: 'emir_blueplate_highpass.png'  },
+      { label: 'High-pass filtered absolute',                file: 'emir_blueplate_highpass_absolute.png' }
+      { label: 'Binarized)', file: 'emir_blueplate_binarized.png' }
     ];
 
     function makeFeatCard(basePath, item){
@@ -343,7 +352,8 @@
       list.forEach(item => el.appendChild(makeFeatCard(basePath, item)));
     }
 
-    renderFeat(binFeat, 'binFeat', BASE_FEAT);
+    renderFeat(binFeat1, 'binFeat', BASE_FEAT);
+    renderFeat(binFeat2, 'binFeat', BASE_FEAT);
 
     // ====== LIGHTBOX ======
     const lb = document.getElementById('lightbox');
