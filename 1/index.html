@@ -66,7 +66,7 @@
       <p class="subtitle">Aligning B/G/R plates into modern RGB photographs using <strong>binarized high‑pass features</strong> scored with NCC, with a second iteration that refines shifts coarse → fine.</p>
       <div class="meta">
         <span><strong>Student:</strong> Your Name</span><span>•</span>
-        <span><strong>Course:</strong> CS184/284A — Fall 2025</span><span>•</span>
+        <span><strong>Course:</strong> CS180 — Fall 2025</span><span>•</span>
         <span><strong>Date:</strong> September 2025</span>
       </div>
     </div>
@@ -99,7 +99,23 @@
       </div>
       <div class="panel" style="padding:14px">
         <h3 style="margin:8px 6px 10px">Example: Raw → High‑Pass → Binarized</h3>
+        <div class="tip"><strong>Base folder:</strong> <code>binarization/</code>. Filenames: <code>harvesters_redplate</code>, <code>harvesters_redplate_highpass</code>, <code>harvesters_redplate_binarized</code>.</div>
         <div id="binFeat" class="gallery"></div>
+      </div>
+    </section>
+
+    <!-- Setup: Where to put images -->
+    <section class="section">
+      <h2>Setup — Where to put images & file names</h2>
+      <div class="panel prose">
+        <p>Put your <strong>compressed outputs</strong> (JPG/PNG/WebP/GIF) into the folders below. If you change file names, edit the small JS datasets at the bottom of this page (look for <code>// EDIT HERE: filenames</code>).</p>
+        <ul>
+          <li><strong>Iteration 1 results:</strong> <code>media/iteration_1/</code> (e.g., <code>church.jpg</code>, <code>emir.jpg</code>, ...)</li>
+          <li><strong>Iteration 2 results:</strong> <code>media/iteration_2/</code> (same names as Iteration 1)</li>
+          <li><strong>Binarization example (front-of-page):</strong> <code>binarization/</code> → <code>harvesters_redplate</code>, <code>harvesters_redplate_highpass</code>, <code>harvesters_redplate_binarized</code></li>
+          <li><strong>Iteration 2 debug levels:</strong> <code>media/p1/iter2_debug/</code> → <code>example_L11.png</code>, <code>example_L10.png</code>, <code>example_L9.png</code>, <code>example_L8.png</code>, <code>example_L7.png</code></li>
+        </ul>
+        <p class="tip"><strong>Tip:</strong> You only need to update the arrays named <code>results</code>, <code>results2</code>, <code>binFeat</code>, and <code>debugLevels</code> if your filenames differ. Base paths are defined as constants in the JS for easy changes.</p>
       </div>
     </section>
 
@@ -212,6 +228,7 @@ score = v1 · v2   // range ~[-1, 1]</code></pre>
       <h2>Iteration 1 — Results (Baseline)</h2>
       <div class="panel prose">
         <p>Below are the aligned outputs for the required set, with displacements <em>(dx, dy)</em> reported as <strong>G→B</strong> and <strong>R→B</strong>. Click any thumbnail to view larger.</p>
+        <p class="tip"><strong>Base folder:</strong> <code>media/iteration_1/</code> (edit file names in the <code>results</code> dataset in the JS).</p>
       </div>
       <div class="panel" style="padding:14px">
         <div id="gallery" class="gallery"></div>
@@ -235,6 +252,7 @@ score = v1 · v2   // range ~[-1, 1]</code></pre>
       <h2>Iteration 2 — Results (Coarse‑to‑Fine + Simple Crop)</h2>
       <div class="panel prose">
         <p>This second iteration implements a coarse‑to‑fine alignment wrapper that (a) accumulates shifts from coarse → fine using pre‑rolling and (b) applies a simple symmetric inner crop (10%) once per level to suppress plate borders. It reuses the same <em>high‑pass + threshold + NCC</em> matching and ±20 pixel search per level as Iteration 1.</p>
+        <p class="tip"><strong>Base folder:</strong> <code>media/iteration_2/</code> (edit file names in the <code>results2</code> dataset in the JS).</p>
         <details><summary><strong>Show Iteration 2 code</strong></summary>
           <pre style="white-space:pre-wrap;overflow:auto"><code>from scipy.ndimage import gaussian_filter 
 
@@ -357,8 +375,8 @@ def search_alignment(img, ref):
     <section class="section">
       <h2>Intermediate Features Across Levels (Iteration 2)</h2>
       <div class="panel prose">
-        <p>This section showcases the <em>binarized high‑pass</em> feature maps used by Iteration 2 for a single example image while searching at pyramid levels <strong>11, 10, 9, 8, 7</strong>. Replace the placeholder filenames in the JS dataset (below) with your exported debug frames.</p>
-        <p class="tip">Expected files (place under <code>media/p1/iter2_debug/</code>): <code>example_L11.png</code>, <code>example_L10.png</code>, <code>example_L9.png</code>, <code>example_L8.png</code>, <code>example_L7.png</code>.</p>
+        <p>This section showcases the <em>binarized high‑pass</em> feature maps used by Iteration 2 for a single example image while searching at pyramid levels <strong>11, 10, 9, 8, 7</strong>.</p>
+        <p class="tip"><strong>Base folder:</strong> <code>media/p1/iter2_debug/</code>. Expected files: <code>example_L11.png</code>, <code>example_L10.png</code>, <code>example_L9.png</code>, <code>example_L8.png</code>, <code>example_L7.png</code>.</p>
       </div>
       <div class="panel" style="padding:14px">
         <div id="levelsDebug" class="gallery"></div>
@@ -389,6 +407,12 @@ def search_alignment(img, ref):
     document.getElementById('year').textContent = new Date().getFullYear();
 
     // ====== DATASET ======
+    // EDIT HERE: base paths for your images (change these four if you reorganize folders)
+    const BASE_ITER1 = 'media/iteration_1';
+    const BASE_ITER2 = 'media/iteration_2';
+    const BASE_FEAT  = 'binarization';
+    const BASE_DEBUG = 'media/p1/iter2_debug';
+
     // Put your compressed outputs into media/p1/ with these names
     // Fill in your measured offsets for each image (G→B and R→B). dx: right+, dy: down+
     const results = [
@@ -441,14 +465,14 @@ def search_alignment(img, ref):
       return wrap;
     }
 
-    function renderGallery(list, elId, basePath = 'media/p1'){
+    function renderGallery(list, elId, basePath = BASE_ITER1){
       const el = document.getElementById(elId);
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeCard(basePath, item)));
     }
 
-    renderGallery(results, 'gallery', 'media/p1');
-    renderGallery(results2, 'gallery2', 'media/p1/iter2');
+    renderGallery(results, 'gallery', BASE_ITER1);
+    renderGallery(results2, 'gallery2', BASE_ITER2);
     renderGallery(extra, 'galleryExtra');
 
     // ====== RENDER TABLE ======
@@ -498,13 +522,13 @@ def search_alignment(img, ref):
       list.forEach(item => el.appendChild(makeDebugCard(basePath, item)));
     }
 
-    renderDebug(debugLevels, 'levelsDebug', 'media/p1/iter2_debug');
+    renderDebug(debugLevels, 'levelsDebug', BASE_DEBUG);
 
     // ====== Binarization example (front-of-page) ======
     const binFeat = [
-      { label: 'Input (grayscale slice)', file: 'example_raw.png' },
-      { label: 'High‑pass |·|',          file: 'example_hp.png'  },
-      { label: 'Binarized mask',         file: 'example_bin.png' }
+      { label: 'Input (harvesters — red plate)', file: 'harvesters_redplate' },
+      { label: 'High‑pass |·|',                 file: 'harvesters_redplate_highpass'  },
+      { label: 'Binarized mask',                file: 'harvesters_redplate_binarized' }
     ];
 
     function makeFeatCard(basePath, item){
@@ -532,7 +556,7 @@ def search_alignment(img, ref):
       list.forEach(item => el.appendChild(makeFeatCard(basePath, item)));
     }
 
-    renderFeat(binFeat, 'binFeat', 'media/p1/feat');
+    renderFeat(binFeat, 'binFeat', BASE_FEAT);
 
     // ====== LIGHTBOX ======
     const lb = document.getElementById('lightbox');
