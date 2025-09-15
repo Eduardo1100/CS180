@@ -410,45 +410,45 @@ def search_alignment(img, ref):
 
     // ====== DATASET ======
     // EDIT HERE: base paths for your images (change these four if you reorganize folders)
-    const BASE_ITER1 = 'media/iteration_1/';
-    const BASE_ITER2 = 'media/iteration_2/';
-    const BASE_FEAT  = 'media/binarization/';
-    const BASE_DEBUG = 'media/debug/';
+    const BASE_ITER1 = 'media/iteration_1';
+    const BASE_ITER2 = 'media/iteration_2';
+    const BASE_FEAT  = 'media/binarization';
+    const BASE_DEBUG = 'media/debug';
 
     // Fill in your measured offsets for each image (G→B and R→B). dx: right+, dy: down+
     const results = [
-      { id:"church",          file:"church.jpg",          g:[0,24],   r:[-11,55] },
-      { id:"icon",            file:"icon.jpg",            g:[16,40],   r:[22,88] },
-      { id:"emir",            file:"emir.jpg",            g:[24,48],   r:[40,104] },
-      { id:"italil",          file:"italil.jpg",          g:[20,40],   r:[35,77] },
-      { id:"lastochikino",    file:"lastochikino.jpg",    g:[0,-7],   r:[-7, 77] },
-      { id:"siren",            file:"siren.jpg",           g:[-8,48],   r:[-24,96] },
-      { id:"three_generations",file:"three_generations.jpg",g:[11,55],  r:[7,112] },
-      { id:"lugano",           file:"lugano.jpg",          g:[-16,40],   r:[-28,91] },
-      { id:"cathedral",        file:"cathedral.jpg",       g:[2,5],   r:[3,12] },
-      { id:"monastery",        file:"monastery.jpg",       g:[1,-3],   r:[2,3] },
-      { id:"tobolsk",          file:"tobolsk.jpg",         g:[2,3],   r:[3,7] },
-      { id:"harvesters",       file:"harvesters.jpg",      g:[18,63],   r:[9,126] },
-      { id:"melons",           file:"melons.jpg",          g:[10,80],   r:[11,176] },
-      { id:"self_portrait",    file:"self_portrait.jpg",   g:[28,77],   r:[36,180] }
+      { id:"church",          file:"church.png",          g:[0,24],   r:[-11,55] },
+      { id:"icon",            file:"icon.png",            g:[16,40],   r:[22,88] },
+      { id:"emir",            file:"emir.png",            g:[24,48],   r:[40,104] },
+      { id:"italil",          file:"italil.png",          g:[20,40],   r:[35,77] },
+      { id:"lastochikino",    file:"lastochikino.png",    g:[0,-7],   r:[-7, 77] },
+      { id:"siren",            file:"siren.png",           g:[-8,48],   r:[-24,96] },
+      { id:"three_generations",file:"three_generations.png",g:[11,55],  r:[7,112] },
+      { id:"lugano",           file:"lugano.png",          g:[-16,40],   r:[-28,91] },
+      { id:"cathedral",        file:"cathedral.png",       g:[2,5],   r:[3,12] },
+      { id:"monastery",        file:"monastery.png",       g:[1,-3],   r:[2,3] },
+      { id:"tobolsk",          file:"tobolsk.png",         g:[2,3],   r:[3,7] },
+      { id:"harvesters",       file:"harvesters.png",      g:[18,63],   r:[9,126] },
+      { id:"melons",           file:"melons.png",          g:[10,80],   r:[11,176] },
+      { id:"self_portrait",    file:"self_portrait.png",   g:[28,77],   r:[36,180] }
     ];
 
     // Iteration 2 dataset
     const results2 = [
-      { id:"church",          file:"church.jpg",          g:[1,22],   r:[-8,55] },
-      { id:"icon",            file:"icon.jpg",            g:[21,37],   r:[22,88] },
-      { id:"emir",            file:"emir.jpg",            g:[22,46],   r:[37,103] },
-      { id:"italil",          file:"italil.jpg",          g:[22,35],   r:[33,77] },
-      { id:"lastochikino",    file:"lastochikino.jpg",    g:[0,-1],   r:[-11,77] },
-      { id:"siren",            file:"siren.jpg",           g:[-3,52],   r:[-22,99] },
-      { id:"three_generations",file:"three_generations.jpg", g:[11,55],  r:[11,110] },
-      { id:"lugano",           file:"lugano.jpg",          g:[-20,44],   r:[-32,95] },
-      { id:"cathedral",        file:"cathedral.jpg",       g:[2,5],   r:[3,12] },
-      { id:"monastery",        file:"monastery.jpg",       g:[-3,2],   r:[2,3] },
-      { id:"tobolsk",          file:"tobolsk.jpg",         g:[3,3],   r:[3,7] },
-      { id:"harvesters",       file:"harvesters.jpg",      g:[13,64],   r:[11,128] },
-      { id:"melons",           file:"melons.jpg",          g:[11,79],   r:[11,176] },
-      { id:"self_portrait",    file:"self_portrait.jpg",   g:[31,77],   r:[33,176] }
+      { id:"church",          file:"church.png",          g:[1,22],   r:[-8,55] },
+      { id:"icon",            file:"icon.png",            g:[21,37],   r:[22,88] },
+      { id:"emir",            file:"emir.png",            g:[22,46],   r:[37,103] },
+      { id:"italil",          file:"italil.png",          g:[22,35],   r:[33,77] },
+      { id:"lastochikino",    file:"lastochikino.png",    g:[0,-1],   r:[-11,77] },
+      { id:"siren",            file:"siren.png",           g:[-3,52],   r:[-22,99] },
+      { id:"three_generations",file:"three_generations.png", g:[11,55],  r:[11,110] },
+      { id:"lugano",           file:"lugano.png",          g:[-20,44],   r:[-32,95] },
+      { id:"cathedral",        file:"cathedral.png",       g:[2,5],   r:[3,12] },
+      { id:"monastery",        file:"monastery.png",       g:[-3,2],   r:[2,3] },
+      { id:"tobolsk",          file:"tobolsk.png",         g:[3,3],   r:[3,7] },
+      { id:"harvesters",       file:"harvesters.png",      g:[13,64],   r:[11,128] },
+      { id:"melons",           file:"melons.png",          g:[11,79],   r:[11,176] },
+      { id:"self_portrait",    file:"self_portrait.png",   g:[31,77],   r:[33,176] }
     ];
 
     // Optional: extra examples you downloaded
