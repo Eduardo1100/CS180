@@ -532,7 +532,7 @@ def search_alignment(img, ref):
       return wrap;
     }
 
-    function renderDebug(list, elId, basePath='media/p1/iter2_debug'){
+    function renderDebug(list, elId, basePath=BASE_DEBUG'){
       const el = document.getElementById(elId);
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeDebugCard(basePath, item)));
@@ -542,9 +542,9 @@ def search_alignment(img, ref):
 
     // ====== Binarization example (front-of-page) ======
     const binFeat = [
-      { label: 'Input (harvesters — red plate)', file: 'harvesters_redplate' },
-      { label: 'High‑pass |·|',                 file: 'harvesters_redplate_highpass'  },
-      { label: 'Binarized mask',                file: 'harvesters_redplate_binarized' }
+      { label: 'Input (harvesters — red plate)', file: 'harvesters_redplate.png' },
+      { label: 'High‑pass |·|',                 file: 'harvesters_redplate_highpass.png'  },
+      { label: 'Binarized mask',                file: 'harvesters_redplate_binarized.png' }
     ];
 
     function makeFeatCard(basePath, item){
@@ -566,7 +566,7 @@ def search_alignment(img, ref):
       return wrap;
     }
 
-    function renderFeat(list, elId, basePath='media/p1/feat'){
+    function renderFeat(list, elId, basePath=BASE_FEAT){
       const el = document.getElementById(elId);
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeFeatCard(basePath, item)));
