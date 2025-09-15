@@ -6,9 +6,7 @@
   <title>Project 1 — Images of the Russian Empire (Prokudin-Gorskii)</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0b0c10;--panel:#11131a;--text:#eaeef5;--muted:#9aa4b2;--accent:#7aa2ff;--border:#1d2230;--radius:16px;--gap:20px;--shadow:0 10px 30px rgba(0,0,0,.25)
-    }
+    :root{ --bg:#0b0c10;--panel:#11131a;--text:#eaeef5;--muted:#9aa4b2;--accent:#7aa2ff;--border:#1d2230;--radius:16px;--gap:20px;--shadow:0 10px 30px rgba(0,0,0,.25) }
     @media (prefers-color-scheme: light){:root{--bg:#f6f8fb;--panel:#fff;--text:#0c1222;--muted:#4b5563;--border:#e5e7eb;--accent:#4169e1}}
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6}
@@ -32,21 +30,16 @@
     .card{padding:14px}
     .media{position:relative;overflow:hidden;border-radius:calc(var(--radius) - 6px);border:1px solid var(--border);background:#000}
     img{display:block;width:100%;height:auto}
-
-    /* Bigger gallery thumbs */
     .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:calc(var(--gap) + 6px)}
     .thumb{cursor:pointer}
     .thumb:hover{outline:2px solid color-mix(in oklab, var(--accent) 50%, transparent)}
     .cap{display:flex;justify-content:space-between;gap:10px;align-items:center}
     .cap small{color:var(--muted)}
-
-    /* Lightbox */
     .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
     .lightbox.open{display:flex}
     .lightbox img{max-width:95vw;max-height:90vh}
     .lightbox .close{position:absolute;top:14px;right:18px;background:#0009;border:1px solid #fff3;color:#fff;padding:6px 10px;border-radius:10px;cursor:pointer}
     .kbd{font:600 12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;background:#0009;color:#fff;padding:4px 8px;border-radius:6px;border:1px solid #ffffff33}
-
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
     tbody tr:hover{background:rgba(255,255,255,.025)}
@@ -69,7 +62,6 @@
   </header>
 
   <main class="container">
-    <!-- Overview -->
     <section class="section">
       <div class="panel prose">
         <h2>Overview</h2>
@@ -78,7 +70,6 @@
       </div>
     </section>
 
-    <!-- Core Idea -->
     <section class="section">
       <h2>Core Idea — Binarized High-Pass Features</h2>
       <div class="panel prose">
@@ -86,12 +77,12 @@
       </div>
       <div class="panel" style="padding:14px">
         <h3 style="margin:8px 6px 10px">Example: Raw → High-Pass → Binarized</h3>
-        <div id="binFeat" class="gallery"></div>
-        <div id="binFeat" class="gallery"></div>
+        <!-- use unique IDs -->
+        <div id="binFeatRed" class="gallery"></div>
+        <div id="binFeatBlue" class="gallery" style="margin-top:20px"></div>
       </div>
     </section>
 
-    <!-- Approach (kept as high-level content) -->
     <section class="section">
       <h2>Approach</h2>
       <div class="panel prose">
@@ -100,7 +91,6 @@
       </div>
     </section>
 
-    <!-- Results Required -->
     <section class="section">
       <h2>Iteration 1 — Results (Baseline)</h2>
       <div class="panel prose">
@@ -122,7 +112,6 @@
       </div>
     </section>
 
-    <!-- Iteration 2 -->
     <section class="section">
       <h2>Iteration 2 — Results (Coarse-to-Fine + Simple Crop)</h2>
       <div class="panel prose">
@@ -144,7 +133,6 @@
       </div>
     </section>
 
-    <!-- Extra Examples -->
     <section class="section">
       <h2>Additional Examples from the Collection</h2>
       <div class="panel" style="padding:14px">
@@ -152,7 +140,6 @@
       </div>
     </section>
 
-    <!-- Discussion -->
     <section class="section">
       <h2>Discussion: Failures &amp; Fixes</h2>
       <div class="panel prose">
@@ -162,7 +149,6 @@
       </div>
     </section>
 
-    <!-- Appendix: Level Features -->
     <section class="section">
       <h2>Intermediate Features Across Levels (Iteration 2)</h2>
       <div class="panel" style="padding:14px">
@@ -176,7 +162,6 @@
     </footer>
   </main>
 
-  <!-- Lightbox Modal -->
   <div class="lightbox" id="lightbox" aria-modal="true" role="dialog">
     <button class="close" id="lbClose" aria-label="Close (Esc)"><span class="kbd">Esc</span></button>
     <img id="lbImg" alt="Expanded view"/>
@@ -193,47 +178,44 @@
 
     const results = [
       { id:"church",          file:"church.png",          g:[0,24],   r:[-11,55] },
-      { id:"icon",            file:"icon.png",            g:[16,40],   r:[22,88] },
-      { id:"emir",            file:"emir.png",            g:[24,48],   r:[40,104] },
-      { id:"italil",          file:"italil.png",          g:[20,40],   r:[35,77] },
-      { id:"lastochikino",    file:"lastochikino.png",    g:[0,-7],   r:[-7, 77] },
-      { id:"siren",            file:"siren.png",           g:[-8,48],   r:[-24,96] },
-      { id:"three_generations",file:"three_generations.png",g:[11,55],  r:[7,112] },
-      { id:"lugano",           file:"lugano.png",          g:[-16,40],   r:[-28,91] },
-      { id:"cathedral",        file:"cathedral.png",       g:[2,5],   r:[3,12] },
-      { id:"monastery",        file:"monastery.png",       g:[1,-3],   r:[2,3] },
-      { id:"tobolsk",          file:"tobolsk.png",         g:[2,3],   r:[3,7] },
-      { id:"harvesters",       file:"harvesters.png",      g:[18,63],   r:[9,126] },
-      { id:"melons",           file:"melons.png",          g:[10,80],   r:[11,176] },
-      { id:"self_portrait",    file:"self_portrait.png",   g:[28,77],   r:[36,180] }
+      { id:"icon",            file:"icon.png",            g:[16,40],  r:[22,88] },
+      { id:"emir",            file:"emir.png",            g:[24,48],  r:[40,104] },
+      { id:"italil",          file:"italil.png",          g:[20,40],  r:[35,77] },
+      { id:"lastochikino",    file:"lastochikino.png",    g:[0,-7],   r:[-7,77] },
+      { id:"siren",           file:"siren.png",           g:[-8,48],  r:[-24,96] },
+      { id:"three_generations",file:"three_generations.png",g:[11,55], r:[7,112] },
+      { id:"lugano",          file:"lugano.png",          g:[-16,40], r:[-28,91] },
+      { id:"cathedral",       file:"cathedral.png",       g:[2,5],    r:[3,12] },
+      { id:"monastery",       file:"monastery.png",       g:[1,-3],   r:[2,3] },
+      { id:"tobolsk",         file:"tobolsk.png",         g:[2,3],    r:[3,7] },
+      { id:"harvesters",      file:"harvesters.png",      g:[18,63],  r:[9,126] },
+      { id:"melons",          file:"melons.png",          g:[10,80],  r:[11,176] },
+      { id:"self_portrait",   file:"self_portrait.png",   g:[28,77],  r:[36,180] }
     ];
 
     const results2 = [
       { id:"church",          file:"church.png",          g:[1,22],   r:[-8,55] },
-      { id:"icon",            file:"icon.png",            g:[21,37],   r:[22,88] },
-      { id:"emir",            file:"emir.png",            g:[22,46],   r:[37,103] },
-      { id:"italil",          file:"italil.png",          g:[22,35],   r:[33,77] },
+      { id:"icon",            file:"icon.png",            g:[21,37],  r:[22,88] },
+      { id:"emir",            file:"emir.png",            g:[22,46],  r:[37,103] },
+      { id:"italil",          file:"italil.png",          g:[22,35],  r:[33,77] },
       { id:"lastochikino",    file:"lastochikino.png",    g:[0,-1],   r:[-11,77] },
-      { id:"siren",            file:"siren.png",           g:[-3,52],   r:[-22,99] },
-      { id:"three_generations",file:"three_generations.png", g:[11,55],  r:[11,110] },
-      { id:"lugano",           file:"lugano.png",          g:[-20,44],   r:[-32,95] },
-      { id:"cathedral",        file:"cathedral.png",       g:[2,5],   r:[3,12] },
-      { id:"monastery",        file:"monastery.png",       g:[-3,2],   r:[2,3] },
-      { id:"tobolsk",          file:"tobolsk.png",         g:[3,3],   r:[3,7] },
-      { id:"harvesters",       file:"harvesters.png",      g:[13,64],   r:[11,128] },
-      { id:"melons",           file:"melons.png",          g:[11,79],   r:[11,176] },
-      { id:"self_portrait",    file:"self_portrait.png",   g:[31,77],   r:[33,176] }
+      { id:"siren",           file:"siren.png",           g:[-3,52],  r:[-22,99] },
+      { id:"three_generations",file:"three_generations.png", g:[11,55], r:[11,110] },
+      { id:"lugano",          file:"lugano.png",          g:[-20,44], r:[-32,95] },
+      { id:"cathedral",       file:"cathedral.png",       g:[2,5],    r:[3,12] },
+      { id:"monastery",       file:"monastery.png",       g:[-3,2],   r:[2,3] },
+      { id:"tobolsk",         file:"tobolsk.png",         g:[3,3],    r:[3,7] },
+      { id:"harvesters",      file:"harvesters.png",      g:[13,64],  r:[11,128] },
+      { id:"melons",          file:"melons.png",          g:[11,79],  r:[11,176] },
+      { id:"self_portrait",   file:"self_portrait.png",   g:[31,77],  r:[33,176] }
     ];
 
-    const extra = [
-      // Add any extra examples here if desired
-    ];
+    const extra = [ /* optional extras */ ];
 
     // ====== RENDER GALLERY ======
     function makeCard(basePath, item){
       const wrap = document.createElement('figure');
       wrap.className = 'card';
-
       const media = document.createElement('div');
       media.className = 'media thumb';
       const img = document.createElement('img');
@@ -241,14 +223,11 @@
       img.alt = `${item.id} aligned result`;
       img.src = `${basePath}/${item.file}`;
       media.appendChild(img);
-
       const cap = document.createElement('figcaption');
       cap.className = 'cap';
       cap.innerHTML = `<span><strong>${item.id}</strong></span><small>G→B: (${item.g[0]}, ${item.g[1]}) • R→B: (${item.r[0]}, ${item.r[1]})</small>`;
-
       wrap.appendChild(media);
       wrap.appendChild(cap);
-
       media.addEventListener('click', ()=> openLightbox(`${basePath}/${item.file}`));
       return wrap;
     }
@@ -276,13 +255,13 @@
     renderTable(results, 'offsetsTable');
     renderTable(results2, 'offsetsTable2');
 
-    // ====== Iteration 2 Debug Levels (binarized features) ======
+    // ====== Iteration 2 Debug Levels ======
     const debugLevels = [
       { level: 11, file: 'example_L11.png' },
       { level: 10, file: 'example_L10.png' },
-      { level: 9,  file: 'example_L9.png'  },
-      { level: 8,  file: 'example_L8.png'  },
-      { level: 7,  file: 'example_L7.png'  }
+      { level: 9,  file: 'example_L9.png' },
+      { level: 8,  file: 'example_L8.png' },
+      { level: 7,  file: 'example_L7.png' }
     ];
 
     function makeDebugCard(basePath, item){
@@ -309,22 +288,21 @@
       el.innerHTML = '';
       list.forEach(item => el.appendChild(makeDebugCard(basePath, item)));
     }
-
     renderDebug(debugLevels, 'levelsDebug', BASE_DEBUG);
 
-    // ====== Binarization example (front-of-page) ======
+    // ====== Binarization examples (two rows) ======
     const binFeat1 = [
-      { label: 'Input (emir: red plate)', file: 'emir_redplate.png' },
-      { label: 'High-pass filtered',                 file: 'emir_redplate_highpass.png'  },
-      { label: 'High-pass filtered absolute',                file: 'emir_redplate_highpass_absolute.png' }
-      { label: 'Binarized)', file: 'emir_redplate_binarized.png' }
+      { label: 'Input (emir: red plate)',           file: 'emir_redplate.png' },
+      { label: 'High-pass filtered',                file: 'emir_redplate_highpass.png' },
+      { label: 'High-pass filtered (absolute)',     file: 'emir_redplate_highpass_absolute.png' },
+      { label: 'Binarized',                         file: 'emir_redplate_binarized.png' }
     ];
 
     const binFeat2 = [
-      { label: 'Input (emir: blue plate)', file: 'emir_blueplate.png' },
-      { label: 'High-pass filtered',                 file: 'emir_blueplate_highpass.png'  },
-      { label: 'High-pass filtered absolute',                file: 'emir_blueplate_highpass_absolute.png' }
-      { label: 'Binarized)', file: 'emir_blueplate_binarized.png' }
+      { label: 'Input (emir: blue plate)',          file: 'emir_blueplate.png' },
+      { label: 'High-pass filtered',                file: 'emir_blueplate_highpass.png' },
+      { label: 'High-pass filtered (absolute)',     file: 'emir_blueplate_highpass_absolute.png' },
+      { label: 'Binarized',                         file: 'emir_blueplate_binarized.png' }
     ];
 
     function makeFeatCard(basePath, item){
@@ -352,8 +330,8 @@
       list.forEach(item => el.appendChild(makeFeatCard(basePath, item)));
     }
 
-    renderFeat(binFeat1, 'binFeat', BASE_FEAT);
-    renderFeat(binFeat2, 'binFeat', BASE_FEAT);
+    renderFeat(binFeat1, 'binFeatRed', BASE_FEAT);
+    renderFeat(binFeat2, 'binFeatBlue', BASE_FEAT);
 
     // ====== LIGHTBOX ======
     const lb = document.getElementById('lightbox');
