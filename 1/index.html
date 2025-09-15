@@ -149,13 +149,6 @@
       </div>
     </section>
 
-    <section class="section">
-      <h2>Intermediate Features Across Levels (Iteration 2)</h2>
-      <div class="panel" style="padding:14px">
-        <div id="levelsDebug" class="gallery"></div>
-      </div>
-    </section>
-
     <footer>
       <p>© <span id="year"></span> Eduardo • Project 1: Images of the Russian Empire</p>
       <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write-up are my own; I reviewed and verified technical details.</p>
@@ -174,7 +167,6 @@
     const BASE_ITER1 = 'media/iteration_1';
     const BASE_ITER2 = 'media/iteration_2';
     const BASE_FEAT  = 'media/binarization';
-    const BASE_DEBUG = 'media/debug';
 
     const results = [
       { id:"church",          file:"church.png",          g:[0,24],   r:[-11,55] },
@@ -240,7 +232,7 @@
 
     renderGallery(results, 'gallery', BASE_ITER1);
     renderGallery(results2, 'gallery2', BASE_ITER2);
-    renderGallery(extra, 'galleryExtra', BASE_ITER1);
+    renderGallery(extra, 'galleryExtra', BASE_ITER2);
 
     // ====== RENDER TABLE ======
     function renderTable(list, tableId){
@@ -254,41 +246,6 @@
     }
     renderTable(results, 'offsetsTable');
     renderTable(results2, 'offsetsTable2');
-
-    // ====== Iteration 2 Debug Levels ======
-    const debugLevels = [
-      { level: 11, file: 'example_L11.png' },
-      { level: 10, file: 'example_L10.png' },
-      { level: 9,  file: 'example_L9.png' },
-      { level: 8,  file: 'example_L8.png' },
-      { level: 7,  file: 'example_L7.png' }
-    ];
-
-    function makeDebugCard(basePath, item){
-      const wrap = document.createElement('figure');
-      wrap.className = 'card';
-      const media = document.createElement('div');
-      media.className = 'media thumb';
-      const img = document.createElement('img');
-      img.loading = 'lazy';
-      img.alt = `Binarized high-pass at level ${item.level}`;
-      img.src = `${basePath}/${item.file}`;
-      media.appendChild(img);
-      const cap = document.createElement('figcaption');
-      cap.className = 'cap';
-      cap.innerHTML = `<span><strong>Level ${item.level}</strong></span><small>Binarized features</small>`;
-      wrap.appendChild(media);
-      wrap.appendChild(cap);
-      media.addEventListener('click', ()=> openLightbox(`${basePath}/${item.file}`));
-      return wrap;
-    }
-
-    function renderDebug(list, elId, basePath){
-      const el = document.getElementById(elId);
-      el.innerHTML = '';
-      list.forEach(item => el.appendChild(makeDebugCard(basePath, item)));
-    }
-    renderDebug(debugLevels, 'levelsDebug', BASE_DEBUG);
 
     // ====== Binarization examples (two rows) ======
     const binFeat1 = [
