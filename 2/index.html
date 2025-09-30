@@ -1,1 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 2 — Fun with Filters & Frequencies</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#11131a; --text:#eaeef5; --muted:#9aa4b2; --accent:#7aa2ff; --border:#1d2230;
+      --radius:16px; --gap:18px; --shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#f6f8fb; --panel:#ffffff; --text:#0b0c10; --muted:#586174; --accent:#335dff; --border:#e9edf5; }
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    header{ position:sticky; top:0; z-index:5; backdrop-filter:saturate(180%) blur(8px); background:color-mix(in oklab, var(--bg) 70%, transparent); border-bottom:1px solid var(--border); }
+    .wrap{ max-width:1100px; margin:0 auto; padding:24px; }
+    h1{ font-size:clamp(24px,3.8vw,40px); margin:6px 0 8px; letter-spacing:-.02em; }
+    h2{ font-size:clamp(18px,2.6vw,28px); margin:32px 0 10px; letter-spacing:-.01em; }
+    h3{ font-size:clamp(16px,2.2vw,22px); margin:24px 0 8px; }
+    p,li{ line-height:1.6; color:var(--text); }
+    .pill{ display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--muted); font-size:12px; }
+    .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
+    .grid{ display:grid; gap:var(--gap); }
+    .g-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .g-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .g-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .fig{ background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .fig img{ display:block; width:100%; height:auto; }
+    .cap{ padding:10px 12px; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+    code,pre{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre{ background:#0e1117; color:#e6edf3; border:1px solid #1f2937; border-radius:12px; padding:14px; overflow:auto; }
+    .toc a{ color:var(--text); text-decoration:none; }
+    .toc a:hover{ color:var(--accent); }
+    .callout{ border-left:3px solid var(--accent); padding:10px 14px; background:color-mix(in oklab, var(--accent) 10%, var(--panel)); border-radius:12px; }
+    footer{ color:var(--muted); font-size:13px; padding:24px 0 40px; }
+    .kbd{ border:1px solid var(--border); background:color-mix(in oklab, var(--panel) 70%, #0000); padding:2px 6px; border-radius:6px; font-size:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="pill">CS180 • Fall 2025</div>
+      <h1>Project 2 — Fun with Filters & Frequencies</h1>
+      <p style="margin:4px 0 0">Eduardo Cortes — UC Berkeley</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="panel">
+      <h2>Overview</h2>
+      <p>This project explores 2D convolution, finite-difference gradients, derivatives of Gaussians (DoG), unsharp masking, hybrid images, and multi‑resolution blending. I implement convolution from scratch, analyze edge detection with/without Gaussian smoothing, create hybrid images following Oliva–Torralba–Schyns, and reproduce the classic <em>oraple</em> blend using Gaussian/Laplacian stacks and mask pyramids.</p>
+      <div class="callout"><strong>Note.</strong> All intermediate and final figures are pre‑rendered and stored under <code>media/</code>; this page only displays them. Source snippets for alignment and hybrid construction are included below.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Table of Contents</h2>
+      <ol class="toc">
+        <li><a href="#p11">Part 1.1 — Convolutions from Scratch</a></li>
+        <li><a href="#p12">Part 1.2 — Finite Difference & Gradient Magnitude</a></li>
+        <li><a href="#p13">Part 1.3 — Derivative of Gaussian (DoG)</a></li>
+        <li><a href="#p21">Part 2.1 — Image Sharpening (Unsharp Mask)</a></li>
+        <li><a href="#p22">Part 2.2 — Hybrid Images</a></li>
+        <li><a href="#p23">Part 2.3 — Gaussian & Laplacian Stacks</a></li>
+        <li><a href="#p24">Part 2.4 — Multiresolution Blending (Oraple)</a></li>
+      </ol>
+    </section>
+
+    <!-- Part 1.1 -->
+    <section id="p11" class="panel">
+      <h2>Part 1.1 — Convolutions from Scratch</h2>
+      <p>I implemented 2D convolution with explicit loops (4‑loop baseline, then 2‑loop optimization) and matched SciPy’s <code>convolve2d</code> with zero padding. Below I show the self‑portrait and the 9×9 box‑filtered result.</p>
+      <div class="grid g-2">
+        <figure class="fig">
+          <img src="media/1.1_me.png" alt="Self portrait grayscale" />
+          <figcaption class="cap">Grayscale input self‑portrait.</figcaption>
+        </figure>
+        <figure class="fig">
+          <img src="media/1.1_box.png" alt="Box filter comparison (1x3)" />
+          <figcaption class="cap">9×9 box filtering (naive vs optimized vs SciPy).</figcaption>
+        </figure>
+      </div>
+
+<details>
+  <summary><strong>Code — Naive 4‑loop convolution (with kernel flip)</strong></summary>
+  <pre><code class="language-python">import numpy as np
+
+def convolution_4(img, kernel, pad_mode='constant'):
+    img_f = img.astype(np.float64, copy=False)
+    ker_f = np.asarray(kernel, dtype=np.float64)
+    ker_f = np.flip(ker_f, axis=(0,1))  # convolution, not correlation
+
+    H, W = img_f.shape
+    kH, kW = ker_f.shape
+    pad_top  = kH // 2
+    pad_left = kW // 2
+    pad_bot  = kH - 1 - pad_top
+    pad_right= kW - 1 - pad_left
+    padded = np.pad(img_f, ((pad_top,pad_bot),(pad_left,pad_right)), mode=pad_mode)
+
+    out = np.zeros((H,W), dtype=np.float64)
+    for i in range(H):
+        for j in range(W):
+            acc = 0.0
+            for u in range(kH):
+                for v in range(kW):
+                    acc += padded[i+u, j+v] * ker_f[u, v]
+            out[i,j] = acc
+    return out  # cast/clip for display later
+  </code></pre>
+</details>
+
+      <details>
+        <summary><strong>Code — 9×9 Box kernel & SciPy check</strong></summary>
+        <pre><code class="language-python">box9 = np.ones((9,9), dtype=np.float64) / 81.0
+naive  = convolution_4(img, box9)
+scipy_ = scipy.signal.convolve2d(img, box9, mode='same', boundary='fill', fillvalue=0)
+print('max |diff| =', np.max(np.abs(naive - scipy_)))
+</code></pre>
+      </details>
+    </section>
+
+    <!-- Part 1.2 -->
+    <section id="p12" class="panel">
+      <h2>Part 1.2 — Finite Difference & Gradient Magnitude</h2>
+      <p>I computed partial derivatives using finite difference operators <code>D<sub>x</sub>=[-1,1]</code> and <code>D<sub>y</sub>=[-1;1]</code>, formed the gradient magnitude, and thresholded to get a binarized edge map.</p>
+      <div class="grid g-3">
+        <figure class="fig"><img src="media/1.1_diffops.png" alt="Finite difference grids (2x2)" /><figcaption class="cap">Partial derivatives and gradient magnitude.</figcaption></figure>
+        <figure class="fig"><img src="media/1.2_binarized_grad_mag.png" alt="Binarized gradient magnitude (1x3)" /><figcaption class="cap">Choosing a threshold trades off noise vs missed edges.</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- Part 1.3 -->
+    <section id="p13" class="panel">
+      <h2>Part 1.3 — Derivative of Gaussian (DoG)</h2>
+      <p>I first smoothed with a Gaussian then applied finite differences; next I created DoG filters by convolving the Gaussian kernel with <code>D<sub>x</sub>, D<sub>y</sub></code> to achieve the same result with a single convolution. The DoG pipeline suppresses noise while preserving edges.</p>
+      <div class="grid g-3">
+        <figure class="fig"><img src="media/1.3_DoG.png" alt="DoG results (1x3)" /><figcaption class="cap">Gaussian smoothing → gradients → magnitude.</figcaption></figure>
+        <figure class="fig"><img src="media/1.3_kernels.png" alt="Kernels visualization (1x3)" /><figcaption class="cap">Gaussian / DoG<sub>x</sub> / DoG<sub>y</sub> kernels.</figcaption></figure>
+        <figure class="fig"><img src="media/1.3_filters.png" alt="DoG filters as images (1x3)" /><figcaption class="cap">DoG filters visualized.</figcaption></figure>
+      </div>
+      <div class="grid g-2" style="margin-top:var(--gap)">
+        <figure class="fig"><img src="media/1.3_DoG_single_conv.png" alt="Single-convolution DoG vs two-step (1x2)" /><figcaption class="cap">Single‑conv DoG ≈ blur+diff (verification).</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- Part 2.1 -->
+    <section id="p21" class="panel">
+      <h2>Part 2.1 — Image Sharpening (Unsharp Mask)</h2>
+      <p>Unsharp masking adds back a scaled high‑frequency residue: <code>I<sub>sharp</sub> = I + α (I − Gσ*I)</code>. I experimented with σ and α on Taj Mahal and another image; DoG‑style sharpening emphasizes edges even more but can introduce halos for large α.</p>
+      <div class="grid g-3">
+        <figure class="fig"><img src="media/2.1_taj_sharpening.png" alt="Taj unsharp triptych" /><figcaption class="cap">Taj: blurred • high‑freq • sharpened.</figcaption></figure>
+        <figure class="fig"><img src="media/2.1_dog_sharpening.png" alt="DoG sharpening triptych" /><figcaption class="cap">DoG‑based sharpening comparison.</figcaption></figure>
+      </div>
+
+<details>
+  <summary><strong>Code — Unsharp mask (single‑pass kernel and two‑step)</strong></summary>
+  <pre><code class="language-python">from scipy.ndimage import gaussian_filter
+
+# Two-step form
+alpha, sigma = 1.0, 2.0
+blur   = gaussian_filter(img, sigma=(sigma, sigma, 0))
+high   = img - blur
+sharp  = np.clip(img + alpha*high, 0.0, 1.0)
+
+# Kernel form (grayscale example)
+from cv2 import getGaussianKernel
+size = 2*int(4*sigma)+1
+g1 = getGaussianKernel(size, sigma)
+G  = g1 @ g1.T          # normalized
+imp = np.zeros_like(G); imp[size//2,size//2] = 1.0
+unsharp_kernel = (1+alpha)*imp - alpha*G
+sharp = convolve2d(img_gray, unsharp_kernel, mode='same', boundary='symm')
+</code></pre>
+</details>
+    </section>
+
+    <!-- Part 2.2 -->
+    <section id="p22" class="panel">
+      <h2>Part 2.2 — Hybrid Images</h2>
+      <p>I align two images with clicked correspondences, low‑pass one and high‑pass the other, then sum. I also visualize the log‑magnitude Fourier spectra of each component and the final hybrid.</p>
+
+      <div class="grid g-3">
+        <figure class="fig"><img src="media/2.2_blackhole_QC.png" alt="Blackhole + QC hybrid" /><figcaption class="cap">Hybrid: black hole ⊕ quantum circuit.</figcaption></figure>
+        <figure class="fig"><img src="media/2.2_blackhole_QC_FT.png" alt="FT triptych (1x3)" /><figcaption class="cap">Log FT: inputs & hybrid.</figcaption></figure>
+        <figure class="fig"><img src="media/2.2_blackhole_QC_Filtered_FT.png" alt="Filtered FTs (1x2)" /><figcaption class="cap">Filtered spectra: low vs high paths.</figcaption></figure>
+      </div>
+
+      <div class="grid g-3" style="margin-top:var(--gap)">
+        <figure class="fig"><img src="media/2.2_bull_tiger.png" alt="Bull/Tiger hybrid" /><figcaption class="cap">Hybrid: bull ⊕ tiger.</figcaption></figure>
+        <figure class="fig"><img src="media/2.2_galaxy_flower.png" alt="Galaxy/Flower hybrid" /><figcaption class="cap">Hybrid: galaxy ⊕ flower.</figcaption></figure>
+      </div>
+
+<details>
+  <summary><strong>Code — Alignment & Hybrid construction</strong></summary>
+  <pre><code class="language-python">import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
+
+# Click 2 corresponding points per image (PyCharm/Jupyter: ensure interactive backend)
+def get_points(im1, im2):
+    plt.figure(); plt.imshow(im1); plt.title('Click 2 points (Image 1)'); plt.show(block=False)
+    p1, p2 = plt.ginput(2); plt.close()
+    plt.figure(); plt.imshow(im2); plt.title('Click 2 points (Image 2)'); plt.show(block=False)
+    p3, p4 = plt.ginput(2); plt.close()
+    return (p1, p2, p3, p4)
+
+# (See Part 2.2 code for recenter/rescale/rotate/match; or use a similarity transform.)
+
+def hybrid_image(img1, img2, sigma1, sigma2):
+    # avoid blurring across channels
+    low  = gaussian_filter(img1, sigma=(sigma1, sigma1, 0))
+    high = img2 - gaussian_filter(img2, sigma=(sigma2, sigma2, 0))
+    return np.clip(low + high, 0.0, 1.0)
+</code></pre>
+</details>
+    </section>
+
+    <!-- Part 2.3 -->
+    <section id="p23" class="panel">
+      <h2>Part 2.3 — Gaussian & Laplacian Stacks</h2>
+      <p>I build same‑size stacks (no downsampling). The Laplacian stack is the difference between adjacent Gaussian levels. This prepares multi‑resolution blending.</p>
+      <div class="grid g-2">
+        <figure class="fig"><img src="media/2.3_grapple.png" alt="Gaussian/Laplacian stack visualization" /><figcaption class="cap">Stack slices for an example image (grapple).</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- Part 2.4 -->
+    <section id="p24" class="panel">
+      <h2>Part 2.4 — Multiresolution Blending (Oraple)</h2>
+      <p>I create Gaussian stacks for a binary mask and Laplacian stacks for the two images, then blend per level and collapse. I reproduce the oraple and try two custom blends, including one with an irregular mask.</p>
+      <div class="grid g-3">
+        <figure class="fig"><img src="media/2.4_laplacian stack.png" alt="Laplacian stack montage" /><figcaption class="cap">Laplacian stack visualization.</figcaption></figure>
+        <figure class="fig"><img src="media/2.4_results1.png" alt="Blend result 1" /><figcaption class="cap">Blend result #1.</figcaption></figure>
+        <figure class="fig"><img src="media/2.4_results2.png" alt="Blend result 2" /><figcaption class="cap">Blend result #2 (irregular mask).</figcaption></figure>
+      </div>
+
+<details>
+  <summary><strong>Code — Stack construction & masked blend (sketch)</strong></summary>
+  <pre><code class="language-python">def gaussian_stack(img, levels, sigma=2):
+    g = [img]
+    for _ in range(1, levels):
+        g.append(gaussian_filter(g[-1], sigma=(sigma, sigma, 0)))
+    return g
+
+def laplacian_stack(img, levels, sigma=2):
+    g = gaussian_stack(img, levels, sigma)
+    L = [g[i] - g[i+1] for i in range(levels-1)] + [g[-1]]
+    return L
+
+def blend_multires(A, B, M, levels=5, sigma=2):
+    LA, LB = laplacian_stack(A, levels, sigma), laplacian_stack(B, levels, sigma)
+    GM = gaussian_stack(M, levels, sigma)
+    LS = [GM[i]*LA[i] + (1-GM[i])*LB[i] for i in range(levels)]
+    out = LS[-1]
+    for i in range(levels-2, -1, -1):
+        out = out + LS[i]
+    return np.clip(out, 0.0, 1.0)
+</code></pre>
+</details>
+    </section>
+
+    <section class="panel">
+      <h2>Most Important Takeaway</h2>
+      <p>In both edge detection and blending, <strong>frequency‑aware smoothing</strong> (Gaussian/DoG and mask pyramids) is the key to suppressing noise and seams while preserving perceptually salient structure.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Deliverables Checklist</h2>
+      <ul>
+        <li>1.1 Convolution (numpy‑only) + comparison to SciPy; boundary/runtime notes.</li>
+        <li>1.2 Partial derivatives, gradient magnitude, binarized edge image (threshold choice justified).</li>
+        <li>1.3 Gaussian construction, DoG filters visualized, results vs finite differences.</li>
+        <li>2.1 Unsharp mask on Taj + one other; vary amount; show blurred/high‑freq/sharpened.</li>
+        <li>2.2 Three hybrids (Derek+Nutmeg + two originals); one with FT visualizations.</li>
+        <li>2.3/2.4 Gaussian & Laplacian stacks visualized; Oraple reproduction; two custom blends (one irregular mask).</li>
+        <li>Clarity: organized webpage with captions and concise explanations.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>CS180: Intro to Computer Vision & Computational Photography — Project 2. All images in this report are produced by my implementation and stored under <code>media/</code>.</p>
+    </footer>
+  </main>
+</body>
+</html>
 
