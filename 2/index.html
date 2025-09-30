@@ -79,7 +79,11 @@
         </figure>
         <figure class="fig">
           <img src="media/1.1_box.png" alt="Box filter comparison (1x3)" />
-          <figcaption class="cap">9×9 box filtering (naive vs optimized vs SciPy).</figcaption>
+          <figcaption class="cap">9×9 box filtering (naive vs optimized vs SciPy implementations).</figcaption>
+        </figure>
+        <figure class="fig">
+          <img src="media/1.1_diffops.png" alt="Finite difference (SciPy vs optimized)" />
+          <figcaption class="cap">Finite Difference Operators (optimized vs SciPy implementations)</figcaption>
         </figure>
       </div>
 
@@ -124,10 +128,9 @@ def convolution_2(img, kernel):
 </section>
 <!-- Part 1.2 -->
     <section id="p12" class="panel">
-      <h2>Part 1.2 — Finite Difference & Gradient Magnitude</h2>
+      <h2>Part 1.2 — Gradient Magnitude</h2>
       <p>I computed partial derivatives using finite difference operators <code>D<sub>x</sub>=[-1,1]</code> and <code>D<sub>y</sub>=[-1;1]</code>, formed the gradient magnitude, and thresholded to get a binarized edge map.</p>
       <div class="grid g-3">
-        <figure class="fig"><img src="media/1.1_diffops.png" alt="Finite difference grids (2x2)" /><figcaption class="cap">Partial derivatives and gradient magnitude.</figcaption></figure>
         <figure class="fig"><img src="media/1.2_binarized_grad_mag.png" alt="Binarized gradient magnitude (1x3)" /><figcaption class="cap">Choosing a threshold trades off noise vs missed edges.</figcaption></figure>
       </div>
     
