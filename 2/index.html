@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CS180 Project 2 — Fun with Filters & Frequencies: https://eduardo1100.github.io/CS180/2/index.html</title>
+  <title>CS180 Project 2 — Fun with Filters & Frequencies</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -16,7 +16,7 @@
     *{ box-sizing:border-box; }
     body{ margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); }
     header{ position:sticky; top:0; z-index:5; backdrop-filter:saturate(180%) blur(8px); background:color-mix(in oklab, var(--bg) 70%, transparent); border-bottom:1px solid var(--border); }
-    .wrap{ max-width:1100px; margin:0 auto; padding:24px; }
+    .wrap{ max-width:1500px; margin:0 auto; padding:24px; }
     h1{ font-size:clamp(24px,3.8vw,40px); margin:6px 0 8px; letter-spacing:-.02em; }
     h2{ font-size:clamp(18px,2.6vw,28px); margin:32px 0 10px; letter-spacing:-.01em; }
     h3{ font-size:clamp(16px,2.2vw,22px); margin:24px 0 8px; }
@@ -24,8 +24,8 @@
     .pill{ display:inline-block; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--muted); font-size:12px; }
     .panel{ background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
     .grid{ display:grid; gap:var(--gap); }
-    .g-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    .g-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .g-2{ grid-template-columns: 1fr; }
+    .g-3{ grid-template-columns: 1fr; }
     .g-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
     .fig{ background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
     .fig img{ display:block; width:100%; height:auto; }
@@ -234,7 +234,7 @@ def hybrid_image(img1, img2, sigma1, sigma2):
       <div class="grid g-3">
         <figure class="fig"><img src="media/2.4_laplacian stack.png" alt="Laplacian stack montage" /><figcaption class="cap">Laplacian stack visualization.</figcaption></figure>
         <figure class="fig"><img src="media/2.4_results1.png" alt="Blend result 1" /><figcaption class="cap">Blend result #1.</figcaption></figure>
-        <figure class="fig"><img src="media/2.4_results2.png" alt="Blend result 2" /><figcaption class="cap">Blend result #2 (irregular mask).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_results2.png" alt="Blend result 2 (irregular mask)" /><figcaption class="cap">Blend result #2 (irregular mask).</figcaption></figure>
       </div>
 
 <details>
@@ -281,10 +281,8 @@ def blend_multires(A, B, M, levels=5, sigma=2):
     </section>
 
     <footer>
-      <p>© <span id="year"></span> Eduardo • Project 2: Fun with Filters & Frequencies</p>
-      <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write-up are my own; I reviewed and verified technical details.</p>
+      <p>CS180: Intro to Computer Vision & Computational Photography — Project 2. All images in this report are produced by my implementation and stored under <code>media/</code>.</p>
     </footer>
   </main>
 </body>
 </html>
-
