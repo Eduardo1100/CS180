@@ -67,7 +67,7 @@
         <li><a href="#p23">Part 2.3 — Gaussian & Laplacian Stacks</a></li>
         <li><a href="#p24">Part 2.4 — Multiresolution Blending (Oraple)</a></li>
       </ol>
-    </section>
+    </section>d
 
     <!-- Part 1.1 -->
     <section id="p11" class="panel">
@@ -85,45 +85,45 @@
       </div>
 
 <details>
-  <summary><strong>Code — Naive 4‑loop convolution (with kernel flip)</strong></summary>
-  <pre><code class="language-python">import numpy as np
+  <summary><strong>Code — Part 1.1 Convolution from Scratch</strong></summary>
+  <pre><code>def convolution_4(img, kernel):
+    kernel = np.flip(kernel, axis=(0,1))
 
-def convolution_4(img, kernel, pad_mode='constant'):
-    img_f = img.astype(np.float64, copy=False)
-    ker_f = np.asarray(kernel, dtype=np.float64)
-    ker_f = np.flip(ker_f, axis=(0,1))  # convolution, not correlation
+    img_h, img_w = img.shape
+    ker_h, ker_w = kernel.shape
 
-    H, W = img_f.shape
-    kH, kW = ker_f.shape
-    pad_top  = kH // 2
-    pad_left = kW // 2
-    pad_bot  = kH - 1 - pad_top
-    pad_right= kW - 1 - pad_left
-    padded = np.pad(img_f, ((pad_top,pad_bot),(pad_left,pad_right)), mode=pad_mode)
+    pad_h, pad_w = ker_h // 2, ker_w //2
+    pad_img = np.pad(img, ((pad_h, pad_h),(pad_w, pad_w)), mode="constant")
+    pad_img_h, pad_img_w = pad_img.shape
 
-    out = np.zeros((H,W), dtype=np.float64)
-    for i in range(H):
-        for j in range(W):
-            acc = 0.0
-            for u in range(kH):
-                for v in range(kW):
-                    acc += padded[i+u, j+v] * ker_f[u, v]
-            out[i,j] = acc
-    return out  # cast/clip for display later
+    conv_img = np.zeros_like(img, dtype=np.float64)
+    for i in range(img_h):
+        for j in range(img_w):
+            for k in range(ker_h):
+                for l in range(ker_w):
+                     conv_img[i,j] += pad_img[i+k, j+l] * kernel[k,l]
+    return conv_img
+
+
+def convolution_2(img, kernel):
+    kernel = np.flip(kernel, axis=(0,1))
+
+    img_h, img_w = img.shape
+    ker_h, ker_w = kernel.shape
+
+    pad_h, pad_w = ker_h // 2, ker_w //2
+    pad_img = np.pad(img, ((pad_h, pad_h),(pad_w, pad_w)), mode="constant")
+    pad_img_h, pad_img_w = pad_img.shape
+
+    conv_img = np.zeros_like(img, dtype=np.float64)
+    for i in range(img_h):
+        for j in range(img_w):
+            conv_img[i,j] = np.sum(pad_img[i:i+ker_h, j:j+ker_w] * kernel)
+    return conv_img
   </code></pre>
 </details>
-
-      <details>
-        <summary><strong>Code — 9×9 Box kernel & SciPy check</strong></summary>
-        <pre><code class="language-python">box9 = np.ones((9,9), dtype=np.float64) / 81.0
-naive  = convolution_4(img, box9)
-scipy_ = scipy.signal.convolve2d(img, box9, mode='same', boundary='fill', fillvalue=0)
-print('max |diff| =', np.max(np.abs(naive - scipy_)))
-</code></pre>
-      </details>
-    </section>
-
-    <!-- Part 1.2 -->
+</section>
+<!-- Part 1.2 -->
     <section id="p12" class="panel">
       <h2>Part 1.2 — Finite Difference & Gradient Magnitude</h2>
       <p>I computed partial derivatives using finite difference operators <code>D<sub>x</sub>=[-1,1]</code> and <code>D<sub>y</sub>=[-1;1]</code>, formed the gradient magnitude, and thresholded to get a binarized edge map.</p>
@@ -131,9 +131,28 @@ print('max |diff| =', np.max(np.abs(naive - scipy_)))
         <figure class="fig"><img src="media/1.1_diffops.png" alt="Finite difference grids (2x2)" /><figcaption class="cap">Partial derivatives and gradient magnitude.</figcaption></figure>
         <figure class="fig"><img src="media/1.2_binarized_grad_mag.png" alt="Binarized gradient magnitude (1x3)" /><figcaption class="cap">Choosing a threshold trades off noise vs missed edges.</figcaption></figure>
       </div>
-    </section>
+    
+<details>
+  <summary><strong>Code — Part 1.2 Finite Differences & Gradient Magnitude</strong></summary>
+  <pre><code>def gradient_magnitude_img(Dx_img, Dy_img):
+    grad_mag_img = np.sqrt(Dx_img**2 + Dy_img**2)
+    return grad_mag_img / grad_mag_img.max()
 
-    <!-- Part 1.3 -->
+img = np.array(Image.open("cameraman.png").convert("L"))
+Dx = np.array([[-1, 1]], dtype=np.float64)
+Dy = np.array([[-1], [1]], dtype=np.float64)
+
+Dx_img = convolve2d(img, Dx, mode="same", boundary="symm")
+Dy_img = convolve2d(img, Dy, mode="same", boundary="symm")
+grad_mag_img = gradient_magnitude_img(Dx_img, Dy_img)
+
+grad_mag_img_binarized = grad_mag_img.copy()
+grad_mag_img_binarized[grad_mag_img_binarized < 0.07] = 0
+grad_mag_img_binarized[grad_mag_img_binarized >= 0.07] = 1
+  </code></pre>
+</details>
+</section>
+<!-- Part 1.3 -->
     <section id="p13" class="panel">
       <h2>Part 1.3 — Derivative of Gaussian (DoG)</h2>
       <p>I first smoothed with a Gaussian then applied finite differences; next I created DoG filters by convolving the Gaussian kernel with <code>D<sub>x</sub>, D<sub>y</sub></code> to achieve the same result with a single convolution. The DoG pipeline suppresses noise while preserving edges.</p>
@@ -145,9 +164,24 @@ print('max |diff| =', np.max(np.abs(naive - scipy_)))
       <div class="grid g-2" style="margin-top:var(--gap)">
         <figure class="fig"><img src="media/1.3_DoG_single_conv.png" alt="Single-convolution DoG vs two-step (1x2)" /><figcaption class="cap">Single‑conv DoG ≈ blur+diff (verification).</figcaption></figure>
       </div>
-    </section>
+    
+<details>
+  <summary><strong>Code — Part 1.3 Gaussian & DoG</strong></summary>
+  <pre><code>gaussian_kernel_1D = getGaussianKernel(17, 1)
+gaussian_kernel_2D = gaussian_kernel_1D @ gaussian_kernel_1D.T
 
-    <!-- Part 2.1 -->
+Dx = np.array([[-1, 1]], dtype=np.float64)
+Dy = np.array([[-1], [1]], dtype=np.float64)
+gaussian_kernel_Dx = convolve2d(gaussian_kernel_2D, Dx, mode="same", boundary="symm")
+gaussian_kernel_Dy = convolve2d(gaussian_kernel_2D, Dy, mode="same", boundary="symm")
+
+guassian_img = convolve2d(img, gaussian_kernel_2D, mode="same", boundary="symm")
+gaussian_Dx_img = convolve2d(img, gaussian_kernel_Dx, mode="same", boundary="symm")
+guassian_Dy_img = convolve2d(img, gaussian_kernel_Dy, mode="same", boundary="symm")
+  </code></pre>
+</details>
+</section>
+<!-- Part 2.1 -->
     <section id="p21" class="panel">
       <h2>Part 2.1 — Image Sharpening (Unsharp Mask)</h2>
       <p>Unsharp masking adds back a scaled high‑frequency residue: <code>I<sub>sharp</sub> = I + α (I − Gσ*I)</code>. I experimented with σ and α on Taj Mahal and another image; DoG‑style sharpening emphasizes edges even more but can introduce halos for large α.</p>
@@ -155,38 +189,37 @@ print('max |diff| =', np.max(np.abs(naive - scipy_)))
         <figure class="fig"><img src="media/2.1_taj_sharpening.png" alt="Taj unsharp triptych" /><figcaption class="cap">Taj: blurred • high‑freq • sharpened.</figcaption></figure>
         <figure class="fig"><img src="media/2.1_dog_sharpening.png" alt="DoG sharpening triptych" /><figcaption class="cap">DoG‑based sharpening comparison.</figcaption></figure>
       </div>
-
+    
 <details>
-  <summary><strong>Code — Unsharp mask (single‑pass kernel and two‑step)</strong></summary>
-  <pre><code class="language-python">from scipy.ndimage import gaussian_filter
+  <summary><strong>Code — Part 2.1 Unsharp Mask</strong></summary>
+  <pre><code>gaussian_kernel_1D = getGaussianKernel(9, 3)
+gaussian_kernel_2D = gaussian_kernel_1D @ gaussian_kernel_1D.T
+unit_impulse_kernel = np.zeros_like(gaussian_kernel_2D, dtype=np.float64)
+unit_impulse_kernel[unit_impulse_kernel.shape[0] // 2, unit_impulse_kernel.shape[1] // 2] = 1
+alpha = 2
+unsharp_kernel = (1+alpha)*unit_impulse_kernel - alpha*gaussian_kernel_2D
 
-# Two-step form
-alpha, sigma = 1.0, 2.0
-blur   = gaussian_filter(img, sigma=(sigma, sigma, 0))
-high   = img - blur
-sharp  = np.clip(img + alpha*high, 0.0, 1.0)
+img = np.array(Image.open("taj.jpg").convert("L"))
+unsharp_img = convolve2d(img, unsharp_kernel, mode="same", boundary="symm")
+unsharp_img = np.clip(unsharp_img, 0, 255).astype(np.uint8)
 
-# Kernel form (grayscale example)
-from cv2 import getGaussianKernel
-size = 2*int(4*sigma)+1
-g1 = getGaussianKernel(size, sigma)
-G  = g1 @ g1.T          # normalized
-imp = np.zeros_like(G); imp[size//2,size//2] = 1.0
-unsharp_kernel = (1+alpha)*imp - alpha*G
-sharp = convolve2d(img_gray, unsharp_kernel, mode='same', boundary='symm')
-</code></pre>
+img2 = np.array(Image.open("dog.jpg").convert("L"))
+img2 = downsample(img2, 8)
+gaussian_img2 = convolve2d(img2, gaussian_kernel_2D, mode="same", boundary="symm")
+unsharp_img2 = convolve2d(gaussian_img2, unsharp_kernel, mode="same", boundary="symm")
+unsharp_img2 = np.clip(unsharp_img2, 0, 255).astype(np.uint8)
+  </code></pre>
 </details>
-    </section>
-
-    <!-- Part 2.2 -->
+</section>
+<!-- Part 2.2 -->
     <section id="p22" class="panel">
       <h2>Part 2.2 — Hybrid Images</h2>
       <p>I align two images with clicked correspondences, low‑pass one and high‑pass the other, then sum. I also visualize the log‑magnitude Fourier spectra of each component and the final hybrid.</p>
 
       <div class="grid g-3">
-        <figure class="fig"><img src="media/2.2_blackhole_QC.png" alt="Blackhole + QC hybrid" /><figcaption class="cap">Hybrid: black hole ⊕ quantum circuit.</figcaption></figure>
-        <figure class="fig"><img src="media/2.2_blackhole_QC_FT.png" alt="FT triptych (1x3)" /><figcaption class="cap">Log FT: inputs & hybrid.</figcaption></figure>
-        <figure class="fig"><img src="media/2.2_blackhole_QC_Filtered_FT.png" alt="Filtered FTs (1x2)" /><figcaption class="cap">Filtered spectra: low vs high paths.</figcaption></figure>
+        <figure class="fig"><img src="media/2.2_Black Hole_Quantum Computer.png" alt="Blackhole + QC hybrid" /><figcaption class="cap">Hybrid: black hole ⊕ quantum circuit.</figcaption></figure>
+        <figure class="fig"><img src="media/2.2_Black Hole_Quantum Computer_FT.png" alt="FT triptych (1x3)" /><figcaption class="cap">Log FT: inputs & hybrid.</figcaption></figure>
+        <figure class="fig"><img src="media/2.2_Black Hole_Quantum Computer_Filtered_FT.png" alt="Filtered FTs (1x2)" /><figcaption class="cap">Filtered spectra: low vs high paths.</figcaption></figure>
       </div>
 
       <div class="grid g-3" style="margin-top:var(--gap)">
@@ -195,35 +228,26 @@ sharp = convolve2d(img_gray, unsharp_kernel, mode='same', boundary='symm')
       </div>
 
 <details>
-  <summary><strong>Code — Alignment & Hybrid construction</strong></summary>
-  <pre><code class="language-python">import matplotlib.pyplot as plt
-from scipy.ndimage import gaussian_filter
+  <summary><strong>Code — Part 2.2 Hybrid Images</strong></summary>
+  <pre><code>def hybrid_image(img1, img2, sigma1, sigma2):
+    img1_low  = gaussian_filter(img1, sigma=(sigma1, sigma1, 0))
+    img2_high = img2 - gaussian_filter(img2, sigma=(sigma2, sigma2, 0))
 
-# Click 2 corresponding points per image (PyCharm/Jupyter: ensure interactive backend)
-def get_points(im1, im2):
-    plt.figure(); plt.imshow(im1); plt.title('Click 2 points (Image 1)'); plt.show(block=False)
-    p1, p2 = plt.ginput(2); plt.close()
-    plt.figure(); plt.imshow(im2); plt.title('Click 2 points (Image 2)'); plt.show(block=False)
-    p3, p4 = plt.ginput(2); plt.close()
-    return (p1, p2, p3, p4)
+    return np.clip(img1_low + img2_high, 0.0, 1.0)
 
-# (See Part 2.2 code for recenter/rescale/rotate/match; or use a similarity transform.)
-
-def hybrid_image(img1, img2, sigma1, sigma2):
-    # avoid blurring across channels
-    low  = gaussian_filter(img1, sigma=(sigma1, sigma1, 0))
-    high = img2 - gaussian_filter(img2, sigma=(sigma2, sigma2, 0))
-    return np.clip(low + high, 0.0, 1.0)
-</code></pre>
+sigma1 = .5
+sigma2 = 5
+hybrid = hybrid_image(im1, im2, sigma1, sigma2)
+  </code></pre>
 </details>
     </section>
 
     <!-- Part 2.3 -->
     <section id="p23" class="panel">
       <h2>Part 2.3 — Gaussian & Laplacian Stacks</h2>
-      <p>I build same‑size stacks (no downsampling). The Laplacian stack is the difference between adjacent Gaussian levels. This prepares multi‑resolution blending.</p>
+      <p><em>Placeholder:</em> Results and code to be added.</p>
       <div class="grid g-2">
-        <figure class="fig"><img src="media/2.3_grapple.png" alt="Gaussian/Laplacian stack visualization" /><figcaption class="cap">Stack slices for an example image (grapple).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_grapple.png" alt="Gaussian/Laplacian stack visualization" /><figcaption class="cap">Stack slices (placeholder figure shown if available).</figcaption></figure>
       </div>
     </section>
 
@@ -232,11 +256,11 @@ def hybrid_image(img1, img2, sigma1, sigma2):
       <h2>Part 2.4 — Multiresolution Blending (Oraple)</h2>
       <p>I create Gaussian stacks for a binary mask and Laplacian stacks for the two images, then blend per level and collapse. I reproduce the oraple and try two custom blends, including one with an irregular mask.</p>
       <div class="grid g-3">
-        <figure class="fig"><img src="media/2.4_laplacian stack.png" alt="Laplacian stack montage" /><figcaption class="cap">Laplacian stack visualization.</figcaption></figure>
-        <figure class="fig"><img src="media/2.4_results1.png" alt="Blend result 1" /><figcaption class="cap">Blend result #1.</figcaption></figure>
-        <figure class="fig"><img class="wide zoomable" src="media/2.4_results2.png" alt="Blend result 2 (irregular mask)" /><figcaption class="cap">Blend result #2 (irregular mask).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_laplacian stack.png" alt="Laplacian stack montage" /><figcaption class="cap">Laplacian stack (placeholder).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_results1.png" alt="Blend result 1" /><figcaption class="cap">Blend result #1 (placeholder).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_results2.png" alt="Blend result 2 (irregular mask)" /><figcaption class="cap">Blend result #2 (placeholder).</figcaption></figure>
       </div>
-
+   
 <details>
   <summary><strong>Code — Stack construction & masked blend (sketch)</strong></summary>
   <pre><code class="language-python">def gaussian_stack(img, levels, sigma=2):
