@@ -250,41 +250,73 @@ hybrid = hybrid_image(im1, im2, sigma1, sigma2)
       <h2>Part 2.3 — Gaussian & Laplacian Stacks</h2>
       <p><em>Placeholder:</em> Results and code to be added.</p>
       <div class="grid g-2">
-        <figure class="fig"><img class="wide zoomable" src="media/2.3_grapple.png" alt="Gaussian/Laplacian stack visualization" /><figcaption class="cap">Stack slices (placeholder figure shown if available).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_apple.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for masked apple.</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_laplacian_stack_apple.png" alt="Laplacian stack visualization" /><figcaption class="cap">Laplacian stack slices for masked apple.</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_orange.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for masked orange</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_laplacian_stack_orange.png" alt="Laplacian stack visualization" /><figcaption class="cap">Laplacian stack slices for masked orange</figcaption></figure>
       </div>
     </section>
 
+    <details>
+      <summary><strong>Code  — Part 2.3 Gaussian/Laplacian Stack and Horizontal Mask</strong></summary>
+      <pre><code class="language-python">def get_gaussian_stack(img, levels=5, sigma=5):
+        gaussian_stack = [img]
+        for _ in range(1, levels):
+            guassian_stack.append(gaussian_filter(guassian_stack[-1], sigma=(sigma, sigma, 0)))
+        return guassian_stack
+        
+        def get_laplacian_stack(img, levels=5, sigma=5):
+            gaussian_stack = get_gaussian_stack(img, levels, sigma)
+            laplacian_stack = [gaussian_stack[i] - gaussian_stack[i+1] for i in range(levels-1)] + [gaussian_stack[-1]]
+            return gaussian_stack, laplacian_stack
+        
+        def get_horizontal_mask(img, direction='right'):
+          h, w = img.shape[:2]
+          if direction == 'right':
+            mask = np.zeros((h, w), np.float32)
+            mask[:, :w//2] = 1.0
+          else:
+            mask = np.ones((h, w), np.float32)
+            mask[:, :w//2] = 0
+          mask = gaussian_filter(mask, sigma=40)
+          return np.dstack([mask, mask, mask])
+    </code></pre>
+  </details>
+
     <!-- Part 2.4 -->
     <section id="p24" class="panel">
-      <h2>Part 2.4 — Multiresolution Blending (Oraple)</h2>
+      <h2>Part 2.4 — Multiresolution Blending</h2>
       <p>I create Gaussian stacks for a binary mask and Laplacian stacks for the two images, then blend per level and collapse. I reproduce the oraple and try two custom blends, including one with an irregular mask.</p>
       <div class="grid g-3">
-        <figure class="fig"><img class="wide zoomable" src="media/2.4_laplacian stack.png" alt="Laplacian stack montage" /><figcaption class="cap">Laplacian stack (placeholder).</figcaption></figure>
-        <figure class="fig"><img class="wide zoomable" src="media/2.4_results1.png" alt="Blend result 1" /><figcaption class="cap">Blend result #1 (placeholder).</figcaption></figure>
-        <figure class="fig"><img class="wide zoomable" src="media/2.4_results2.png" alt="Blend result 2 (irregular mask)" /><figcaption class="cap">Blend result #2 (placeholder).</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_results_oraple.png" alt="Blend result 1" /><figcaption class="cap">Apple + Orange Horizontal Blend</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_results_1.png" alt="Blend result 1" /><figcaption class="cap">Tiger + Bull Horizontal Blend </figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.4_results_2.png" alt="Blend result 2 (irregular mask)" /><figcaption class="cap">Tiger + Bull Wave Blend</figcaption></figure>
       </div>
    
 <details>
-  <summary><strong>Code — Stack construction & masked blend (sketch)</strong></summary>
-  <pre><code class="language-python">def gaussian_stack(img, levels, sigma=2):
-    g = [img]
-    for _ in range(1, levels):
-        g.append(gaussian_filter(g[-1], sigma=(sigma, sigma, 0)))
-    return g
+  <summary><strong>Code — Part 2.4 Blending and Irregular Mask</strong></summary>
+  <pre><code class="language-python">def blend_multires(im1, im2, mask, levels=6, sigma=2):
+    guassian_stack1, laplacian_stack1 = get_gaussian_stack(im1, levels, sigma), get_laplacian_stack(im1, levels, sigma)[1]
+    guassian_stack2, laplacian_stack2 = get_gaussian_stack(im2, levels, sigma), get_laplacian_stack(im2, levels, sigma)[1]
+    guassian_stack_mask = get_gaussian_stack(mask, levels, sigma) 
 
-def laplacian_stack(img, levels, sigma=2):
-    g = gaussian_stack(img, levels, sigma)
-    L = [g[i] - g[i+1] for i in range(levels-1)] + [g[-1]]
-    return L
-
-def blend_multires(A, B, M, levels=5, sigma=2):
-    LA, LB = laplacian_stack(A, levels, sigma), laplacian_stack(B, levels, sigma)
-    GM = gaussian_stack(M, levels, sigma)
-    LS = [GM[i]*LA[i] + (1-GM[i])*LB[i] for i in range(levels)]
-    out = LS[-1]
+    blends = [guassian_stack_mask[i]*laplacian_stack1[i] + (1.0 - guassian_stack_mask[i])*laplacian_stack2[i] for i in range(levels)]
+    out = blends[-1].copy()
     for i in range(levels-2, -1, -1):
-        out = out + LS[i]
+        out = out + blends[i]
     return np.clip(out, 0.0, 1.0)
+
+    B = plt.imread('orange.jpeg') / 255.0
+    A = plt.imread('apple.jpeg') / 255.0
+    
+    h = min(A.shape[0], B.shape[0])
+    w = min(A.shape[1], B.shape[1])
+    
+    A = A[:h,:w]
+    B = B[:h,:w]
+    
+    mask = get_horizontal_mask(A)
+    out = blend_multires(A, B, mask, 6, 5)
 </code></pre>
 </details>
     </section>
