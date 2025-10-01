@@ -89,40 +89,41 @@
 
 <details>
   <summary><strong>Code — Part 1.1 Convolution from Scratch</strong></summary>
-  <pre><code>def convolution_4(img, kernel):
-    kernel = np.flip(kernel, axis=(0,1))
+  <pre><code>
+    def convolution_4(img, kernel):
+      kernel = np.flip(kernel, axis=(0,1))
+  
+      img_h, img_w = img.shape
+      ker_h, ker_w = kernel.shape
+  
+      pad_h, pad_w = ker_h // 2, ker_w //2
+      pad_img = np.pad(img, ((pad_h, pad_h),(pad_w, pad_w)), mode="constant")
+      pad_img_h, pad_img_w = pad_img.shape
+  
+      conv_img = np.zeros_like(img, dtype=np.float64)
+      for i in range(img_h):
+          for j in range(img_w):
+              for k in range(ker_h):
+                  for l in range(ker_w):
+                       conv_img[i,j] += pad_img[i+k, j+l] * kernel[k,l]
+      return conv_img
 
-    img_h, img_w = img.shape
-    ker_h, ker_w = kernel.shape
 
-    pad_h, pad_w = ker_h // 2, ker_w //2
-    pad_img = np.pad(img, ((pad_h, pad_h),(pad_w, pad_w)), mode="constant")
-    pad_img_h, pad_img_w = pad_img.shape
-
-    conv_img = np.zeros_like(img, dtype=np.float64)
-    for i in range(img_h):
-        for j in range(img_w):
-            for k in range(ker_h):
-                for l in range(ker_w):
-                     conv_img[i,j] += pad_img[i+k, j+l] * kernel[k,l]
-    return conv_img
-
-
-def convolution_2(img, kernel):
-    kernel = np.flip(kernel, axis=(0,1))
-
-    img_h, img_w = img.shape
-    ker_h, ker_w = kernel.shape
-
-    pad_h, pad_w = ker_h // 2, ker_w //2
-    pad_img = np.pad(img, ((pad_h, pad_h),(pad_w, pad_w)), mode="constant")
-    pad_img_h, pad_img_w = pad_img.shape
-
-    conv_img = np.zeros_like(img, dtype=np.float64)
-    for i in range(img_h):
-        for j in range(img_w):
-            conv_img[i,j] = np.sum(pad_img[i:i+ker_h, j:j+ker_w] * kernel)
-    return conv_img
+    def convolution_2(img, kernel):
+      kernel = np.flip(kernel, axis=(0,1))
+  
+      img_h, img_w = img.shape
+      ker_h, ker_w = kernel.shape
+  
+      pad_h, pad_w = ker_h // 2, ker_w //2
+      pad_img = np.pad(img, ((pad_h, pad_h),(pad_w, pad_w)), mode="constant")
+      pad_img_h, pad_img_w = pad_img.shape
+  
+      conv_img = np.zeros_like(img, dtype=np.float64)
+      for i in range(img_h):
+          for j in range(img_w):
+              conv_img[i,j] = np.sum(pad_img[i:i+ker_h, j:j+ker_w] * kernel)
+      return conv_img
   </code></pre>
 </details>
 </section>
@@ -136,21 +137,22 @@ def convolution_2(img, kernel):
     
 <details>
   <summary><strong>Code — Part 1.2 Finite Differences & Gradient Magnitude</strong></summary>
-  <pre><code>def gradient_magnitude_img(Dx_img, Dy_img):
-    grad_mag_img = np.sqrt(Dx_img**2 + Dy_img**2)
-    return grad_mag_img / grad_mag_img.max()
+  <pre><code>
+    def gradient_magnitude_img(Dx_img, Dy_img):
+      grad_mag_img = np.sqrt(Dx_img**2 + Dy_img**2)
+      return grad_mag_img / grad_mag_img.max()
 
-img = np.array(Image.open("cameraman.png").convert("L"))
-Dx = np.array([[-1, 1]], dtype=np.float64)
-Dy = np.array([[-1], [1]], dtype=np.float64)
-
-Dx_img = convolve2d(img, Dx, mode="same", boundary="symm")
-Dy_img = convolve2d(img, Dy, mode="same", boundary="symm")
-grad_mag_img = gradient_magnitude_img(Dx_img, Dy_img)
-
-grad_mag_img_binarized = grad_mag_img.copy()
-grad_mag_img_binarized[grad_mag_img_binarized < 0.07] = 0
-grad_mag_img_binarized[grad_mag_img_binarized >= 0.07] = 1
+    img = np.array(Image.open("cameraman.png").convert("L"))
+    Dx = np.array([[-1, 1]], dtype=np.float64)
+    Dy = np.array([[-1], [1]], dtype=np.float64)
+    
+    Dx_img = convolve2d(img, Dx, mode="same", boundary="symm")
+    Dy_img = convolve2d(img, Dy, mode="same", boundary="symm")
+    grad_mag_img = gradient_magnitude_img(Dx_img, Dy_img)
+    
+    grad_mag_img_binarized = grad_mag_img.copy()
+    grad_mag_img_binarized[grad_mag_img_binarized < 0.07] = 0
+    grad_mag_img_binarized[grad_mag_img_binarized >= 0.07] = 1
   </code></pre>
 </details>
 </section>
@@ -169,17 +171,18 @@ grad_mag_img_binarized[grad_mag_img_binarized >= 0.07] = 1
     
 <details>
   <summary><strong>Code — Part 1.3 Gaussian & DoG</strong></summary>
-  <pre><code>gaussian_kernel_1D = getGaussianKernel(17, 1)
-gaussian_kernel_2D = gaussian_kernel_1D @ gaussian_kernel_1D.T
-
-Dx = np.array([[-1, 1]], dtype=np.float64)
-Dy = np.array([[-1], [1]], dtype=np.float64)
-gaussian_kernel_Dx = convolve2d(gaussian_kernel_2D, Dx, mode="same", boundary="symm")
-gaussian_kernel_Dy = convolve2d(gaussian_kernel_2D, Dy, mode="same", boundary="symm")
-
-guassian_img = convolve2d(img, gaussian_kernel_2D, mode="same", boundary="symm")
-gaussian_Dx_img = convolve2d(img, gaussian_kernel_Dx, mode="same", boundary="symm")
-guassian_Dy_img = convolve2d(img, gaussian_kernel_Dy, mode="same", boundary="symm")
+  <pre><code>
+    gaussian_kernel_1D = getGaussianKernel(17, 1)
+    gaussian_kernel_2D = gaussian_kernel_1D @ gaussian_kernel_1D.T
+    
+    Dx = np.array([[-1, 1]], dtype=np.float64)
+    Dy = np.array([[-1], [1]], dtype=np.float64)
+    gaussian_kernel_Dx = convolve2d(gaussian_kernel_2D, Dx, mode="same", boundary="symm")
+    gaussian_kernel_Dy = convolve2d(gaussian_kernel_2D, Dy, mode="same", boundary="symm")
+    
+    guassian_img = convolve2d(img, gaussian_kernel_2D, mode="same", boundary="symm")
+    gaussian_Dx_img = convolve2d(img, gaussian_kernel_Dx, mode="same", boundary="symm")
+    guassian_Dy_img = convolve2d(img, gaussian_kernel_Dy, mode="same", boundary="symm")
   </code></pre>
 </details>
 </section>
@@ -194,22 +197,23 @@ guassian_Dy_img = convolve2d(img, gaussian_kernel_Dy, mode="same", boundary="sym
     
 <details>
   <summary><strong>Code — Part 2.1 Unsharp Mask</strong></summary>
-  <pre><code>gaussian_kernel_1D = getGaussianKernel(9, 3)
-gaussian_kernel_2D = gaussian_kernel_1D @ gaussian_kernel_1D.T
-unit_impulse_kernel = np.zeros_like(gaussian_kernel_2D, dtype=np.float64)
-unit_impulse_kernel[unit_impulse_kernel.shape[0] // 2, unit_impulse_kernel.shape[1] // 2] = 1
-alpha = 2
-unsharp_kernel = (1+alpha)*unit_impulse_kernel - alpha*gaussian_kernel_2D
-
-img = np.array(Image.open("taj.jpg").convert("L"))
-unsharp_img = convolve2d(img, unsharp_kernel, mode="same", boundary="symm")
-unsharp_img = np.clip(unsharp_img, 0, 255).astype(np.uint8)
-
-img2 = np.array(Image.open("dog.jpg").convert("L"))
-img2 = downsample(img2, 8)
-gaussian_img2 = convolve2d(img2, gaussian_kernel_2D, mode="same", boundary="symm")
-unsharp_img2 = convolve2d(gaussian_img2, unsharp_kernel, mode="same", boundary="symm")
-unsharp_img2 = np.clip(unsharp_img2, 0, 255).astype(np.uint8)
+  <pre><code>
+    gaussian_kernel_1D = getGaussianKernel(9, 3)
+    gaussian_kernel_2D = gaussian_kernel_1D @ gaussian_kernel_1D.T
+    unit_impulse_kernel = np.zeros_like(gaussian_kernel_2D, dtype=np.float64)
+    unit_impulse_kernel[unit_impulse_kernel.shape[0] // 2, unit_impulse_kernel.shape[1] // 2] = 1
+    alpha = 2
+    unsharp_kernel = (1+alpha)*unit_impulse_kernel - alpha*gaussian_kernel_2D
+    
+    img = np.array(Image.open("taj.jpg").convert("L"))
+    unsharp_img = convolve2d(img, unsharp_kernel, mode="same", boundary="symm")
+    unsharp_img = np.clip(unsharp_img, 0, 255).astype(np.uint8)
+    
+    img2 = np.array(Image.open("dog.jpg").convert("L"))
+    img2 = downsample(img2, 8)
+    gaussian_img2 = convolve2d(img2, gaussian_kernel_2D, mode="same", boundary="symm")
+    unsharp_img2 = convolve2d(gaussian_img2, unsharp_kernel, mode="same", boundary="symm")
+    unsharp_img2 = np.clip(unsharp_img2, 0, 255).astype(np.uint8)
   </code></pre>
 </details>
 </section>
@@ -259,11 +263,12 @@ unsharp_img2 = np.clip(unsharp_img2, 0, 255).astype(np.uint8)
 
       <details>
         <summary><strong>Code  — Part 2.3 Gaussian/Laplacian Stack and Horizontal Mask</strong></summary>
-        <pre><code class="language-python">def get_gaussian_stack(img, levels=5, sigma=5):
-          gaussian_stack = [img]
-          for _ in range(1, levels):
-              guassian_stack.append(gaussian_filter(guassian_stack[-1], sigma=(sigma, sigma, 0)))
-          return guassian_stack
+        <pre><code class="language-python">
+          def get_gaussian_stack(img, levels=5, sigma=5):
+            gaussian_stack = [img]
+            for _ in range(1, levels):
+                guassian_stack.append(gaussian_filter(guassian_stack[-1], sigma=(sigma, sigma, 0)))
+            return guassian_stack
           
           def get_laplacian_stack(img, levels=5, sigma=5):
               gaussian_stack = get_gaussian_stack(img, levels, sigma)
