@@ -230,19 +230,20 @@ unsharp_img2 = np.clip(unsharp_img2, 0, 255).astype(np.uint8)
         <figure class="fig"><img src="media/2.2_galaxy_flower.png" alt="Galaxy/Flower hybrid" /><figcaption class="cap">Hybrid: galaxy ⊕ flower.</figcaption></figure>
       </div>
 
-<details>
-  <summary><strong>Code — Part 2.2 Hybrid Images</strong></summary>
-  <pre><code>def hybrid_image(img1, img2, sigma1, sigma2):
-    img1_low  = gaussian_filter(img1, sigma=(sigma1, sigma1, 0))
-    img2_high = img2 - gaussian_filter(img2, sigma=(sigma2, sigma2, 0))
-
-    return np.clip(img1_low + img2_high, 0.0, 1.0)
-
-sigma1 = .5
-sigma2 = 5
-hybrid = hybrid_image(im1, im2, sigma1, sigma2)
-  </code></pre>
-</details>
+      <details>
+        <summary><strong>Code — Part 2.2 Hybrid Images</strong></summary>
+        <pre><code>
+          def hybrid_image(img1, img2, sigma1, sigma2):
+            img1_low  = gaussian_filter(img1, sigma=(sigma1, sigma1, 0))
+            img2_high = img2 - gaussian_filter(img2, sigma=(sigma2, sigma2, 0))
+        
+            return np.clip(img1_low + img2_high, 0.0, 1.0)
+      
+          sigma1 = .5
+          sigma2 = 5
+          hybrid = hybrid_image(im1, im2, sigma1, sigma2)
+        </code></pre>
+      </details>
     </section>
 
     <!-- Part 2.3 -->
@@ -255,33 +256,33 @@ hybrid = hybrid_image(im1, im2, sigma1, sigma2)
         <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_orange.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for orange</figcaption></figure>
         <figure class="fig"><img class="wide zoomable" src="media/2.3_laplacian_stack_orange.png" alt="Laplacian stack visualization" /><figcaption class="cap">Laplacian stack slices for masked orange</figcaption></figure>
       </div>
-    </section>
 
-    <details>
-      <summary><strong>Code  — Part 2.3 Gaussian/Laplacian Stack and Horizontal Mask</strong></summary>
-      <pre><code class="language-python">def get_gaussian_stack(img, levels=5, sigma=5):
-        gaussian_stack = [img]
-        for _ in range(1, levels):
-            guassian_stack.append(gaussian_filter(guassian_stack[-1], sigma=(sigma, sigma, 0)))
-        return guassian_stack
-        
-        def get_laplacian_stack(img, levels=5, sigma=5):
-            gaussian_stack = get_gaussian_stack(img, levels, sigma)
-            laplacian_stack = [gaussian_stack[i] - gaussian_stack[i+1] for i in range(levels-1)] + [gaussian_stack[-1]]
-            return gaussian_stack, laplacian_stack
-        
-        def get_horizontal_mask(img, direction='right'):
-          h, w = img.shape[:2]
-          if direction == 'right':
-            mask = np.zeros((h, w), np.float32)
-            mask[:, :w//2] = 1.0
-          else:
-            mask = np.ones((h, w), np.float32)
-            mask[:, :w//2] = 0
-          mask = gaussian_filter(mask, sigma=40)
-          return np.dstack([mask, mask, mask])
-    </code></pre>
-  </details>
+      <details>
+        <summary><strong>Code  — Part 2.3 Gaussian/Laplacian Stack and Horizontal Mask</strong></summary>
+        <pre><code class="language-python">def get_gaussian_stack(img, levels=5, sigma=5):
+          gaussian_stack = [img]
+          for _ in range(1, levels):
+              guassian_stack.append(gaussian_filter(guassian_stack[-1], sigma=(sigma, sigma, 0)))
+          return guassian_stack
+          
+          def get_laplacian_stack(img, levels=5, sigma=5):
+              gaussian_stack = get_gaussian_stack(img, levels, sigma)
+              laplacian_stack = [gaussian_stack[i] - gaussian_stack[i+1] for i in range(levels-1)] + [gaussian_stack[-1]]
+              return gaussian_stack, laplacian_stack
+          
+          def get_horizontal_mask(img, direction='right'):
+            h, w = img.shape[:2]
+            if direction == 'right':
+              mask = np.zeros((h, w), np.float32)
+              mask[:, :w//2] = 1.0
+            else:
+              mask = np.ones((h, w), np.float32)
+              mask[:, :w//2] = 0
+            mask = gaussian_filter(mask, sigma=40)
+            return np.dstack([mask, mask, mask])
+        </code></pre>
+      </details>
+    </section>
 
     <!-- Part 2.4 -->
     <section id="p24" class="panel">
