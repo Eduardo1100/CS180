@@ -250,9 +250,9 @@ hybrid = hybrid_image(im1, im2, sigma1, sigma2)
       <h2>Part 2.3 — Gaussian & Laplacian Stacks</h2>
       <p><em>Placeholder:</em> Results and code to be added.</p>
       <div class="grid g-2">
-        <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_apple.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for masked apple.</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_apple.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for apple.</figcaption></figure>
         <figure class="fig"><img class="wide zoomable" src="media/2.3_laplacian_stack_apple.png" alt="Laplacian stack visualization" /><figcaption class="cap">Laplacian stack slices for masked apple.</figcaption></figure>
-        <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_orange.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for masked orange</figcaption></figure>
+        <figure class="fig"><img class="wide zoomable" src="media/2.3_gaussian_stack_orange.png" alt="Gaussian stack visualization" /><figcaption class="cap">Gaussian stack slices for orange</figcaption></figure>
         <figure class="fig"><img class="wide zoomable" src="media/2.3_laplacian_stack_orange.png" alt="Laplacian stack visualization" /><figcaption class="cap">Laplacian stack slices for masked orange</figcaption></figure>
       </div>
     </section>
@@ -295,7 +295,19 @@ hybrid = hybrid_image(im1, im2, sigma1, sigma2)
    
 <details>
   <summary><strong>Code — Part 2.4 Blending and Irregular Mask</strong></summary>
-  <pre><code class="language-python">def blend_multires(im1, im2, mask, levels=6, sigma=2):
+  <pre><code class="language-python">
+    def get_sine_mask(img, cycles=1.0, phase=0.0):
+    h, w = img.shape[:2]
+    x = np.linspace(0, 2*np.pi*cycles, w, endpoint=False)
+    s = np.sin(x + phase)                    
+    line = 0.5 * (1.0 + s)                    
+    mask = np.tile(line[None, :], (h, 1))    
+    mask = np.clip(mask, 0.0, 1.0)
+    mask = gaussian_filter(mask, sigma=20)
+    return np.dstack([mask, mask, mask]).astype(np.float32)
+
+    
+    def blend_multires(im1, im2, mask, levels=6, sigma=2):
     guassian_stack1, laplacian_stack1 = get_gaussian_stack(im1, levels, sigma), get_laplacian_stack(im1, levels, sigma)[1]
     guassian_stack2, laplacian_stack2 = get_gaussian_stack(im2, levels, sigma), get_laplacian_stack(im2, levels, sigma)[1]
     guassian_stack_mask = get_gaussian_stack(mask, levels, sigma) 
