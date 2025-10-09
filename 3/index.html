@@ -56,10 +56,10 @@
       <div class="title">Planar Rectification & Panoramic Mosaic</div>
       <nav>
         <a href="#overview">Overview</a>
-        <a href="#inputs">Raw Inputs</a>
-        <a href="#homography">Homography</a>
-        <a href="#rectification">Rectification</a>
-        <a href="#mosaics">Mosaics</a>
+        <a href="#inputs">A1: Raw Inputs</a>
+        <a href="#homography">A2: Homography</a>
+        <a href="#rectification">A3: Warping &amp; Rectification</a>
+        <a href="#mosaics">A4: Panoramic Mosaics</a>
         <a href="#notes">Notes</a>
       </nav>
     </div>
@@ -99,33 +99,50 @@
         <figure class="card"><img class="img" src="images/a1_rect_tiles_raw.jpg" alt="Tiles raw"><figcaption class="caption">a1_rect_tiles_raw.jpg</figcaption></figure>
       </div>
     </section>
+    <section id="homography" class="section">
+      <h2>A2 — Homography (Correspondences & Solution)</h2>
+      <p>
+        For each mosaic, pick a single <strong>reference</strong> image and register every other <strong>source</strong> image to it. With three images (1,2,3), using 1 as reference means you need two pairs: <span class="pill">(1↔2)</span> and <span class="pill">(1↔3)</span>. Below we visualize correspondences on the reference and source for each pair, and include the solved <span class="pill">3×3 H</span>.
+      </p>
 
-    
-      <h3 style="margin-top:12px">Snippet — Normalized DLT for Homography (conceptual)</h3>
-      <pre><code class="language-python">
-      # Given N ≥ 4 point pairs (x, y) ↔ (x', y') on a plane
-      # 1) Normalize coordinates (shift/scale so mean≈0, avg dist≈√2)
-      # 2) Build A (2N×9): for each pair add two rows encoding x' ~ Hx
-      # 3) Solve Ah = 0 via SVD → h is last column of V (smallest singular value)
-      # 4) Reshape h → H (3×3), enforce H[2,2] = 1; denormalize: H = T'⁻¹ H T
-      # 5) Optionally refine H by non-linear least squares (reprojection error)
-      
-      # Sketch of A construction for one pair (x, y) → (u, v):
-      # [ -x, -y, -1,  0,  0,  0,  u*x, u*y, u ]
-      # [  0,  0,  0, -x, -y, -1,  v*x, v*y, v ]
-      </code></pre>
-    
+      <h3>Snippet — Normalized DLT for Homography (conceptual)</h3>
+      <pre><code class="language-python"># Given N ≥ 4 point pairs (x, y) ↔ (x', y') on a plane
+# 1) Normalize coordinates (shift/scale so mean≈0, avg dist≈√2)
+# 2) Build A (2N×9): for each pair add two rows encoding x' ~ Hx
+# 3) Solve Ah = 0 via SVD → h is last column of V (smallest singular value)
+# 4) Reshape h → H (3×3), enforce H[2,2] = 1; denormalize: H = T'⁻¹ H T
+# 5) Optionally refine H by non-linear least squares (reprojection error)
+
+# Sketch of A construction for one pair (x, y) → (u, v):
+# [ -x, -y, -1,  0,  0,  0,  u*x, u*y, u ]
+# [  0,  0,  0, -x, -y, -1,  v*x, v*y, v ]
+</code></pre>
+
+      <h3>Set 1 — Two Pairs to Reference</h3>
       <div class="grid g3">
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_ref.jpg" alt="Set1 ref points"><figcaption class="caption">a2_set1_pair12_points_ref.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_src.jpg" alt="Set1 src points"><figcaption class="caption">a2_set1_pair12_points_src.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_h_matrix_table.png" alt="Set1 H table"><figcaption class="caption">a2_set1_h_matrix_table.png</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_ref.jpg" alt="Set2 ref points"><figcaption class="caption">a2_set2_pair12_points_ref.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_src.jpg" alt="Set2 src points"><figcaption class="caption">a2_set2_pair12_points_src.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set2_h_matrix_table.png" alt="Set2 H table"><figcaption class="caption">a2_set2_h_matrix_table.png</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_ref_1to2.jpg" alt="Set1 pair12 ref points"><figcaption class="caption">a2_set1_pair12_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_src_1to2.jpg" alt="Set1 pair12 src points"><figcaption class="caption">a2_set1_pair12_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_h_matrix_1to2.png" alt="Set1 H(2→1)"><figcaption class="caption">a2_set1_pair12_h_matrix.png</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_ref_3to2.jpg" alt="Set1 pair13 ref points"><figcaption class="caption">a2_set1_pair13_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_src_3to2.jpg" alt="Set1 pair13 src points"><figcaption class="caption">a2_set1_pair13_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_h_matrix_3to2.png" alt="Set1 H(3→1)"><figcaption class="caption">a2_set1_pair13_h_matrix.png</figcaption></figure>
       </div>
+
+      <h3>Set 2 — Two Pairs to Reference</h3>
+      <div class="grid g3">
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_ref_1to2.jpg" alt="Set2 pair12 ref points"><figcaption class="caption">a2_set2_pair12_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_src_1to2.jpg" alt="Set2 pair12 src points"><figcaption class="caption">a2_set2_pair12_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_h_matrix_1to2.png" alt="Set2 H(2→1)"><figcaption class="caption">a2_set2_pair12_h_matrix.png</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_ref_3to2.jpg" alt="Set2 pair13 ref points"><figcaption class="caption">a2_set2_pair13_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_src_3to2.jpg" alt="Set2 pair13 src points"><figcaption class="caption">a2_set2_pair13_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_h_matrix_3to2.png" alt="Set2 H(3→1)"><figcaption class="caption">a2_set2_pair13_h_matrix.png</figcaption></figure>
+      </div>
+
+      <p class="caption">Naming convention: <code>pair12</code> means points between image 1 (reference) and image 2 (source). If you use image 2 as reference instead, rename to <code>pair21</code> and <code>pair23</code> accordingly.</p>
     </section>
 
-    $1
+    <section id="rectification" class="section">
+      <h2>A3 — Warping &amp; Rectification</h2>
       <h3>Snippet — Inverse Warping (per-pixel sampling)</h3>
       <pre><code class="language-python">
       # For each output pixel (X, Y) on the rectified/mosaic canvas:
@@ -161,27 +178,29 @@
         <figure class="card"><img class="img" src="images/a3_rect2_warp_bilinear.jpg" alt="Rect2 Bilinear"><figcaption class="caption">a3_rect2_warp_bilinear.jpg</figcaption></figure>
       </div>
     </section>
-    
-      <h3>Snippet — Bounding Box & Canvas Offset</h3>
-      <pre><code class="language-python">
-      # Warp each image's 4 corners with H to get (x', y')
-      xs = [x' for each corner across all images]
-      ys = [y' for each corner across all images]
-      Xmin, Xmax = floor(min(xs)), ceil(max(xs))
-      Ymin, Ymax = floor(min(ys)), ceil(max(ys))
-      W, H = Xmax - Xmin, Ymax - Ymin
-      # If mins are negative, define offset so indices are non-negative
-      offset = (-Xmin, -Ymin)
-      </code></pre>
-    
+    <section id="mosaics" class="section">
+      <h2>A4 — Panoramic Mosaics (Results)</h2>
+      <p>
+        Each mosaic aligns all photos into a common canvas and blends overlaps (e.g., feathering). Below are two short code snippets used in my pipeline and three final results.
+      </p>
+      <h3>Snippet — Bounding Box &amp; Canvas Offset</h3>
+      <pre><code class="language-python"># Warp each image's 4 corners with H to get (x', y')
+xs = [x' for each corner across all images]
+ys = [y' for each corner across all images]
+Xmin, Xmax = floor(min(xs)), ceil(max(xs))
+Ymin, Ymax = floor(min(ys)), ceil(max(ys))
+W, H = Xmax - Xmin, Ymax - Ymin
+# If mins are negative, define offset so indices are non-negative
+offset = (-Xmin, -Ymin)
+</code></pre>
+
       <h3>Snippet — Feathered Blending with Alpha Masks</h3>
-      <pre><code class="language-python">
-      # Given K warped images I_k and masks A_k (0..1), blend per pixel:
-      # weights = A_k / (sum_j A_j + eps)
-      # output = sum_k (weights_k * I_k)
-      # Practical tip: make A_k highest near image center and taper to 0 at borders
-      </code></pre>
-    
+      <pre><code class="language-python"># Given K warped images I_k and masks A_k (0..1), blend per pixel:
+# weights = A_k / (sum_j A_j + eps)
+# output = sum_k (weights_k * I_k)
+# Practical tip: make A_k highest near image center and taper to 0 at borders
+</code></pre>
+
       <div class="grid g3">
         <figure class="card"><img class="img" src="images/a4_mosaic1_final.jpg" alt="Mosaic 1 final"><figcaption class="caption">a4_mosaic1_final.jpg</figcaption></figure>
         <figure class="card"><img class="img" src="images/a4_mosaic2_final.jpg" alt="Mosaic 2 final"><figcaption class="caption">a4_mosaic2_final.jpg</figcaption></figure>
@@ -206,4 +225,3 @@
   </main>
 </body>
 </html>
-
