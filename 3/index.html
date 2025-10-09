@@ -48,7 +48,30 @@
     .callout{border:1px dashed var(--border);background:#0c1322;padding:12px 14px;border-radius:12px;color:#c7d2ff}
       pre{background:#0f1422;border:1px solid var(--border);padding:14px;border-radius:12px;overflow:auto}
     pre code{background:transparent;border:none;color:#e2e9ff;padding:0}
-  </style>
+  
+/* === No-crop image overrides === */
+.img, img.img, figure.card > img {
+  width: 100%;
+  height: auto !important;           /* let height follow width */
+  object-fit: contain !important;    /* show entire image, no cropping */
+  display: block;
+}
+.figure-fill { aspect-ratio: auto; }
+
+/* Cards/grids should not force fixed heights */
+.card { overflow: visible; }
+.grid { grid-auto-rows: auto; }
+.grid.g3 > .card { align-self: start; }
+
+/* Captions wrap naturally */
+.caption { white-space: normal; }
+
+/* === Final deliverables: make mosaics big and standalone === */
+.finals { max-width: 1200px; margin: 24px auto; display: block; }
+.card.final-mosaic { padding: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.25); margin: 28px 0; }
+.card.final-mosaic .caption { padding: 10px 14px; font-weight: 600; text-align: center; opacity: 0.9; }
+.img.final-img { width: 100%; height: auto !important; object-fit: contain !important; display: block; background: #0c1018; }
+</style>
 </head>
 <body>
   <header>
@@ -86,17 +109,20 @@
       <h2>A1 — Raw Inputs</h2>
       <p>Sample overlapping photos for two scenes (for mosaics) and two angled shots for rectification examples.</p>
       <div class="grid g3">
-        <figure class="card"><img class="img" src="images/a1_set1_src01.jpg" alt="Set1 Src01"><figcaption class="caption">a1_set1_src01.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a1_set1_src02.jpg" alt="Set1 Src02"><figcaption class="caption">a1_set1_src02.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a1_set1_src03.jpg" alt="Set1 Src03"><figcaption class="caption">a1_set1_src03.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a1_set2_src01.jpg" alt="Set2 Src01"><figcaption class="caption">a1_set2_src01.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a1_set2_src02.jpg" alt="Set2 Src02"><figcaption class="caption">a1_set2_src02.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a1_set2_src03.jpg" alt="Set2 Src03"><figcaption class="caption">a1_set2_src03.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set1_src01.jpg" alt="Set1 Src01"><figcaption class="caption">a1_set1_src01.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set1_src02.jpg" alt="Set1 Src02"><figcaption class="caption">a1_set1_src02.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set1_src03.jpg" alt="Set1 Src03"><figcaption class="caption">a1_set1_src03.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set2_src01.jpg" alt="Set2 Src01"><figcaption class="caption">a1_set2_src01.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set2_src02.jpg" alt="Set2 Src02"><figcaption class="caption">a1_set2_src02.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set2_src03.jpg" alt="Set2 Src03"><figcaption class="caption">a1_set2_src03.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set3_src01.jpg" alt="Set2 Src01"><figcaption class="caption">a1_set2_src01.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set3_src02.jpg" alt="Set2 Src02"><figcaption class="caption">a1_set2_src02.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_set3_src03.jpg" alt="Set2 Src03"><figcaption class="caption">a1_set2_src03.jpg</figcaption></figure>
       </div>
       <h3 style="margin-top:16px">Rectification sources</h3>
       <div class="grid g2">
-        <figure class="card"><img class="img" src="images/a1_rect_poster_raw.jpg" alt="Poster raw"><figcaption class="caption">a1_rect_poster_raw.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a1_rect_tiles_raw.jpg" alt="Tiles raw"><figcaption class="caption">a1_rect_tiles_raw.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_rect_poster_raw.jpg" alt="Poster raw"><figcaption class="caption">a1_rect_poster_raw.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a1_rect_tiles_raw.jpg" alt="Tiles raw"><figcaption class="caption">a1_rect_tiles_raw.jpg</figcaption></figure>
       </div>
     </section>
     <section id="homography" class="section">
@@ -105,37 +131,53 @@
         For each mosaic, pick a single <strong>reference</strong> image and register every other <strong>source</strong> image to it. With three images (1,2,3), using 1 as reference means you need two pairs: <span class="pill">(1↔2)</span> and <span class="pill">(1↔3)</span>. Below we visualize correspondences on the reference and source for each pair, and include the solved <span class="pill">3×3 H</span>.
       </p>
 
-      <h3>Snippet — Normalized DLT for Homography (conceptual)</h3>
-      <pre><code class="language-python"># Given N ≥ 4 point pairs (x, y) ↔ (x', y') on a plane
-# 1) Normalize coordinates (shift/scale so mean≈0, avg dist≈√2)
-# 2) Build A (2N×9): for each pair add two rows encoding x' ~ Hx
-# 3) Solve Ah = 0 via SVD → h is last column of V (smallest singular value)
-# 4) Reshape h → H (3×3), enforce H[2,2] = 1; denormalize: H = T'⁻¹ H T
-# 5) Optionally refine H by non-linear least squares (reprojection error)
+      <h3>Snippet — Normalized DLT for Homography (from my code)</h3>
+      <pre><code class="language-python">
+      def _normalize_points(xy: np.ndarray):
+        mu = xy.mean(axis=0)
+        d  = np.sqrt(((xy - mu) ** 2).sum(axis=1)).mean()
+        s  = np.sqrt(2.0) / max(d, 1e-8)
+        T  = np.array([[s, 0, -s * mu[0]],
+                       [0, s, -s * mu[1]],
+                       [0, 0, 1.0]], dtype=np.float64)
+        xy_h = np.c_[xy, np.ones(len(xy))]
+        xy_n = (T @ xy_h.T).T
+        return T, xy_n[:, :2]
 
-# Sketch of A construction for one pair (x, y) → (u, v):
-# [ -x, -y, -1,  0,  0,  0,  u*x, u*y, u ]
-# [  0,  0,  0, -x, -y, -1,  v*x, v*y, v ]
-</code></pre>
+    def dlt_homography(xy_src: np.ndarray, xy_dst: np.ndarray) -> np.ndarray:
+      assert xy_src.shape == xy_dst.shape and xy_src.shape[0] >= 4
+      T_src, src_n = _normalize_points(xy_src)
+      T_dst, dst_n = _normalize_points(xy_dst)
+      A = []
+      for (x, y), (u, v) in zip(src_n, dst_n):
+          A.append([-x, -y, -1, 0, 0, 0, u * x, u * y, u])
+          A.append([0, 0, 0, -x, -y, -1, v * x, v * y, v])
+      A = np.asarray(A, dtype=np.float64)
+      _, _, Vt = np.linalg.svd(A)
+      Hn = Vt[-1].reshape(3, 3)
+      H = np.linalg.inv(T_dst) @ Hn @ T_src
+      H = H / (H[2, 2] if abs(H[2, 2]) > 1e-12 else 1.0)
+      return H
+    </code></pre>
 
       <h3>Set 1 — Two Pairs to Reference</h3>
       <div class="grid g3">
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_ref_1to2.png" alt="Set1 pair12 ref points"><figcaption class="caption">a2_set1_pair12_points_ref.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_src_1to2.png" alt="Set1 pair12 src points"><figcaption class="caption">a2_set1_pair12_points_src.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_h_matrix_1to2.png" alt="Set1 H(2→1)"><figcaption class="caption">a2_set1_pair12_h_matrix.png</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_ref_3to2.png" alt="Set1 pair13 ref points"><figcaption class="caption">a2_set1_pair13_points_ref.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_src_3to2.png" alt="Set1 pair13 src points"><figcaption class="caption">a2_set1_pair13_points_src.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set1_pair12_h_matrix_3to2.png" alt="Set1 H(3→1)"><figcaption class="caption">a2_set1_pair13_h_matrix.png</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set1_pair12_points_ref_1to2.png" alt="Set1 pair12 ref points"><figcaption class="caption">a2_set1_pair12_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set1_pair12_points_src_1to2.png" alt="Set1 pair12 src points"><figcaption class="caption">a2_set1_pair12_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set1_pair12_h_matrix_1to2.png" alt="Set1 H(2→1)"><figcaption class="caption">a2_set1_pair12_h_matrix.png</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set1_pair12_points_ref_3to2.png" alt="Set1 pair13 ref points"><figcaption class="caption">a2_set1_pair13_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set1_pair12_points_src_3to2.png" alt="Set1 pair13 src points"><figcaption class="caption">a2_set1_pair13_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set1_pair12_h_matrix_3to2.png" alt="Set1 H(3→1)"><figcaption class="caption">a2_set1_pair13_h_matrix.png</figcaption></figure>
       </div>
 
       <h3>Set 2 — Two Pairs to Reference</h3>
       <div class="grid g3">
-        <figure class="card"><img class="img" src="images/a2_set3_pair12_points_ref_1to2.png" alt="Set2 pair12 ref points"><figcaption class="caption">a2_set2_pair12_points_ref.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set3_pair12_points_src_1to2.png" alt="Set2 pair12 src points"><figcaption class="caption">a2_set2_pair12_points_src.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set3_pair12_h_matrix_1to2.png" alt="Set2 H(2→1)"><figcaption class="caption">a2_set2_pair12_h_matrix.png</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set3_pair12_points_ref_3to2.png" alt="Set2 pair13 ref points"><figcaption class="caption">a2_set2_pair13_points_ref.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set3_pair12_points_src_3to2.png" alt="Set2 pair13 src points"><figcaption class="caption">a2_set2_pair13_points_src.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a2_set3_pair12_h_matrix_3to2.png" alt="Set2 H(3→1)"><figcaption class="caption">a2_set2_pair13_h_matrix.png</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set3_pair12_points_ref_1to2.png" alt="Set2 pair12 ref points"><figcaption class="caption">a2_set2_pair12_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set3_pair12_points_src_1to2.png" alt="Set2 pair12 src points"><figcaption class="caption">a2_set2_pair12_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set3_pair12_h_matrix_1to2.png" alt="Set2 H(2→1)"><figcaption class="caption">a2_set2_pair12_h_matrix.png</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set3_pair12_points_ref_3to2.png" alt="Set2 pair13 ref points"><figcaption class="caption">a2_set2_pair13_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set3_pair12_points_src_3to2.png" alt="Set2 pair13 src points"><figcaption class="caption">a2_set2_pair13_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a2_set3_pair12_h_matrix_3to2.png" alt="Set2 H(3→1)"><figcaption class="caption">a2_set2_pair13_h_matrix.png</figcaption></figure>
       </div>
 
       <p class="caption">Naming convention: <code>pair12</code> means points between image 1 (reference) and image 2 (source). If you use image 2 as reference instead, rename to <code>pair21</code> and <code>pair23</code> accordingly.</p>
@@ -143,39 +185,58 @@
 
     <section id="rectification" class="section">
       <h2>A3 — Warping &amp; Rectification</h2>
-      <h3>Snippet — Inverse Warping (per-pixel sampling)</h3>
+      <h3>Snippet — Inverse Warping (from my code)</h3>
       <pre><code class="language-python">
-      # For each output pixel (X, Y) on the rectified/mosaic canvas:
-      #   1) Map back with homogeneous coords: [x, y, w]^T = H_inv @ [X, Y, 1]^T
-      #   2) Normalize: xs = x / w; ys = y / w
-      #   3) If (xs, ys) inside source bounds: sample via chosen interpolation
-      #   4) Write color to output and set alpha=1; else alpha=0
+        def inverse_warp_to_canvas(src_img: np.ndarray, H_inv: np.ndarray,
+        out_h: int, out_w: int, offset_xy: tuple[int, int],
+        mode: str = "bilinear"):
+          ox, oy = offset_xy
+          C = src_img.shape[2] if src_img.ndim == 3 else 1
+          out = np.zeros((out_h, out_w, C), dtype=np.float32)
+          alpha = np.zeros((out_h, out_w), dtype=np.float32)
+          sampler = bilinear_sample if mode == "bilinear" else nearest_sample
+          h0, h1, h2 = H_inv[0], H_inv[1], H_inv[2]
+          for Y in range(out_h):
+              for X in range(out_w):
+                  Xc, Yc = float(X), float(Y)
+                  w = h2[0]*(Xc-ox) + h2[1]*(Yc-oy) + h2[2]
+                  if abs(w) < 1e-12: continue
+                  x = (h0[0]*(Xc-ox) + h0[1]*(Yc-oy) + h0[2]) / w
+                  y = (h1[0]*(Xc-ox) + h1[1]*(Yc-oy) + h1[2]) / w
+                  val, ok = sampler(src_img, x, y)
+                  if ok:
+                      out[Y, X] = val
+                      alpha[Y, X] = 1.0
+          return out, alpha
       </code></pre>
     
-      <h3>Snippet — Bilinear Sampler (continuous → discrete)</h3>
+      <h3>Snippet — Bilinear Sampler (from my code)</h3>
       <pre><code class="language-python">
-      def bilinear(img, xs, ys):
-      # img: H×W×C, xs/ys: float source coords
-      x0 = floor(xs); y0 = floor(ys)
-      x1 = x0 + 1;    y1 = y0 + 1
-      ax = xs - x0;   ay = ys - y0
-      # Clamp indices to valid range before sampling
-      I00 = img[y0, x0]; I10 = img[y0, x1]
-      I01 = img[y1, x0]; I11 = img[y1, x1]
-      I0 = (1-ax)*I00 + ax*I10
-      I1 = (1-ax)*I01 + ax*I11
-      return (1-ay)*I0 + ay*I1
+      def bilinear_sample(img: np.ndarray, x: float, y: float):
+        H, W = img.shape[:2]
+        if x < 0 or y < 0 or x > W - 1 or y > H - 1:
+            return None, False
+        x0 = int(np.floor(x)); x1 = min(x0 + 1, W - 1)
+        y0 = int(np.floor(y)); y1 = min(y0 + 1, H - 1)
+        ax = x - x0; ay = y - y0
+        I00 = img[y0, x0]
+        I10 = img[y0, x1]
+        I01 = img[y1, x0]
+        I11 = img[y1, x1]
+        I0 = (1 - ax) * I00 + ax * I10
+        I1 = (1 - ax) * I01 + ax * I11
+        return (1 - ay) * I0 + ay * I1, True
       </code></pre>
     
       <h3>Rectification Example 1 — Poster</h3>
       <div class="grid g2">
-        <figure class="card"><img class="img" src="images/a3_rect1_warp_nn.jpg" alt="Rect1 NN"><figcaption class="caption">a3_rect1_warp_nn.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a3_rect1_warp_bilinear.jpg" alt="Rect1 Bilinear"><figcaption class="caption">a3_rect1_warp_bilinear.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a3_rect1_warp_nn.jpg" alt="Rect1 NN"><figcaption class="caption">a3_rect1_warp_nn.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a3_rect1_warp_bilinear.jpg" alt="Rect1 Bilinear"><figcaption class="caption">a3_rect1_warp_bilinear.jpg</figcaption></figure>
       </div>
       <h3 style="margin-top:14px">Rectification Example 2 — Tiles</h3>
       <div class="grid g2">
-        <figure class="card"><img class="img" src="images/a3_rect2_warp_nn.jpg" alt="Rect2 NN"><figcaption class="caption">a3_rect2_warp_nn.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a3_rect2_warp_bilinear.jpg" alt="Rect2 Bilinear"><figcaption class="caption">a3_rect2_warp_bilinear.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a3_rect2_warp_nn.jpg" alt="Rect2 NN"><figcaption class="caption">a3_rect2_warp_nn.jpg</figcaption></figure>
+        <figure class="card"><img class="img figure-fill" src="images/a3_rect2_warp_bilinear.jpg" alt="Rect2 Bilinear"><figcaption class="caption">a3_rect2_warp_bilinear.jpg</figcaption></figure>
       </div>
     </section>
     <section id="mosaics" class="section">
@@ -183,33 +244,73 @@
       <p>
         Each mosaic aligns all photos into a common canvas and blends overlaps (e.g., feathering). Below are two short code snippets used in my pipeline and three final results.
       </p>
-      <h3>Snippet — Bounding Box &amp; Canvas Offset</h3>
-      <pre><code class="language-python"># Warp each image's 4 corners with H to get (x', y')
-xs = [x' for each corner across all images]
-ys = [y' for each corner across all images]
-Xmin, Xmax = floor(min(xs)), ceil(max(xs))
-Ymin, Ymax = floor(min(ys)), ceil(max(ys))
-W, H = Xmax - Xmin, Ymax - Ymin
-# If mins are negative, define offset so indices are non-negative
-offset = (-Xmin, -Ymin)
-</code></pre>
+      <h3>Snippet — Global Canvas (from my code)</h3>
+      <pre><code class="language-python">
+      def global_canvas_from_pairs(img_shapes: list[tuple[int,int]], H_maps: list[np.ndarray]):
+        xs_min, xs_max, ys_min, ys_max = [], [], [], []
+        for (H, W), Hc in zip(img_shapes, H_maps):
+            xmin, xmax, ymin, ymax = warp_footprint_bbox(W, H, Hc)
+            xs_min.append(xmin); xs_max.append(xmax)
+            ys_min.append(ymin); ys_max.append(ymax)
+        Xmin, Xmax = np.floor(min(xs_min)), np.ceil(max(xs_max))
+        Ymin, Ymax = np.floor(min(ys_min)), np.ceil(max(ys_max))
+        out_w = int(max(1, Xmax - Xmin))
+        out_h = int(max(1, Ymax - Ymin))
+        offset = (-int(Xmin), -int(Ymin))
+        return out_h, out_w, offset
+    </code></pre>
 
-      <h3>Snippet — Feathered Blending with Alpha Masks</h3>
-      <pre><code class="language-python"># Given K warped images I_k and masks A_k (0..1), blend per pixel:
-# weights = A_k / (sum_j A_j + eps)
-# output = sum_k (weights_k * I_k)
-# Practical tip: make A_k highest near image center and taper to 0 at borders
-</code></pre>
+      <h3>Snippet — Feathered Blending (from my code)</h3>
+      <pre><code class="language-python">
+      def center_falloff_weights(alpha: np.ndarray) -> np.ndarray:
+        H, W = alpha.shape
+        y = np.arange(H)[:, None]
+        x = np.arange(W)[None, :]
+        d_left, d_right = x, (W - 1 - x)
+        d_top, d_bot   = y, (H - 1 - y)
+        d = np.minimum(np.minimum(d_left, d_right), np.minimum(d_top, d_bot))
+        d = d * alpha
+        m = d.max() if d.max() > 0 else 1.0
+        return d / m
+
+      def feather_blend_stack(images: list[np.ndarray], alphas: list[np.ndarray]) -> np.ndarray:
+        H, W, C = images[0].shape
+        accum = np.zeros((H, W, C), dtype=np.float32)
+        wsum  = np.zeros((H, W, 1), dtype=np.float32)
+        for img, a in zip(images, alphas):
+            w = center_falloff_weights(a) * (a > 0).astype(np.float32)
+            w = w[..., None]
+            accum += w * img
+            wsum  += w
+        wsum[wsum == 0] = 1.0
+        return accum / wsum
+      </code></pre>
 
       <div class="grid g3">
-        <figure class="card"><img class="img" src="images/a4_mosaic1_final.jpg" alt="Mosaic 1 final"><figcaption class="caption">a4_mosaic1_final.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a4_mosaic2_final.jpg" alt="Mosaic 2 final"><figcaption class="caption">a4_mosaic2_final.jpg</figcaption></figure>
-        <figure class="card"><img class="img" src="images/a4_mosaic3_final.jpg" alt="Mosaic 3 final"><figcaption class="caption">a4_mosaic3_final.jpg</figcaption></figure>
+        <figure class="card final-mosaic"><img class="img final-img" src="images/a4_mosaic1_final.jpg" alt="Mosaic 1 final"><figcaption class="caption">A4 — Mosaic 1 (Final)</figcaption></figure>
+        <figure class="card final-mosaic"><img class="img final-img" src="images/a4_mosaic2_final.jpg" alt="Mosaic 2 final"><figcaption class="caption">A4 — Mosaic 2 (Final)</figcaption></figure>
+        <figure class="card final-mosaic"><img class="img final-img" src="images/a4_mosaic3_final.jpg" alt="Mosaic 3 final"><figcaption class="caption">A4 — Mosaic 3 (Final)</figcaption></figure>
       </div>
     </section>
 
     <section id="notes" class="section">
       <h2>Appendix & Notes</h2>
+      <h3>Snippet — EXIF-Aware I/O (from my code)</h3>
+      <pre><code class="language-python">
+      from PIL import Image, ImageOps
+
+      def imread(path: str) -> np.ndarray:
+          im = Image.open(path)
+          im = ImageOps.exif_transpose(im)   # rotate pixels per EXIF orientation
+          arr = np.asarray(im).astype(np.float32) / 255.0
+          if arr.ndim == 2:
+              arr = np.stack([arr,arr,arr], axis=-1)
+          return arr
+
+      def imsave(path: str, img: np.ndarray):
+          img8 = (np.clip(img,0,1)*255).astype(np.uint8)
+          Image.fromarray(img8).save(path, exif=b"")  # strip EXIF so previews match
+      </code></pre>
       <ul>
         <li><strong>Bounding box:</strong> Compute the axis-aligned min/max of the four warped corners to size the canvas and set offsets.</li>
         <li><strong>Inverse warping:</strong> For each output pixel, map with <span class="kbd">H⁻¹</span> to source coordinates; sample with chosen interpolation.</li>
