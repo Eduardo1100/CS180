@@ -1,1 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 3A — Planar Rectification & Panoramic Mosaic: https://eduardo1100.github.io/CS180/3/index.html</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0c10;--panel:#11131a;--text:#eaeef5;--muted:#a7b0bf;--accent:#7aa2ff;--border:#1d2230;
+      --radius:16px;--gap:18px;--shadow:0 12px 30px rgba(0,0,0,.25)
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px}
+    header{position:sticky;top:0;background:linear-gradient(180deg,rgba(11,12,16,.9),rgba(11,12,16,.75));backdrop-filter:saturate(1.2) blur(8px);z-index:40;border-bottom:1px solid var(--border)}
+    header .inner{display:flex;gap:20px;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:14px 28px}
+    .title{font-weight:800;font-size:20px;letter-spacing:.2px}
+    nav{display:flex;gap:18px;flex-wrap:wrap}
+    nav a{font-size:14px;color:var(--muted)}
+    nav a:hover{color:var(--text)}
+    .section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px 22px 24px;box-shadow:var(--shadow);margin:28px 0}
+    h1{font-size:28px;margin:0 0 8px}
+    h2{font-size:22px;margin:0 0 10px}
+    h3{font-size:18px;margin:16px 0 8px}
+    p{line-height:1.6;color:var(--muted)}
+    ul,ol{color:var(--muted)}
+    code, .kbd{background:#0f1422;border:1px solid var(--border);padding:2px 6px;border-radius:8px;color:#e2e9ff}
+    .grid{display:grid;gap:var(--gap)}
+    .g2{grid-template-columns:repeat(2,1fr)}
+    .g3{grid-template-columns:repeat(3,1fr)}
+    .g4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}}
+    .card{background:#0d1018;border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .card h4{font-size:14px;font-weight:600;margin:10px 12px 0}
+    .card p{font-size:13px;margin:4px 12px 12px}
+    .img{aspect-ratio:16/10;background:#0a0d14;display:block;width:100%;object-fit:cover;border-bottom:1px solid var(--border)}
+    .caption{font-size:12px;color:var(--muted);margin-top:6px}
+    .pill{display:inline-block;font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+    .kbd{font-size:12px}
+    footer{color:var(--muted);text-align:center;margin:34px 0 22px}
+    .toc{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .toc a{border:1px solid var(--border);padding:6px 10px;border-radius:999px;background:#0d111b;color:var(--muted)}
+    .toc a:hover{color:var(--text)}
+    .callout{border:1px dashed var(--border);background:#0c1322;padding:12px 14px;border-radius:12px;color:#c7d2ff}
+      pre{background:#0f1422;border:1px solid var(--border);padding:14px;border-radius:12px;overflow:auto}
+    pre code{background:transparent;border:none;color:#e2e9ff;padding:0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <div class="title">Planar Rectification & Panoramic Mosaic</div>
+      <nav>
+        <a href="#overview">Overview</a>
+        <a href="#inputs">Raw Inputs</a>
+        <a href="#homography">Homography</a>
+        <a href="#rectification">Rectification</a>
+        <a href="#mosaics">Mosaics</a>
+        <a href="#notes">Notes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="overview" class="section">
+      <h1>Overview</h1>
+      <p>
+        This project implements <strong>planar rectification</strong> and <strong>panoramic mosaicing</strong> from overlapping photos.
+        You will collect correspondences, solve a <em>homography</em>, perform <em>inverse warping</em> with interpolation, and blend images into seamless panoramas.
+        All core geometry and warping logic is implemented by you (no high-level warping helpers).
+      </p>
+      <div class="toc">
+        <a href="#inputs">A1: Raw Inputs</a>
+        <a href="#homography">A2: Homography</a>
+        <a href="#rectification">A3: Warping & Rectification</a>
+        <a href="#mosaics">A4: Mosaics</a>
+        <a href="#notes">Appendix & Notes</a>
+      </div>
+      <div class="callout" style="margin-top:14px">
+        <strong>File layout:</strong> place all images in a single folder <code>images/</code> using the filenames referenced below.
+      </div>
+    </section>
+
+    <section id="inputs" class="section">
+      <h2>A1 — Raw Inputs</h2>
+      <p>Sample overlapping photos for two scenes (for mosaics) and two angled shots for rectification examples.</p>
+      <div class="grid g3">
+        <figure class="card"><img class="img" src="images/a1_set1_src01.jpg" alt="Set1 Src01"><figcaption class="caption">a1_set1_src01.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a1_set1_src02.jpg" alt="Set1 Src02"><figcaption class="caption">a1_set1_src02.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a1_set1_src03.jpg" alt="Set1 Src03"><figcaption class="caption">a1_set1_src03.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a1_set2_src01.jpg" alt="Set2 Src01"><figcaption class="caption">a1_set2_src01.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a1_set2_src02.jpg" alt="Set2 Src02"><figcaption class="caption">a1_set2_src02.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a1_set2_src03.jpg" alt="Set2 Src03"><figcaption class="caption">a1_set2_src03.jpg</figcaption></figure>
+      </div>
+      <h3 style="margin-top:16px">Rectification sources</h3>
+      <div class="grid g2">
+        <figure class="card"><img class="img" src="images/a1_rect_poster_raw.jpg" alt="Poster raw"><figcaption class="caption">a1_rect_poster_raw.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a1_rect_tiles_raw.jpg" alt="Tiles raw"><figcaption class="caption">a1_rect_tiles_raw.jpg</figcaption></figure>
+      </div>
+    </section>
+
+    
+      <h3 style="margin-top:12px">Snippet — Normalized DLT for Homography (conceptual)</h3>
+      <pre><code class="language-python">
+      # Given N ≥ 4 point pairs (x, y) ↔ (x', y') on a plane
+      # 1) Normalize coordinates (shift/scale so mean≈0, avg dist≈√2)
+      # 2) Build A (2N×9): for each pair add two rows encoding x' ~ Hx
+      # 3) Solve Ah = 0 via SVD → h is last column of V (smallest singular value)
+      # 4) Reshape h → H (3×3), enforce H[2,2] = 1; denormalize: H = T'⁻¹ H T
+      # 5) Optionally refine H by non-linear least squares (reprojection error)
+      
+      # Sketch of A construction for one pair (x, y) → (u, v):
+      # [ -x, -y, -1,  0,  0,  0,  u*x, u*y, u ]
+      # [  0,  0,  0, -x, -y, -1,  v*x, v*y, v ]
+      </code></pre>
+    
+      <div class="grid g3">
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_ref.jpg" alt="Set1 ref points"><figcaption class="caption">a2_set1_pair12_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_pair12_points_src.jpg" alt="Set1 src points"><figcaption class="caption">a2_set1_pair12_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set1_h_matrix_table.png" alt="Set1 H table"><figcaption class="caption">a2_set1_h_matrix_table.png</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_ref.jpg" alt="Set2 ref points"><figcaption class="caption">a2_set2_pair12_points_ref.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_pair12_points_src.jpg" alt="Set2 src points"><figcaption class="caption">a2_set2_pair12_points_src.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a2_set2_h_matrix_table.png" alt="Set2 H table"><figcaption class="caption">a2_set2_h_matrix_table.png</figcaption></figure>
+      </div>
+    </section>
+
+    $1
+      <h3>Snippet — Inverse Warping (per-pixel sampling)</h3>
+      <pre><code class="language-python">
+      # For each output pixel (X, Y) on the rectified/mosaic canvas:
+      #   1) Map back with homogeneous coords: [x, y, w]^T = H_inv @ [X, Y, 1]^T
+      #   2) Normalize: xs = x / w; ys = y / w
+      #   3) If (xs, ys) inside source bounds: sample via chosen interpolation
+      #   4) Write color to output and set alpha=1; else alpha=0
+      </code></pre>
+    
+      <h3>Snippet — Bilinear Sampler (continuous → discrete)</h3>
+      <pre><code class="language-python">
+      def bilinear(img, xs, ys):
+      # img: H×W×C, xs/ys: float source coords
+      x0 = floor(xs); y0 = floor(ys)
+      x1 = x0 + 1;    y1 = y0 + 1
+      ax = xs - x0;   ay = ys - y0
+      # Clamp indices to valid range before sampling
+      I00 = img[y0, x0]; I10 = img[y0, x1]
+      I01 = img[y1, x0]; I11 = img[y1, x1]
+      I0 = (1-ax)*I00 + ax*I10
+      I1 = (1-ax)*I01 + ax*I11
+      return (1-ay)*I0 + ay*I1
+      </code></pre>
+    
+      <h3>Rectification Example 1 — Poster</h3>
+      <div class="grid g2">
+        <figure class="card"><img class="img" src="images/a3_rect1_warp_nn.jpg" alt="Rect1 NN"><figcaption class="caption">a3_rect1_warp_nn.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a3_rect1_warp_bilinear.jpg" alt="Rect1 Bilinear"><figcaption class="caption">a3_rect1_warp_bilinear.jpg</figcaption></figure>
+      </div>
+      <h3 style="margin-top:14px">Rectification Example 2 — Tiles</h3>
+      <div class="grid g2">
+        <figure class="card"><img class="img" src="images/a3_rect2_warp_nn.jpg" alt="Rect2 NN"><figcaption class="caption">a3_rect2_warp_nn.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a3_rect2_warp_bilinear.jpg" alt="Rect2 Bilinear"><figcaption class="caption">a3_rect2_warp_bilinear.jpg</figcaption></figure>
+      </div>
+    </section>
+    
+      <h3>Snippet — Bounding Box & Canvas Offset</h3>
+      <pre><code class="language-python">
+      # Warp each image's 4 corners with H to get (x', y')
+      xs = [x' for each corner across all images]
+      ys = [y' for each corner across all images]
+      Xmin, Xmax = floor(min(xs)), ceil(max(xs))
+      Ymin, Ymax = floor(min(ys)), ceil(max(ys))
+      W, H = Xmax - Xmin, Ymax - Ymin
+      # If mins are negative, define offset so indices are non-negative
+      offset = (-Xmin, -Ymin)
+      </code></pre>
+    
+      <h3>Snippet — Feathered Blending with Alpha Masks</h3>
+      <pre><code class="language-python">
+      # Given K warped images I_k and masks A_k (0..1), blend per pixel:
+      # weights = A_k / (sum_j A_j + eps)
+      # output = sum_k (weights_k * I_k)
+      # Practical tip: make A_k highest near image center and taper to 0 at borders
+      </code></pre>
+    
+      <div class="grid g3">
+        <figure class="card"><img class="img" src="images/a4_mosaic1_final.jpg" alt="Mosaic 1 final"><figcaption class="caption">a4_mosaic1_final.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a4_mosaic2_final.jpg" alt="Mosaic 2 final"><figcaption class="caption">a4_mosaic2_final.jpg</figcaption></figure>
+        <figure class="card"><img class="img" src="images/a4_mosaic3_final.jpg" alt="Mosaic 3 final"><figcaption class="caption">a4_mosaic3_final.jpg</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="notes" class="section">
+      <h2>Appendix & Notes</h2>
+      <ul>
+        <li><strong>Bounding box:</strong> Compute the axis-aligned min/max of the four warped corners to size the canvas and set offsets.</li>
+        <li><strong>Inverse warping:</strong> For each output pixel, map with <span class="kbd">H⁻¹</span> to source coordinates; sample with chosen interpolation.</li>
+        <li><strong>Alpha/masks:</strong> Track valid samples to avoid seams; use weights for feathering in overlaps.</li>
+        <li><strong>Quality tips:</strong> Use well-spread correspondences on planar regions; rotate in place to reduce parallax.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>© <span id="year"></span> Eduardo Cortes • Project 3A: Planar Rectification & Panoramic Mosaic</p>
+      <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write-up are my own; I reviewed and verified technical details.</p>
+    </footer>
+  </main>
+</body>
+</html>
 
