@@ -1,1 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180/280A Project 3B – Feature Matching for Autostitching: https://eduardo1100.github.io/CS180/3B/index.html</title>
+  <meta name="description" content="Project 3B webpage: Harris corners, descriptors, matching, RANSAC mosaics, and bells & whistles." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e12;
+      --ink: #e9edf2;
+      --ink-dim: #b8c2cf;
+      --card: #121821;
+      --accent: #6aa1ff;
+      --muted: #2a3340;
+    }
+    html, body { margin: 0; padding: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--ink); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header { padding: 2.5rem 0 1.25rem; }
+    .title { font-size: clamp(1.8rem, 2.4vw, 2.6rem); font-weight: 800; letter-spacing: 0.2px; margin: 0 0 0.25rem; }
+    .subtitle { margin: 0.25rem 0 0; color: var(--ink-dim); }
+    nav { position: sticky; top: 0; background: linear-gradient(180deg, rgba(11,14,18,0.95), rgba(11,14,18,0.7)); backdrop-filter: blur(8px); border-bottom: 1px solid var(--muted); z-index: 20; }
+    nav .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0.5rem 1.25rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+    nav a { font-size: 0.95rem; padding: 0.4rem 0.6rem; border-radius: 0.5rem; }
+    nav a:hover { background: var(--muted); text-decoration: none; }
+
+    section { padding: 2.25rem 0; border-bottom: 1px solid var(--muted); }
+    h2 { font-size: clamp(1.4rem, 2vw, 1.8rem); margin: 0 0 0.75rem; }
+    h3 { font-size: 1.05rem; margin: 1.25rem 0 0.25rem; color: var(--ink-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+    p { line-height: 1.7; color: var(--ink-dim); }
+    .callout { background: #0f141c; border: 1px solid var(--muted); border-radius: 0.9rem; padding: 1rem 1rem; }
+
+    .grid { display: grid; gap: 0.9rem; }
+    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 880px) { .grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 680px) { .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; } }
+
+    figure { margin: 0; background: var(--card); border: 1px solid var(--muted); border-radius: 1rem; overflow: hidden; }
+    figure img { display: block; width: 100%; height: auto; }
+    figcaption { padding: 0.75rem 0.9rem; font-size: 0.95rem; color: var(--ink-dim); border-top: 1px solid var(--muted); }
+
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: #0f141c; border: 1px solid var(--muted); border-radius: 0.6rem; padding: 0.75rem 0.9rem; color: var(--ink); overflow-x: auto; }
+
+    .footer { padding-top: 2rem; color: var(--ink-dim); font-size: 0.95rem; }
+    .tag { display: inline-block; background: #0f141c; border: 1px solid var(--muted); color: var(--ink-dim); padding: 0.15rem 0.5rem; border-radius: 0.5rem; font-size: 0.85rem; margin-right: 0.35rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <a href="#overview">Overview</a>
+      <a href="#b1">B.1 Harris Corners</a>
+      <a href="#b2">B.2 Descriptors</a>
+      <a href="#b3">B.3 Matching</a>
+      <a href="#b4">B.4 RANSAC & Mosaics</a>
+      <a href="#b5">B.5 Bells & Whistles</a>
+      <a href="#results">Results Gallery</a>
+      <a href="#implementation">Implementation Notes</a>
+      <a href="#references">References</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <header>
+      <h1 class="title">Project 3B – Feature Matching for Autostitching</h1>
+      <p class="subtitle">CS180/280A – Intro to Computer Vision & Computational Photography</p>
+      <p class="subtitle">Eduardo Cortes · Fall 2025</p>
+    </header>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>
+        This project implements an end-to-end pipeline for <strong>automatic panorama stitching</strong>, including
+        Harris corner detection, adaptive non-maximal suppression (ANMS), patch-based descriptors, feature matching with
+        a nearest-neighbor ratio test, and robust homography estimation using 4-point RANSAC. The final step warps and blends images
+        into mosaics and compares manual vs. automatic stitching.
+      </p>
+      <div class="callout"><strong>Deliverables quick list:</strong>
+        <span class="tag">Harris corners (±ANMS)</span>
+        <span class="tag">Descriptor patches</span>
+        <span class="tag">Matched features</span>
+        <span class="tag">RANSAC inliers</span>
+        <span class="tag">≥3 automatic mosaics</span>
+      </div>
+    </section>
+
+    <section id="b1">
+      <h2>B.1 – Harris Corner Detection</h2>
+      <p>
+        We detect corners with a Harris interest point operator and optionally refine the set with <em>Adaptive Non-Maximal Suppression</em> (ANMS).
+      </p>
+      <div class="grid cols-2">
+        <figure>
+          <img src="images/harris_corners_raw.jpg" alt="Harris corners overlaid on the original image" />
+          <figcaption>Detected Harris corners (all responses over threshold).</figcaption>
+        </figure>
+        <figure>
+          <img src="images/harris_corners_anms.jpg" alt="ANMS-selected corners overlaid on the original image" />
+          <figcaption>ANMS-selected corners (diverse, strong points).</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="b2">
+      <h2>B.2 – Feature Descriptor Extraction</h2>
+      <p>
+        Around each selected corner, we sample a <strong>40×40</strong> window (blurred / downsampled) to produce a normalized <strong>8×8</strong> grayscale descriptor (bias–gain normalized).
+      </p>
+      <div class="grid cols-2">
+        <figure>
+          <img src="images/descriptor_visualization.jpg" alt="Patch locations overlaid on the source image" />
+          <figcaption>Patch locations used for descriptor extraction.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/feature_patch_examples.jpg" alt="Montage of 8×8 normalized descriptor patches" />
+          <figcaption>Montage of several 8×8 normalized descriptor patches.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="b3">
+      <h2>B.3 – Feature Matching</h2>
+      <p>
+        We compute nearest neighbors in descriptor space and apply Lowe’s <em>ratio test</em> to keep reliable correspondences.
+      </p>
+      <div class="grid cols-2">
+        <figure>
+          <img src="images/matched_features_raw.jpg" alt="Raw candidate matches between the two images" />
+          <figcaption>Candidate matches prior to ratio test.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/matched_features_filtered.jpg" alt="Filtered matches after Lowe ratio test" />
+          <figcaption>Filtered matches after ratio test (cleaner, more reliable pairs).</figcaption>
+        </figure>
+      </div>
+      <div class="grid cols-2">
+        <figure>
+          <img src="images/match_distribution_plot.png" alt="Histogram of nearest-neighbor distance ratios" />
+          <figcaption>(Optional) Distribution of NN distance ratios, indicating the chosen threshold.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="b4">
+      <h2>B.4 – RANSAC for Robust Homography & Mosaics</h2>
+      <p>
+        Using 4-point RANSAC, we estimate a homography from inlier matches, warp one image into the other’s frame, and blend to form a mosaic.
+      </p>
+      <div class="grid cols-3">
+        <figure>
+          <img src="images/ransac_inliers.jpg" alt="Inlier/outlier visualization for RANSAC" />
+          <figcaption>RANSAC inliers (green) vs outliers (red).</figcaption>
+        </figure>
+        <figure>
+          <img src="images/homography_warped.jpg" alt="One image warped by the estimated homography" />
+          <figcaption>Warp result using the estimated homography.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/blend_overlay.jpg" alt="Blend/overlay visualization" />
+          <figcaption>(Optional) Blend/overlay check of alignment.</figcaption>
+        </figure>
+      </div>
+
+      <h3>Manual vs Automatic Stitching</h3>
+      <div class="grid cols-2">
+        <figure>
+          <img src="images/mosaic_manual.jpg" alt="Manually stitched panorama" />
+          <figcaption>Manual mosaic (from Part A pipeline).</figcaption>
+        </figure>
+        <figure>
+          <img src="images/mosaic_auto.jpg" alt="Automatically stitched panorama" />
+          <figcaption>Automatic mosaic (this part’s pipeline).</figcaption>
+        </figure>
+      </div>
+
+      <h3>Additional Automatic Mosaics (≥ 3)</h3>
+      <div class="grid cols-3">
+        <figure>
+          <img src="images/mosaic_variation1.jpg" alt="Automatic mosaic example 1" />
+          <figcaption>Automatic mosaic #1.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/mosaic_variation2.jpg" alt="Automatic mosaic example 2" />
+          <figcaption>Automatic mosaic #2.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/mosaic_variation3.jpg" alt="Automatic mosaic example 3" />
+          <figcaption>Automatic mosaic #3.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="b5">
+      <h2>B.5 – Bells & Whistles</h2>
+      <p>Choose at least one extension (required for CS280A): multiscale features, rotation-invariant descriptors, or panorama recognition.</p>
+      <div class="grid cols-3">
+        <figure>
+          <img src="images/multiscale_corners.jpg" alt="Multiscale corner detection visualization" />
+          <figcaption>(Option) Multiscale corner detection.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/rotated_feature_match.jpg" alt="Rotation-invariant matching visualization" />
+          <figcaption>(Option) Rotation-invariant matching.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/panorama_recognition_results.jpg" alt="Panorama recognition from unordered set" />
+          <figcaption>(Option) Panorama recognition from unordered set.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="results">
+      <h2>Results Gallery</h2>
+      <p>A compact gallery of favorites from the project. Click to view full resolution.</p>
+      <div class="grid cols-3">
+        <figure>
+          <a href="images/mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/mosaic_auto.jpg" alt="Highlighted automatic mosaic" /></a>
+          <figcaption>Highlighted automatic mosaic.</figcaption>
+        </figure>
+        <figure>
+          <a href="images/mosaic_variation1.jpg" target="_blank" rel="noopener"><img src="images/mosaic_variation1.jpg" alt="Gallery mosaic 1" /></a>
+          <figcaption>Gallery mosaic #1.</figcaption>
+        </figure>
+        <figure>
+          <a href="images/mosaic_variation2.jpg" target="_blank" rel="noopener"><img src="images/mosaic_variation2.jpg" alt="Gallery mosaic 2" /></a>
+          <figcaption>Gallery mosaic #2.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="implementation">
+      <h2>Implementation Notes</h2>
+      <p>
+        Briefly summarize key implementation choices (e.g., Harris parameters, ANMS radius logic, descriptor normalization, ratio threshold, RANSAC iterations and inlier metric), and include any ablations or pitfalls.
+      </p>
+      <pre class="code"># Example parameters (replace with your final values)
+HARRIS_K = 0.04
+HARRIS_WINDOW = 3
+ANMS_MAX_CORNERS = 750
+DESC_SIZE = 8  # final 8x8
+PATCH_SIZE = 40  # sampled then blurred/downsampled
+LOWE_RATIO = 0.7
+RANSAC_ITERS = 2000
+RANSAC_EPS = 3.0  # inlier pixel threshold</pre>
+    </section>
+
+    <section id="references">
+      <h2>References</h2>
+      <ul>
+        <li>Brown, Szeliski, Winder. <em>Multi-Image Matching using Multi-Scale Oriented Patches (MOPS)</em>.</li>
+        <li>Harris & Stephens. <em>A Combined Corner and Edge Detector</em>.</li>
+        <li>Lowe. <em>Distinctive Image Features from Scale-Invariant Keypoints</em> – ratio test idea.</li>
+      </ul>
+      <p class="footer">Last updated: <span id="last-updated">—</span></p>
+    </section>
+
+    <footer class="footer">
+      <p>
+        © 2025 Eduardo Cortes. This page is part of CS180/280A coursework. Images are my own unless otherwise noted.
+      </p>
+      <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write-up are my own; I reviewed and verified technical details.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Set last updated time programmatically
+    const span = document.getElementById('last-updated');
+    if (span) {
+      const d = new Date();
+      const fmt = new Intl.DateTimeFormat([], { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
+      span.textContent = fmt;
+    }
+  </script>
+</body>
+</html>
 
