@@ -85,7 +85,16 @@
         a nearest-neighbor ratio test, and robust homography estimation using 4-point RANSAC. The final step warps and blends images
         into mosaics and compares manual vs. automatic stitching.
       </p>
-    </section>
+    <p class="callout"><strong>What problem are we solving?</strong> Given two overlapping photos of the same scene, we want the computer to find how they line up and blend them into a single panorama—automatically. That means (1) finding distinctive points in each image, (2) describing the local appearance around each point so we can compare points across images, (3) matching points that look alike, (4) using a robust method to estimate how one image should be warped to align with the other, and (5) rendering the final stitched mosaic.</p>
+<p><strong>High‑level recipe:</strong></p>
+<ol>
+  <li><em>Corners:</em> detect repeatable, distinctive points (like window corners) in each image.</li>
+  <li><em>Descriptors:</em> turn a small patch around each point into an 8×8 numeric fingerprint that’s resilient to brightness changes.</li>
+  <li><em>Matching:</em> compare fingerprints between images and keep confident pairs using a safety test (Lowe ratio).</li>
+  <li><em>Geometry:</em> from many tentative matches, estimate a single planar warp (a <em>homography</em>) that maps one image into the other using RANSAC.</li>
+  <li><em>Stitch:</em> warp, place both images on a shared canvas, and feather along overlaps for a seamless panorama.</li>
+</ol>
+</section>
 
     <section id="b1">
       <h2>B.1 – Harris Corner Detection</h2>
@@ -111,14 +120,60 @@
         </figure>
       </div>
 
-      <h3>Code (Harris + ANMS)</h3>
-      <pre class="code"># Harris response (normalized) + ANMS
-resp = harris_corner_response(gray, k_coeff=0.04, window_size=3)
-xs, ys, vals = nms_local_maxima(resp, threshold_relative=0.01)
-xs_sel, ys_sel, _ = adaptive_nms(xs, ys, vals, top_k=750)</pre>
-      <p class="callout">
-        We compute the Harris response (structure tensor with Gaussian smoothing), suppress non-maxima with a local 3×3 window, then apply ANMS to keep well-distributed, strong corners.
-      </p>
+      <p><strong>Intuition.</strong> A corner is a spot where intensity changes strongly in <em>both</em> directions (think: a checkerboard corner vs. a flat wall). Harris measures how much the image varies around each pixel. High scores indicate good, repeatable points that are easy to re‑find in another photo of the same scene.</p>
+      <p><strong>Why ANMS?</strong> Raw detection can cluster many points in one small area and ignore others. ANMS keeps the strongest points while spreading them out spatially, which improves coverage and makes the later matching step more stable.</p>
+
+      <h3>Implementation (Harris + ANMS)</h3>
+      <pre class="code">def harris_corner_response(gray: np.ndarray, k_coeff: float = harris_k_coeff, window_size: int = harris_window_size) -> np.ndarray:
+    sobel_x = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=np.float32)
+    sobel_y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=np.float32)
+    grad_x = conv2d_same(gray, sobel_x)
+    grad_y = conv2d_same(gray, sobel_y)
+    grad_xx, grad_yy, grad_xy = grad_x * grad_x, grad_y * grad_y, grad_x * grad_y
+    gauss = gaussian_kernel_2d(window_size if window_size % 2 else window_size + 1, sigma=1.0)
+    sum_xx = conv2d_same(grad_xx, gauss)
+    sum_yy = conv2d_same(grad_yy, gauss)
+    sum_xy = conv2d_same(grad_xy, gauss)
+    determinant = sum_xx * sum_yy - sum_xy * sum_xy
+    trace = sum_xx + sum_yy
+    response = determinant - k_coeff * (trace ** 2)
+    r_min, r_max = float(response.min()), float(response.max())
+    if r_max &gt; r_min:
+        return (response - r_min) / (r_max - r_min)
+    return np.zeros_like(response)
+
+def nms_local_maxima(harris_norm: np.ndarray, threshold_relative: float = harris_threshold_relative):
+    height, width = harris_norm.shape
+    threshold_value = threshold_relative * float(harris_norm.max())
+    keep_mask = np.zeros_like(harris_norm, dtype=bool)
+    for y in range(1, height - 1):
+        for x in range(1, width - 1):
+            value = harris_norm[y, x]
+            if value &lt; threshold_value:
+                continue
+            window = harris_norm[y - 1:y + 2, x - 1:x + 2]
+            if value == window.max() and np.count_nonzero(window == value) == 1:
+                keep_mask[y, x] = True
+    ys, xs = np.where(keep_mask)
+    vals = harris_norm[ys, xs]
+    return xs.astype(np.float32), ys.astype(np.float32), vals.astype(np.float32)
+
+def adaptive_nms(x_coords: np.ndarray, y_coords: np.ndarray, strengths: np.ndarray, top_k: int = max_keypoints_after_anms):
+    count = len(x_coords)
+    if count == 0:
+        return x_coords, y_coords, strengths
+    order = np.argsort(-strengths)
+    x_coords, y_coords, strengths = x_coords[order], y_coords[order], strengths[order]
+    radii_sq = np.full(count, np.inf, dtype=np.float32)
+    for i in range(1, count):
+        dx = x_coords[:i] - x_coords[i]
+        dy = y_coords[:i] - y_coords[i]
+        dist2 = dx * dx + dy * dy
+        radii_sq[i] = float(np.min(dist2)) if i &gt; 0 else np.inf
+    radii_sq[0] = np.inf
+    selected = np.argsort(-radii_sq)[:min(top_k, count)]
+    return x_coords[selected], y_coords[selected], strengths[selected]</pre>
+      <p class="callout"><strong>Walkthrough.</strong> <em>harris_corner_response</em> builds x/y gradients with Sobel filters, aggregates squared terms with a Gaussian window (approximating the structure tensor), and returns a normalized Harris score per pixel. <em>nms_local_maxima</em> keeps only strict 3×3 peaks above a relative threshold. <em>adaptive_nms</em> then sorts by strength and assigns each point a suppression radius to the nearest stronger point; we keep the largest radii so corners are spatially spread out and stable for matching.</p>
     </section>
 
     <section id="b2">
@@ -147,14 +202,58 @@ xs_sel, ys_sel, _ = adaptive_nms(xs, ys, vals, top_k=750)</pre>
         </figure>
       </div>
 
-      <h3>Code (Patch → 8×8 → z-score)</h3>
-      <pre class="code">patch = extract_square_patch(gray, cx, cy, size=40)
-patch8 = resize_patch_to_8x8(patch)             # downsample 40→8
-desc   = normalize_descriptor_vector(patch8)    # bias–gain normalize (z-score)</pre>
+      <h3>Implementation (Patch → 8×8 → z‑score)</h3>
+      <pre class="code">def extract_square_patch(gray: np.ndarray, center_x: float, center_y: float, size: int = 40) -> np.ndarray:
+    height, width = gray.shape
+    half = size // 2
+    x0, y0 = int(round(center_x)) - half, int(round(center_y)) - half
+    x1, y1 = x0 + size, y0 + size
+    if x0 &lt; 0 or y0 &lt; 0 or x1 &gt; width or y1 &gt; height:
+        return None
+    return gray[y0:y1, x0:x1].copy()
+
+def resize_patch_to_8x8(patch_40: np.ndarray) -> np.ndarray:
+    patch_uint8 = (np.clip(patch_40, 0, 1) * 255).astype(np.uint8)
+    image = Image.fromarray(patch_uint8)
+    image8 = image.resize((8, 8), resample=Image.BILINEAR)
+    return np.asarray(image8).astype(np.float32) / 255.0
+
+def normalize_descriptor_vector(patch_8x8: np.ndarray) -> np.ndarray:
+    vector = patch_8x8.flatten().astype(np.float32)
+    mean_value = float(np.mean(vector))
+    std_value = float(np.std(vector))
+    if std_value &lt; 1e-6:
+        std_value = 1.0
+    return (vector - mean_value) / std_value
+
+def build_patch_descriptors(gray: np.ndarray, x_coords: np.ndarray, y_coords: np.ndarray):
+    descriptor_list, kept_x, kept_y, display_patches = [], [], [], []
+    for x_val, y_val in zip(x_coords, y_coords):
+        patch = extract_square_patch(gray, x_val, y_val, size=40)
+        if patch is None:
+            continue
+        patch8 = resize_patch_to_8x8(patch)
+        descriptor = normalize_descriptor_vector(patch8)
+        descriptor_list.append(descriptor)
+        kept_x.append(x_val)
+        kept_y.append(y_val)
+        display_patches.append(normalize_patch_for_display(patch8))
+    if len(descriptor_list) == 0:
+        return np.zeros((0, 64), dtype=np.float32), np.array([]), np.array([]), np.zeros((0, 8, 8), dtype=np.float32)
+    return np.vstack(descriptor_list), np.array(kept_x), np.array(kept_y), np.stack(display_patches, axis=0)</pre>
+      <p class="callout"><strong>Walkthrough.</strong> We crop a 40×40 window centered on each corner (skip if it would go out of bounds), bilinearly resize to 8×8 to reduce noise and standardize size, then flatten and z‑score the 64 pixels to remove brightness/contrast bias. The helper returns both the numeric descriptors (for matching) and display‑normalized patches (for the montages you see above).</p>
       <p class="callout">
         Each corner produces a 40×40 patch (bounds-checked), which is bilinearly resized to 8×8 and z-score normalized to suppress illumination bias and gain differences.
       </p>
-    </section>
+    <p><strong>Step‑by‑step (from scratch):</strong></p>
+<ol>
+  <li>For each selected corner, crop a 40×40 grayscale window centered on it.</li>
+  <li>Downsample that window to 8×8 using bilinear interpolation. This reduces noise and makes all descriptors the same size.</li>
+  <li>Normalize the 64 values: subtract the mean and divide by the standard deviation (z‑score). This makes descriptors less sensitive to brightness/exposure.</li>
+  <li>Optionally visualize: draw 40×40 boxes on the original images and show grids of the 8×8 patches (shown above for Set 1).</li>
+</ol>
+
+      </section>
 
     <section id="b3">
       <h2>B.3 – Feature Matching</h2>
@@ -170,17 +269,30 @@ desc   = normalize_descriptor_vector(patch8)    # bias–gain normalize (z-score
           <img src="images/set2_matches_filtered.jpg" alt="Set 2 – Filtered matches after Lowe ratio test" />
           <figcaption>Set 2 · Filtered matches (post ratio test).</figcaption>
         </figure>
-        <figure>
-          <img src="images/set3_matches_filtered.jpg" alt="Set 3 – Filtered matches after Lowe ratio test" />
-          <figcaption>Set 3 · Filtered matches (post ratio test).</figcaption>
-        </figure>
       </div>
 
-      <h3>Code (Lowe ratio)</h3>
-      <pre class="code">D = np.sum((desc_L[:,None,:] - desc_R[None,:,:])**2, axis=2)
-j1, j2 = np.argsort(D, axis=1)[:,0], np.argsort(D, axis=1)[:,1]
-mask = (D[np.arange(len(D)), j1] / D[np.arange(len(D)), j2]) &lt; 0.7
-matches = [(i, j1[i]) for i in np.where(mask)[0]]</pre>
+      <p><strong>What is a “match”?</strong> After we convert patches to 64‑D vectors, we can measure how similar two patches are by their Euclidean distance (small = similar). For each left‑image descriptor we find its nearest neighbor in the right image.</p>
+      <p><strong>Why the ratio test?</strong> Sometimes the best and second‑best matches are similarly good—an ambiguity that often means the match isn’t reliable. The ratio test accepts a pair only if “best” is noticeably better than “runner‑up”. This prunes many false pairs while keeping the real ones.</p>
+
+      <h3>Implementation (Lowe ratio matching)</h3>
+      <pre class="code">def match_with_lowe_ratio(descriptors_left: np.ndarray, descriptors_right: np.ndarray, ratio_threshold: float = lowe_ratio_threshold):
+    matches = []
+    if len(descriptors_left) == 0 or len(descriptors_right) == 0:
+        return matches
+    distances = np.sum((descriptors_left[:, None, :] - descriptors_right[None, :, :]) ** 2, axis=2)
+    for idx_left in range(descriptors_left.shape[0]):
+        row = distances[idx_left]
+        order = np.argsort(row)
+        idx_right_best = int(order[0])
+        idx_right_next = int(order[1]) if len(order) &gt; 1 else int(order[0])
+        best_dist = float(row[idx_right_best])
+        next_dist = float(row[idx_right_next])
+        if next_dist == 0:
+            continue
+        if best_dist / next_dist &lt; ratio_threshold:
+            matches.append((idx_left, idx_right_best, best_dist, next_dist))
+    return matches</pre>
+      <p class="callout"><strong>Walkthrough.</strong> We compute the dense left‑to‑right distance matrix once, then for each left descriptor pick the smallest (best) and second‑smallest (runner‑up) distances. A match is kept only if <code>best/next &lt; ratio_threshold</code> (default 0.7), which filters out ambiguous pairs that are likely false.</p>
       <p class="callout">
         For each left descriptor, we take the best and second-best right matches by L2 distance and accept the match if the best/second-best ratio is below 0.7.
       </p>
@@ -198,9 +310,54 @@ matches = [(i, j1[i]) for i in np.where(mask)[0]]</pre>
         </figure>
       </div>
 
-      <h3>Code (RANSAC + warp)</h3>
-      <pre class="code">H, inliers = ransac_fit_homography(src_pts, dst_pts, max_iters=2000, eps=3.0)
-mosaic = inverse_warp_to_canvas(right_rgb, np.linalg.inv(H), H_canvas, W_canvas, offset)</pre>
+      <p><strong>What is a homography?</strong> It’s a 3×3 matrix that maps points from one flat view to another (e.g., two photos of the same wall taken from different positions). With enough correct point pairs, we can estimate this matrix and use it to align entire images.</p>
+      <p><strong>Why RANSAC?</strong> Some matches are wrong. RANSAC repeatedly picks 4 random pairs, computes a candidate homography, and counts how many matches agree (inliers). The candidate with the most inliers “wins”, and we refit using just those inliers for accuracy.</p>
+      <p><strong>From math to pixels:</strong> Once we have the homography, we <em>inverse‑warp</em> the moving image into a shared canvas and blend overlaps with soft weights so seams fade away.</p>
+
+      <h3>Implementation (RANSAC + inverse warp)</h3>
+      <pre class="code">def ransac_fit_homography(src_xy: np.ndarray, dst_xy: np.ndarray, max_iters: int = ransac_max_iterations, eps: float = ransac_inlier_epsilon):
+    best_inlier_mask = None
+    best_homography = None
+    count = src_xy.shape[0]
+    if count &lt; 4:
+        return None, np.array([], dtype=bool)
+    for _ in range(max_iters):
+        sample_idx = np.random.choice(count, 4, replace=False)
+        candidate = dlt_homography(src_xy[sample_idx], dst_xy[sample_idx])
+        predicted = apply_homography_points(src_xy, candidate)
+        error = np.sqrt(np.sum((predicted - dst_xy) ** 2, axis=1))
+        inliers = error &lt; eps
+        if best_inlier_mask is None or np.count_nonzero(inliers) &gt; np.count_nonzero(best_inlier_mask):
+            best_inlier_mask = inliers
+            best_homography = candidate
+    if best_inlier_mask is not None and np.count_nonzero(best_inlier_mask) &gt;= 4:
+        best_homography = dlt_homography(src_xy[best_inlier_mask], dst_xy[best_inlier_mask])
+    else:
+        best_homography = None
+        best_inlier_mask = np.zeros(count, dtype=bool)
+    return best_homography, best_inlier_mask
+
+def inverse_warp_to_canvas(src_image: np.ndarray, inverse_homography: np.ndarray, canvas_height: int, canvas_width: int, canvas_offset_xy: Tuple[int, int], mode: str = "bilinear"):
+    offset_x, offset_y = canvas_offset_xy
+    channels = src_image.shape[2] if src_image.ndim == 3 else 1
+    canvas = np.zeros((canvas_height, canvas_width, channels), dtype=np.float32)
+    alpha = np.zeros((canvas_height, canvas_width), dtype=np.float32)
+    sampler = sample_bilinear if mode == "bilinear" else sample_nearest
+    h0, h1, h2 = inverse_homography[0], inverse_homography[1], inverse_homography[2]
+    for Y in range(canvas_height):
+        for X in range(canvas_width):
+            Xc, Yc = float(X), float(Y)
+            w = h2[0] * (Xc - offset_x) + h2[1] * (Yc - offset_y) + h2[2]
+            if abs(w) &lt; 1e-12:
+                continue
+            x = (h0[0] * (Xc - offset_x) + h0[1] * (Yc - offset_y) + h0[2]) / w
+            y = (h1[0] * (Xc - offset_x) + h1[1] * (Yc - offset_y) + h1[2]) / w
+            value, ok = sampler(src_image, x, y)
+            if ok:
+                canvas[Y, X] = value
+                alpha[Y, X] = 1.0
+    return canvas, alpha</pre>
+      <p class="callout"><strong>Walkthrough.</strong> <em>ransac_fit_homography</em> loops over random 4‑point samples to propose a homography via DLT, labels inliers by reprojection error &lt; <code>eps</code>, and keeps the proposal with the largest consensus before refitting on all inliers. <em>inverse_warp_to_canvas</em> then maps every output pixel back into the source via the inverse homography and samples (bilinear by default); we also produce an <code>alpha</code> mask so overlapping images can be feather‑blended smoothly.</p>
       <p class="callout">
         We randomly sample 4 correspondences to fit H (DLT), score inliers by reprojection error, keep the best consensus, refit on all inliers, then inverse-warp and feather-blend onto a common canvas.
       </p>
@@ -208,7 +365,7 @@ mosaic = inverse_warp_to_canvas(right_rgb, np.linalg.inv(H), H_canvas, W_canvas,
 
     <section id="results">
       <h2>Results Gallery</h2>
-      <p>A compact gallery of favorites from the project. Click to view full resolution.</p>
+      <p>Below are stitched panoramas produced by the full pipeline. When judging quality, look for: (1) straight lines that stay straight across the join, (2) consistent exposure where the two images overlap, and (3) minimal “ghosting” of moving objects. Minor waviness or faint seams can occur when the scene isn’t perfectly planar or the overlap is small.</p>
       <div class="grid cols-3">
         <figure class="wide">
           <a href="images/set1_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set1_mosaic_auto.jpg" alt="Gallery mosaic – Set 1" /></a>
@@ -227,9 +384,8 @@ mosaic = inverse_warp_to_canvas(right_rgb, np.linalg.inv(H), H_canvas, W_canvas,
 
     <section id="implementation">
       <h2>Implementation Notes</h2>
-      <p>
-        Briefly summarize key implementation choices (e.g., Harris parameters, ANMS radius logic, descriptor normalization, ratio threshold, RANSAC iterations and inlier metric), and include any ablations or pitfalls.
-      </p>
+      <p><strong>Parameters in plain English.</strong> The values below control how sensitive each stage is. Lowering the Harris threshold yields more corners (including noisy ones); raising it leaves only the most confident corners. The ratio threshold trades recall for precision in matching: smaller values mean fewer but cleaner matches. The RANSAC epsilon is the maximum reprojection error (in pixels) to accept a match as an inlier, and the iteration count controls how long we search for a good consensus.</p>
+      <p><strong>Common pitfalls.</strong> Blurry images or very small overlaps can reduce the number of reliable matches. Large exposure differences can also hurt descriptor comparisons; our z‑score normalization helps but doesn’t fix everything. If a scene isn’t close to planar (e.g., has strong parallax), a single homography cannot perfectly align it—some residual misalignment is expected.</p>
       <pre class="code"># Example parameters (replace with your final values)
 max_keypoints_after_anms = 750
 harris_k_coeff = 0.04
