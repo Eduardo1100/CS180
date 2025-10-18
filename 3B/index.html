@@ -42,6 +42,10 @@
     @media (max-width: 880px) { .grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 680px) { .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; } }
 
+    /* Make specific horizontally wide figures span the full grid width */
+    .grid figure.wide { grid-column: 1 / -1; }
+    .grid figure.wide img { display: block; width: 100%; height: auto; }
+
     figure { margin: 0; background: var(--card); border: 1px solid var(--muted); border-radius: 1rem; overflow: hidden; }
     figure img { display: block; width: 100%; height: auto; }
     figcaption { padding: 0.75rem 0.9rem; font-size: 0.95rem; color: var(--ink-dim); border-top: 1px solid var(--muted); }
@@ -109,14 +113,12 @@
       </div>
 
       <h3>Code (Harris + ANMS)</h3>
-      <pre class="code">left_response  = harris_corner_response(left_gray)
-right_response = harris_corner_response(right_gray)
-left_x_all,  left_y_all,  left_scores_all  = nms_local_maxima(left_response,  harris_threshold_relative)
-right_x_all, right_y_all, right_scores_all = nms_local_maxima(right_response, harris_threshold_relative)
-left_x,  left_y,  _ = adaptive_nms(left_x_all,  left_y_all,  left_scores_all,  max_keypoints_after_anms)
-right_x, right_y, _ = adaptive_nms(right_x_all, right_y_all, right_scores_all, max_keypoints_after_anms)</pre>
+      <pre class="code"># Harris response (normalized) + ANMS
+resp = harris_corner_response(gray, k_coeff=0.04, window_size=3)
+xs, ys, vals = nms_local_maxima(resp, threshold_relative=0.01)
+xs_sel, ys_sel, _ = adaptive_nms(xs, ys, vals, top_k=750)</pre>
       <p class="callout">
-        Harris response → local NMS → ANMS keeps strong, well-spaced corners.
+        We compute the Harris response (structure tensor with Gaussian smoothing), suppress non-maxima with a local 3×3 window, then apply ANMS to keep well-distributed, strong corners.
       </p>
     </section>
 
@@ -136,22 +138,22 @@ right_x, right_y, _ = adaptive_nms(right_x_all, right_y_all, right_scores_all, m
           <img src="images/set1_desc_B_patch_boxes.jpg" alt="Set 1 – Image B patch boxes + centers" />
           <figcaption>Set 1 · Image B · 40×40 patch boxes (inlier corners) + center points.</figcaption>
         </figure>
-        <figure>
+        <figure class="wide">
           <img src="images/set1_desc_A_montage.png" alt="Set 1 – Image A montage of 8×8 descriptors" />
           <figcaption>Set 1 · Image A · Montage of 8×8 normalized descriptor patches.</figcaption>
         </figure>
-        <figure>
+        <figure class="wide">
           <img src="images/set1_desc_B_montage.png" alt="Set 1 – Image B montage of 8×8 descriptors" />
           <figcaption>Set 1 · Image B · Montage of 8×8 normalized descriptor patches.</figcaption>
         </figure>
       </div>
 
       <h3>Code (Patch → 8×8 → z-score)</h3>
-      <pre class="code">patch   = extract_square_patch(gray, x_val, y_val, size=40)
-patch8  = resize_patch_to_8x8(patch)             # 40→8
-descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
+      <pre class="code">patch = extract_square_patch(gray, cx, cy, size=40)
+patch8 = resize_patch_to_8x8(patch)             # downsample 40→8
+desc   = normalize_descriptor_vector(patch8)    # bias–gain normalize (z-score)</pre>
       <p class="callout">
-        Each corner yields a 40×40 patch, resized to 8×8 and z-scored to reduce illumination effects.
+        Each corner produces a 40×40 patch (bounds-checked), which is bilinearly resized to 8×8 and z-score normalized to suppress illumination bias and gain differences.
       </p>
     </section>
 
@@ -161,7 +163,7 @@ descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
         We compute nearest neighbors in descriptor space and apply Lowe’s <em>ratio test</em> to keep reliable correspondences.
       </p>
       <div class="grid cols-2">
-        <figure>
+        <figure class="wide">
           <img src="images/set1_matches_filtered.jpg" alt="Set 1 – Filtered matches after Lowe ratio test" />
           <figcaption>Set 1 · Filtered matches (post ratio test).</figcaption>
         </figure>
@@ -172,25 +174,12 @@ descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
       </div>
 
       <h3>Code (Lowe ratio)</h3>
-      <pre class="code">def match_with_lowe_ratio(descriptors_left: np.ndarray, descriptors_right: np.ndarray, ratio_threshold: float = lowe_ratio_threshold):
-    matches = []
-    if len(descriptors_left) == 0 or len(descriptors_right) == 0:
-        return matches
-    distances = np.sum((descriptors_left[:, None, :] - descriptors_right[None, :, :]) ** 2, axis=2)
-    for idx_left in range(descriptors_left.shape[0]):
-        row = distances[idx_left]
-        order = np.argsort(row)
-        idx_right_best = int(order[0])
-        idx_right_next = int(order[1]) if len(order) > 1 else int(order[0])
-        best_dist = float(row[idx_right_best])
-        next_dist = float(row[idx_right_next])
-        if next_dist == 0:
-            continue
-        if best_dist / next_dist &lt; ratio_threshold:
-            matches.append((idx_left, idx_right_best, best_dist, next_dist))
-    return matches</pre>
+      <pre class="code">D = np.sum((desc_L[:,None,:] - desc_R[None,:,:])**2, axis=2)
+j1, j2 = np.argsort(D, axis=1)[:,0], np.argsort(D, axis=1)[:,1]
+mask = (D[np.arange(len(D)), j1] / D[np.arange(len(D)), j2]) &lt; 0.7
+matches = [(i, j1[i]) for i in np.where(mask)[0]]</pre>
       <p class="callout">
-        Accept a match only if best/second-best distance ratio is below <code>lowe_ratio_threshold</code>.
+        For each left descriptor, we take the best and second-best right matches by L2 distance and accept the match if the best/second-best ratio is below 0.7.
       </p>
     </section>
 
@@ -200,7 +189,7 @@ descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
         Using 4-point RANSAC, we estimate a homography from inlier matches, warp one image into the other’s frame, and blend to form a mosaic.
       </p>
       <div class="grid cols-2">
-        <figure>
+        <figure class="wide">
           <img src="images/set1_ransac_inliers.jpg" alt="Set 1 – RANSAC inliers visualization" />
           <figcaption>Set 1 · RANSAC inliers (green) vs outliers (red).</figcaption>
         </figure>
@@ -211,29 +200,10 @@ descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
       </div>
 
       <h3>Code (RANSAC + warp)</h3>
-      <pre class="code">def ransac_fit_homography(src_xy: np.ndarray, dst_xy: np.ndarray, max_iters: int = ransac_max_iterations, eps: float = ransac_inlier_epsilon):
-    best_inlier_mask = None
-    best_homography = None
-    count = src_xy.shape[0]
-    if count &lt; 4:
-        return None, np.array([], dtype=bool)
-    for _ in range(max_iters):
-        sample_idx = np.random.choice(count, 4, replace=False)
-        candidate = dlt_homography(src_xy[sample_idx], dst_xy[sample_idx])
-        predicted = apply_homography_points(src_xy, candidate)
-        error = np.sqrt(np.sum((predicted - dst_xy) ** 2, axis=1))
-        inliers = error &lt; eps
-        if best_inlier_mask is None or np.count_nonzero(inliers) &gt; np.count_nonzero(best_inlier_mask):
-            best_inlier_mask = inliers
-            best_homography = candidate
-    if best_inlier_mask is not None and np.count_nonzero(best_inlier_mask) &gt;= 4:
-        best_homography = dlt_homography(src_xy[best_inlier_mask], dst_xy[best_inlier_mask])
-    else:
-        best_homography = None
-        best_inlier_mask = np.zeros(count, dtype=bool)
-    return best_homography, best_inlier_mask</pre>
+      <pre class="code">H, inliers = ransac_fit_homography(src_pts, dst_pts, max_iters=2000, eps=3.0)
+mosaic = inverse_warp_to_canvas(right_rgb, np.linalg.inv(H), H_canvas, W_canvas, offset)</pre>
       <p class="callout">
-        Sample 4 correspondences → fit H (DLT) → score inliers by reprojection error → keep best set → refit on inliers → inverse-warp + feather-blend.
+        We randomly sample 4 correspondences to fit H (DLT), score inliers by reprojection error, keep the best consensus, refit on all inliers, then inverse-warp and feather-blend onto a common canvas.
       </p>
     </section>
 
@@ -261,7 +231,7 @@ descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
       <p>
         Briefly summarize key implementation choices (e.g., Harris parameters, ANMS radius logic, descriptor normalization, ratio threshold, RANSAC iterations and inlier metric), and include any ablations or pitfalls.
       </p>
-      <pre class="code">
+      <pre class="code"># Example parameters (replace with your final values)
 max_keypoints_after_anms = 750
 harris_k_coeff = 0.04
 harris_window_size = 3
