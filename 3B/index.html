@@ -82,13 +82,6 @@
         a nearest-neighbor ratio test, and robust homography estimation using 4-point RANSAC. The final step warps and blends images
         into mosaics and compares manual vs. automatic stitching.
       </p>
-      <div class="callout"><strong>Deliverables quick list:</strong>
-        <span class="tag">Harris corners (±ANMS)</span>
-        <span class="tag">Descriptor patches</span>
-        <span class="tag">Matched features</span>
-        <span class="tag">RANSAC inliers</span>
-        <span class="tag">≥3 automatic mosaics</span>
-      </div>
     </section>
 
     <section id="b1">
@@ -96,14 +89,22 @@
       <p>
         We detect corners with a Harris interest point operator and optionally refine the set with <em>Adaptive Non-Maximal Suppression</em> (ANMS).
       </p>
-      <div class="grid cols-2">
+      <div class="grid cols-4">
         <figure>
-          <img src="images/harris_corners_raw.jpg" alt="Harris corners overlaid on the original image" />
-          <figcaption>Detected Harris corners (all responses over threshold).</figcaption>
+          <img src="images/set1_harris_A.jpg" alt="Set 1 – Image A Harris corners" />
+          <figcaption>Set 1 · Image A · Harris corners.</figcaption>
         </figure>
         <figure>
-          <img src="images/harris_corners_anms.jpg" alt="ANMS-selected corners overlaid on the original image" />
-          <figcaption>ANMS-selected corners (diverse, strong points).</figcaption>
+          <img src="images/set1_harris_B.jpg" alt="Set 1 – Image B Harris corners" />
+          <figcaption>Set 1 · Image B · Harris corners.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/set1_anms_A.jpg" alt="Set 1 – Image A ANMS corners" />
+          <figcaption>Set 1 · Image A · ANMS-selected corners.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/set1_anms_B.jpg" alt="Set 1 – Image B ANMS corners" />
+          <figcaption>Set 1 · Image B · ANMS-selected corners.</figcaption>
         </figure>
       </div>
     </section>
@@ -132,18 +133,12 @@
       </p>
       <div class="grid cols-2">
         <figure>
-          <img src="images/matched_features_raw.jpg" alt="Raw candidate matches between the two images" />
-          <figcaption>Candidate matches prior to ratio test.</figcaption>
+          <img src="images/set1_matches_filtered.jpg" alt="Set 1 – Filtered matches after Lowe ratio test" />
+          <figcaption>Set 1 · Filtered matches (post ratio test).</figcaption>
         </figure>
         <figure>
-          <img src="images/matched_features_filtered.jpg" alt="Filtered matches after Lowe ratio test" />
-          <figcaption>Filtered matches after ratio test (cleaner, more reliable pairs).</figcaption>
-        </figure>
-      </div>
-      <div class="grid cols-2">
-        <figure>
-          <img src="images/match_distribution_plot.png" alt="Histogram of nearest-neighbor distance ratios" />
-          <figcaption>(Optional) Distribution of NN distance ratios, indicating the chosen threshold.</figcaption>
+          <img src="images/set2_matches_filtered.jpg" alt="Set 2 – Filtered matches after Lowe ratio test" />
+          <figcaption>Set 2 · Filtered matches (post ratio test).</figcaption>
         </figure>
       </div>
     </section>
@@ -153,46 +148,30 @@
       <p>
         Using 4-point RANSAC, we estimate a homography from inlier matches, warp one image into the other’s frame, and blend to form a mosaic.
       </p>
-      <div class="grid cols-3">
-        <figure>
-          <img src="images/ransac_inliers.jpg" alt="Inlier/outlier visualization for RANSAC" />
-          <figcaption>RANSAC inliers (green) vs outliers (red).</figcaption>
-        </figure>
-        <figure>
-          <img src="images/homography_warped.jpg" alt="One image warped by the estimated homography" />
-          <figcaption>Warp result using the estimated homography.</figcaption>
-        </figure>
-        <figure>
-          <img src="images/blend_overlay.jpg" alt="Blend/overlay visualization" />
-          <figcaption>(Optional) Blend/overlay check of alignment.</figcaption>
-        </figure>
-      </div>
-
-      <h3>Manual vs Automatic Stitching</h3>
       <div class="grid cols-2">
         <figure>
-          <img src="images/mosaic_manual.jpg" alt="Manually stitched panorama" />
-          <figcaption>Manual mosaic (from Part A pipeline).</figcaption>
+          <img src="images/set1_ransac_inliers.jpg" alt="Set 1 – RANSAC inliers visualization" />
+          <figcaption>Set 1 · RANSAC inliers (green) vs outliers (red).</figcaption>
         </figure>
         <figure>
-          <img src="images/mosaic_auto.jpg" alt="Automatically stitched panorama" />
-          <figcaption>Automatic mosaic (this part’s pipeline).</figcaption>
+          <img src="images/set1_mosaic_auto.jpg" alt="Set 1 – Automatically stitched mosaic" />
+          <figcaption>Set 1 · Automatically stitched mosaic.</figcaption>
         </figure>
       </div>
 
       <h3>Additional Automatic Mosaics (≥ 3)</h3>
       <div class="grid cols-3">
         <figure>
-          <img src="images/mosaic_variation1.jpg" alt="Automatic mosaic example 1" />
-          <figcaption>Automatic mosaic #1.</figcaption>
+          <img src="images/set1_mosaic_auto.jpg" alt="Automatic mosaic – Set 1" />
+          <figcaption>Automatic mosaic · Set 1.</figcaption>
         </figure>
         <figure>
-          <img src="images/mosaic_variation2.jpg" alt="Automatic mosaic example 2" />
-          <figcaption>Automatic mosaic #2.</figcaption>
+          <img src="images/set2_mosaic_auto.jpg" alt="Automatic mosaic – Set 2" />
+          <figcaption>Automatic mosaic · Set 2.</figcaption>
         </figure>
         <figure>
-          <img src="images/mosaic_variation3.jpg" alt="Automatic mosaic example 3" />
-          <figcaption>Automatic mosaic #3.</figcaption>
+          <img src="images/set3_mosaic_auto.jpg" alt="Automatic mosaic – Set 3" />
+          <figcaption>Automatic mosaic · Set 3.</figcaption>
         </figure>
       </div>
     </section>
@@ -221,16 +200,16 @@
       <p>A compact gallery of favorites from the project. Click to view full resolution.</p>
       <div class="grid cols-3">
         <figure>
-          <a href="images/mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/mosaic_auto.jpg" alt="Highlighted automatic mosaic" /></a>
-          <figcaption>Highlighted automatic mosaic.</figcaption>
+          <a href="images/set1_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set1_mosaic_auto.jpg" alt="Gallery mosaic – Set 1" /></a>
+          <figcaption>Gallery mosaic · Set 1.</figcaption>
         </figure>
         <figure>
-          <a href="images/mosaic_variation1.jpg" target="_blank" rel="noopener"><img src="images/mosaic_variation1.jpg" alt="Gallery mosaic 1" /></a>
-          <figcaption>Gallery mosaic #1.</figcaption>
+          <a href="images/set2_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set2_mosaic_auto.jpg" alt="Gallery mosaic – Set 2" /></a>
+          <figcaption>Gallery mosaic · Set 2.</figcaption>
         </figure>
         <figure>
-          <a href="images/mosaic_variation2.jpg" target="_blank" rel="noopener"><img src="images/mosaic_variation2.jpg" alt="Gallery mosaic 2" /></a>
-          <figcaption>Gallery mosaic #2.</figcaption>
+          <a href="images/set3_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set3_mosaic_auto.jpg" alt="Gallery mosaic – Set 3" /></a>
+          <figcaption>Gallery mosaic · Set 3.</figcaption>
         </figure>
       </div>
     </section>
@@ -280,4 +259,3 @@ RANSAC_EPS = 3.0  # inlier pixel threshold</pre>
   </script>
 </body>
 </html>
-
