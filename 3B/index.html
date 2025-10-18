@@ -58,8 +58,11 @@
 </head>
 <body>
   <nav>
-    <div class="nav-inner">
-      <a href="#overview">Overview</a>
+    $1
+      <a href="#a1">A.1 Raw Inputs</a>
+      <a href="#a2">A.2 Homography</a>
+      <a href="#a3">A.3 Rectification</a>
+      <a href="#a4">A.4 Mosaics</a>
       <a href="#b1">B.1 Harris Corners</a>
       <a href="#b2">B.2 Descriptors</a>
       <a href="#b3">B.3 Matching</a>
@@ -95,6 +98,166 @@
   <li><em>Stitch:</em> warp, place both images on a shared canvas, and feather along overlaps for a seamless panorama.</li>
 </ol>
 </section>
+
+    <!-- ===================== 3A CONTENT (merged, same 3B style) ===================== -->
+    <section id="a1">
+      <h2>A.1 – Raw Inputs (Project 3A)</h2>
+      <p>
+        The 3A half of the project is about <strong>planar rectification</strong> and <strong>hand‑picked correspondences</strong> for mosaics.
+        Here are the overlapping photos (3 per scene) used later for mosaics, plus two angled shots used for rectification examples.
+      </p>
+      <div class="grid cols-3">
+        <figure><img src="images_A/a1_set1_src01.jpg" alt="Set 1 – src01"><figcaption>Set 1 · src01</figcaption></figure>
+        <figure><img src="images_A/a1_set1_src02.jpg" alt="Set 1 – src02"><figcaption>Set 1 · src02</figcaption></figure>
+        <figure><img src="images_A/a1_set1_src03.jpg" alt="Set 1 – src03"><figcaption>Set 1 · src03</figcaption></figure>
+        <figure><img src="images_A/a1_set2_src01.jpg" alt="Set 2 – src01"><figcaption>Set 2 · src01</figcaption></figure>
+        <figure><img src="images_A/a1_set2_src02.jpg" alt="Set 2 – src02"><figcaption>Set 2 · src02</figcaption></figure>
+        <figure><img src="images_A/a1_set2_src03.jpg" alt="Set 2 – src03"><figcaption>Set 2 · src03</figcaption></figure>
+        <figure><img src="images_A/a1_set3_src01.jpg" alt="Set 3 – src01"><figcaption>Set 3 · src01</figcaption></figure>
+        <figure><img src="images_A/a1_set3_src02.jpg" alt="Set 3 – src02"><figcaption>Set 3 · src02</figcaption></figure>
+        <figure><img src="images_A/a1_set3_src03.jpg" alt="Set 3 – src03"><figcaption>Set 3 · src03</figcaption></figure>
+      </div>
+      <h3>Rectification sources</h3>
+      <div class="grid cols-2">
+        <figure><img src="images_A/a1_rect_poster_raw.jpg" alt="Rectification – poster"><figcaption>Poster (oblique)</figcaption></figure>
+        <figure><img src="images_A/a1_rect_tiles_raw.jpg" alt="Rectification – tiles"><figcaption>Tiles (oblique)</figcaption></figure>
+      </div>
+      <p class="callout"><strong>Plain‑English goal.</strong> Given an oblique photo of a planar surface (poster/tiles), estimate a warp that makes it look fronto‑parallel—like you photographed it straight on.</p>
+    </section>
+
+    <section id="a2">
+      <h2>A.2 – Homography (Manual Correspondences → 3×3 H)</h2>
+      <p>
+        A <strong>homography</strong> is a 3×3 matrix that maps any point on a plane from one image to the other. In 3A, we select matching points by hand and then solve for <em>H</em> using a numerically stable version of the Direct Linear Transform (DLT) with point normalization.
+      </p>
+      <h3>Implementation — Normalized DLT</h3>
+      <pre class="code">def _normalize_points(xy: np.ndarray):
+    mu = xy.mean(axis=0)
+    d  = np.sqrt(((xy - mu) ** 2).sum(axis=1)).mean()
+    s  = np.sqrt(2.0) / max(d, 1e-8)
+    T  = np.array([[s, 0, -s * mu[0]],
+                   [0, s, -s * mu[1]],
+                   [0, 0, 1.0]], dtype=np.float64)
+    xy_h = np.c_[xy, np.ones(len(xy))]
+    xy_n = (T @ xy_h.T).T
+    return T, xy_n[:, :2]
+
+def dlt_homography(xy_src: np.ndarray, xy_dst: np.ndarray) -> np.ndarray:
+    assert xy_src.shape == xy_dst.shape and xy_src.shape[0] &gt;= 4
+    T_src, src_n = _normalize_points(xy_src)
+    T_dst, dst_n = _normalize_points(xy_dst)
+    A = []
+    for (x, y), (u, v) in zip(src_n, dst_n):
+        A.append([-x, -y, -1, 0, 0, 0, u * x, u * y, u])
+        A.append([ 0,  0,  0,-x,-y,-1, v * x, v * y, v])
+    A = np.asarray(A, dtype=np.float64)
+    _, _, Vt = np.linalg.svd(A)
+    Hn = Vt[-1].reshape(3, 3)
+    H  = np.linalg.inv(T_dst) @ Hn @ T_src
+    if abs(H[2,2]) &gt; 1e-12: H /= H[2,2]
+    return H</pre>
+      <p class="callout"><strong>Why normalize?</strong> Centering and scaling the points improves numerical conditioning so SVD returns a stable solution. We solve for <em>H</em> in the normalized space, then “de‑normalize” back to pixels.</p>
+    </section>
+
+    <section id="a3">
+      <h2>A.3 – Warping &amp; Rectification</h2>
+      <p>
+        With <em>H</em> in hand, we render a rectified image via <strong>inverse warping</strong>: for each pixel on the output canvas, we map backwards through <em>H⁻¹</em> to sample the right spot in the input. This avoids holes and duplicates.
+      </p>
+      <h3>Implementation — Inverse Warping + Bilinear Sampling</h3>
+      <pre class="code">def bilinear_sample(img: np.ndarray, x: float, y: float):
+    H, W = img.shape[:2]
+    if x &lt; 0 or y &lt; 0 or x &gt; W - 1 or y &gt; H - 1:
+        return None, False
+    x0 = int(np.floor(x)); x1 = min(x0 + 1, W - 1)
+    y0 = int(np.floor(y)); y1 = min(y0 + 1, H - 1)
+    ax = x - x0; ay = y - y0
+    I00 = img[y0, x0]; I10 = img[y0, x1]
+    I01 = img[y1, x0]; I11 = img[y1, x1]
+    I0 = (1 - ax) * I00 + ax * I10
+    I1 = (1 - ay) * I01 + ay * I11
+    return (1 - ay) * I0 + ay * I1, True
+
+def inverse_warp_to_canvas(src_img: np.ndarray, H_inv: np.ndarray,
+                           out_h: int, out_w: int, offset_xy: tuple[int,int],
+                           mode: str = "bilinear"):
+    ox, oy = offset_xy
+    C = src_img.shape[2] if src_img.ndim == 3 else 1
+    out   = np.zeros((out_h, out_w, C), dtype=np.float32)
+    alpha = np.zeros((out_h, out_w), dtype=np.float32)
+    sampler = bilinear_sample if mode == "bilinear" else sample_nearest
+    h0, h1, h2 = H_inv[0], H_inv[1], H_inv[2]
+    for Y in range(out_h):
+        for X in range(out_w):
+            Xc, Yc = float(X), float(Y)
+            w = h2[0]*(Xc-ox) + h2[1]*(Yc-oy) + h2[2]
+            if abs(w) &lt; 1e-12: continue
+            x = (h0[0]*(Xc-ox) + h0[1]*(Yc-oy) + h0[2]) / w
+            y = (h1[0]*(Xc-ox) + h1[1]*(Yc-oy) + h1[2]) / w
+            val, ok = sampler(src_img, x, y)
+            if ok:
+                out[Y, X] = val
+                alpha[Y, X] = 1.0
+    return out, alpha</pre>
+      <div class="grid cols-2">
+        <figure><img src="images_A/a3_rect1_warp_nn.jpg" alt="Rectification – poster (NN)"><figcaption>Poster rectified (nearest neighbor).</figcaption></figure>
+        <figure><img src="images_A/a3_rect1_warp_bilinear.jpg" alt="Rectification – poster (bilinear)"><figcaption>Poster rectified (bilinear) — fewer jaggies.</figcaption></figure>
+        <figure><img src="images_A/a3_rect2_warp_nn.jpg" alt="Rectification – tiles (NN)"><figcaption>Tiles rectified (nearest neighbor).</figcaption></figure>
+        <figure><img src="images_A/a3_rect2_warp_bilinear.jpg" alt="Rectification – tiles (bilinear)"><figcaption>Tiles rectified (bilinear) — smoother lines.</figcaption></figure>
+      </div>
+      <p class="callout"><strong>Takeaway.</strong> Nearest neighbor is fast but jaggy; bilinear is smoother because it averages the 4 closest pixels.</p>
+    </section>
+
+    <section id="a4">
+      <h2>A.4 – Panoramic Mosaics (3A)</h2>
+      <p>
+        For 3A mosaics, we registered each non‑reference image directly to a single reference, sized a common canvas from all warped footprints, inverse‑warped each image into that canvas, and <strong>feather‑blended</strong> overlaps.
+      </p>
+      <h3>Implementation — Canvas sizing & Feathered blending</h3>
+      <pre class="code">def global_canvas_from_pairs(img_shapes: list[tuple[int,int]], H_maps: list[np.ndarray]):
+    xs_min, xs_max, ys_min, ys_max = [], [], [], []
+    for (H, W), Hc in zip(img_shapes, H_maps):
+        xmin, xmax, ymin, ymax = warp_footprint_bbox(W, H, Hc)
+        xs_min.append(xmin); xs_max.append(xmax)
+        ys_min.append(ymin); ys_max.append(ymax)
+    Xmin, Xmax = np.floor(min(xs_min)), np.ceil(max(xs_max))
+    Ymin, Ymax = np.floor(min(ys_min)), np.ceil(max(ys_max))
+    out_w = int(max(1, Xmax - Xmin))
+    out_h = int(max(1, Ymax - Ymin))
+    offset = (-int(Xmin), -int(Ymin))
+    return out_h, out_w, offset
+
+def center_falloff_weights(alpha: np.ndarray) -> np.ndarray:
+    H, W = alpha.shape
+    y = np.arange(H)[:, None]
+    x = np.arange(W)[None, :]
+    d_left, d_right = x, (W - 1 - x)
+    d_top,  d_bot   = y, (H - 1 - y)
+    d = np.minimum(np.minimum(d_left, d_right), np.minimum(d_top, d_bot))
+    d = d * alpha
+    m = d.max() if d.max() &gt; 0 else 1.0
+    return d / m
+
+def feather_blend_stack(images: list[np.ndarray], alphas: list[np.ndarray]) -> np.ndarray:
+    H, W, C = images[0].shape
+    accum = np.zeros((H, W, C), dtype=np.float32)
+    wsum  = np.zeros((H, W, 1), dtype=np.float32)
+    for img, a in zip(images, alphas):
+        w = center_falloff_weights(a) * (a &gt; 0).astype(np.float32)
+        w = w[..., None]
+        accum += w * img
+        wsum  += w
+    wsum[wsum == 0] = 1.0
+    return accum / wsum</pre>
+      <div class="grid cols-3">
+        <figure class="wide"><img src="images_A/a4_mosaic1_final.jpg" alt="3A mosaic 1"><figcaption>3A · Mosaic 1.</figcaption></figure>
+        <figure class="wide"><img src="images_A/a4_mosaic2_final.jpg" alt="3A mosaic 2"><figcaption>3A · Mosaic 2.</figcaption></figure>
+        <figure class="wide"><img src="images_A/a4_mosaic3_final.jpg" alt="3A mosaic 3"><figcaption>3A · Mosaic 3.</figcaption></figure>
+      </div>
+      <p class="callout"><strong>Blending intuition.</strong> In overlaps, we down‑weight pixels near each image border (where alignment is slightly less reliable), so the middle of each image contributes more. The result is a gentler, seam‑free transition.</p>
+    </section>
+
+    <!-- ===================== end 3A content ===================== -->
 
     <section id="b1">
       <h2>B.1 – Harris Corner Detection</h2>
@@ -267,6 +430,10 @@ def build_patch_descriptors(gray: np.ndarray, x_coords: np.ndarray, y_coords: np
         </figure>
         <figure>
           <img src="images/set2_matches_filtered.jpg" alt="Set 2 – Filtered matches after Lowe ratio test" />
+          <figcaption>Set 2 · Filtered matches (post ratio test).</figcaption>
+        </figure>
+        <figure class="wide">
+          <img src="images/set3_matches_filtered.jpg" alt="Set 2 – Filtered matches after Lowe ratio test" />
           <figcaption>Set 2 · Filtered matches (post ratio test).</figcaption>
         </figure>
       </div>
