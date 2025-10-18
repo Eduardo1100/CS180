@@ -126,7 +126,7 @@ xs_sel, ys_sel, _ = adaptive_nms(xs, ys, vals, top_k=750)</pre>
       <h2>B.2 – Feature Descriptor Extraction</h2>
       <p>
         Around each selected corner, we sample a <strong>40×40</strong> window (blurred / downsampled) to produce a normalized <strong>8×8</strong> grayscale descriptor (bias–gain normalized).
-        Below are the <em>Set 1</em> overlays (40×40 boxes with center points at inlier corners) and the corresponding 8×8 descriptor montages.
+        Below are some of the <em>Set 1</em> overlays (40×40 boxes with center points at some corners) and the corresponding 8×8 descriptor montages.
       </p>
 
       <div class="grid cols-4">
@@ -167,7 +167,7 @@ desc   = normalize_descriptor_vector(patch8)    # bias–gain normalize (z-score
           <img src="images/set1_matches_filtered.jpg" alt="Set 1 – Filtered matches after Lowe ratio test" />
           <figcaption>Set 1 · Filtered matches (post ratio test).</figcaption>
         </figure>
-        <figure>
+        <figure class="wide">
           <img src="images/set2_matches_filtered.jpg" alt="Set 2 – Filtered matches after Lowe ratio test" />
           <figcaption>Set 2 · Filtered matches (post ratio test).</figcaption>
         </figure>
@@ -214,8 +214,8 @@ mosaic = inverse_warp_to_canvas(right_rgb, np.linalg.inv(H), H_canvas, W_canvas,
         <figure class="wide">
           <a href="images/set1_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set1_mosaic_auto.jpg" alt="Gallery mosaic – Set 1" /></a>
           <figcaption>Gallery mosaic · Set 1.</figcaption>
-        </figure class="wide">
-        <figure>
+        </figure>
+        <figure class="wide">
           <a href="images/set2_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set2_mosaic_auto.jpg" alt="Gallery mosaic – Set 2" /></a>
           <figcaption>Gallery mosaic · Set 2.</figcaption>
         </figure>
