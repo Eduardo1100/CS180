@@ -130,11 +130,11 @@ xs_sel, ys_sel, _ = adaptive_nms(xs, ys, vals, top_k=750)</pre>
       </p>
 
       <div class="grid cols-4">
-        <figure>
+        <figure class="wide">
           <img src="images/set1_desc_A_patch_boxes.jpg" alt="Set 1 – Image A patch boxes + centers" />
           <figcaption>Set 1 · Image A · 40×40 patch boxes (inlier corners) + center points.</figcaption>
         </figure>
-        <figure>
+        <figure class="wide">
           <img src="images/set1_desc_B_patch_boxes.jpg" alt="Set 1 – Image B patch boxes + centers" />
           <figcaption>Set 1 · Image B · 40×40 patch boxes (inlier corners) + center points.</figcaption>
         </figure>
@@ -211,15 +211,15 @@ mosaic = inverse_warp_to_canvas(right_rgb, np.linalg.inv(H), H_canvas, W_canvas,
       <h2>Results Gallery</h2>
       <p>A compact gallery of favorites from the project. Click to view full resolution.</p>
       <div class="grid cols-3">
-        <figure>
+        <figure class="wide">
           <a href="images/set1_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set1_mosaic_auto.jpg" alt="Gallery mosaic – Set 1" /></a>
           <figcaption>Gallery mosaic · Set 1.</figcaption>
-        </figure>
+        </figure class="wide">
         <figure>
           <a href="images/set2_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set2_mosaic_auto.jpg" alt="Gallery mosaic – Set 2" /></a>
           <figcaption>Gallery mosaic · Set 2.</figcaption>
         </figure>
-        <figure>
+        <figure class="wide">
           <a href="images/set3_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set3_mosaic_auto.jpg" alt="Gallery mosaic – Set 3" /></a>
           <figcaption>Gallery mosaic · Set 3.</figcaption>
         </figure>
