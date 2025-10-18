@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CS180/280A Project 3B – Feature Matching for Autostitching: https://eduardo1100.github.io/CS180/3B/index.html</title>
-  <meta name="description" content="Project 3B webpage: Harris corners, descriptors, matching, RANSAC mosaics, and bells & whistles." />
+  <title>CS180/280A Projects 3A & 3B — Rectification, Mosaics, and Autostitching</title>
+  <meta name="description" content="Combined CS180 project 3A + 3B webpage: Homography, inverse warping, mosaics (3A) and Harris corners, descriptors, matching, RANSAC mosaics (3B)." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -33,6 +33,7 @@
     h2 { font-size: clamp(1.4rem, 2vw, 1.8rem); margin: 0 0 0.75rem; }
     h3 { font-size: 1.05rem; margin: 1.25rem 0 0.25rem; color: var(--ink-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
     p { line-height: 1.7; color: var(--ink-dim); }
+    ol, ul { color: var(--ink-dim); line-height: 1.7; }
     .callout { background: #0f141c; border: 1px solid var(--muted); border-radius: 0.9rem; padding: 1rem 1rem; }
 
     .grid { display: grid; gap: 0.9rem; }
@@ -42,7 +43,7 @@
     @media (max-width: 880px) { .grid.cols-4 { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 680px) { .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; } }
 
-    /* Make specific horizontally wide figures span the full grid width */
+    /* Wide-only images (horizontal visuals) */
     .grid figure.wide { grid-column: 1 / -1; }
     .grid figure.wide img { display: block; width: 100%; height: auto; }
 
@@ -58,7 +59,8 @@
 </head>
 <body>
   <nav>
-    $1
+    <div class="nav-inner">
+      <a href="#overview">Overview</a>
       <a href="#a1">A.1 Raw Inputs</a>
       <a href="#a2">A.2 Homography</a>
       <a href="#a3">A.3 Rectification</a>
@@ -75,7 +77,7 @@
 
   <div class="container">
     <header>
-      <h1 class="title">Project 3B – Feature Matching for Autostitching</h1>
+      <h1 class="title">Projects 3A & 3B — Planar Rectification, Mosaics & Automatic Stitching</h1>
       <p class="subtitle">CS180/280A – Intro to Computer Vision & Computational Photography</p>
       <p class="subtitle">Eduardo Cortes · Fall 2025</p>
     </header>
@@ -83,29 +85,44 @@
     <section id="overview">
       <h2>Overview</h2>
       <p>
-        This project implements an end-to-end pipeline for <strong>automatic panorama stitching</strong>, including
-        Harris corner detection, adaptive non-maximal suppression (ANMS), patch-based descriptors, feature matching with
-        a nearest-neighbor ratio test, and robust homography estimation using 4-point RANSAC. The final step warps and blends images
-        into mosaics and compares manual vs. automatic stitching.
+        This combined page covers <strong>3A</strong> (manual correspondences → homography → inverse warping → mosaics) and <strong>3B</strong> (automatic corner detection, patch descriptors, feature matching, RANSAC homography, and mosaics).
       </p>
-    <p class="callout"><strong>What problem are we solving?</strong> Given two overlapping photos of the same scene, we want the computer to find how they line up and blend them into a single panorama—automatically. That means (1) finding distinctive points in each image, (2) describing the local appearance around each point so we can compare points across images, (3) matching points that look alike, (4) using a robust method to estimate how one image should be warped to align with the other, and (5) rendering the final stitched mosaic.</p>
-<p><strong>High‑level recipe:</strong></p>
-<ol>
-  <li><em>Corners:</em> detect repeatable, distinctive points (like window corners) in each image.</li>
-  <li><em>Descriptors:</em> turn a small patch around each point into an 8×8 numeric fingerprint that’s resilient to brightness changes.</li>
-  <li><em>Matching:</em> compare fingerprints between images and keep confident pairs using a safety test (Lowe ratio).</li>
-  <li><em>Geometry:</em> from many tentative matches, estimate a single planar warp (a <em>homography</em>) that maps one image into the other using RANSAC.</li>
-  <li><em>Stitch:</em> warp, place both images on a shared canvas, and feather along overlaps for a seamless panorama.</li>
-</ol>
-</section>
+      <p class="callout"><strong>What problem are we solving?</strong> Given overlapping photos of the same scene, align them onto a shared coordinate system and blend them into a single panorama. 3A solves the geometry with human-picked correspondences; 3B automates the correspondences and makes the pipeline end-to-end.</p>
+      <ol>
+        <li><em>3A:</em> pick point pairs, solve a <strong>homography</strong>, <strong>inverse-warp</strong> images, and <strong>feather-blend</strong>.</li>
+        <li><em>3B:</em> detect <strong>corners</strong>, extract <strong>descriptors</strong>, <strong>match</strong> with a ratio test, run <strong>RANSAC</strong>, warp & blend.</li>
+      </ol>
+    </section>
 
-    <!-- ===================== 3A CONTENT (merged, same 3B style) ===================== -->
+    <!-- ===================== 3A CONTENT (with walkthroughs) ===================== -->
     <section id="a1">
       <h2>A.1 – Raw Inputs (Project 3A)</h2>
       <p>
-        The 3A half of the project is about <strong>planar rectification</strong> and <strong>hand‑picked correspondences</strong> for mosaics.
-        Here are the overlapping photos (3 per scene) used later for mosaics, plus two angled shots used for rectification examples.
+        The 3A portion uses overlapping photos (three per scene) for mosaics and two oblique shots for rectification examples. Below, we also include the I/O helpers used across 3A so you can see the exact pixel plumbing.
       </p>
+
+      <h3>Implementation — EXIF-aware I/O helpers</h3>
+      <pre class="code">def read_image(path: str) -> np.ndarray:
+    image = Image.open(path)
+    image = ImageOps.exif_transpose(image)
+    array = np.asarray(image).astype(np.float32) / 255.0
+    if array.ndim == 2:
+        array = np.stack([array, array, array], axis=-1)
+    return array
+
+def save_image(path: str, array: np.ndarray):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    array8 = (np.clip(array, 0, 1) * 255).astype(np.uint8)
+    Image.fromarray(array8).save(path, exif=b"")
+
+def to_grayscale(rgb: np.ndarray) -> np.ndarray:
+    if rgb.ndim == 2:
+        return rgb.astype(np.float32)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    return (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.float32)</pre>
+
+      <p class="callout"><strong>Walkthrough.</strong> <em>read_image</em> loads and applies EXIF orientation so pixels match on-screen orientation; returns float32 in [0,1]. If grayscale, it replicates to 3 channels so later code expecting RGB doesn’t break. <em>save_image</em> clips, converts to uint8, and strips EXIF to avoid double rotations. <em>to_grayscale</em> uses standard luminance weights.</p>
+
       <div class="grid cols-3">
         <figure><img src="images_A/a1_set1_src01.jpg" alt="Set 1 – src01"><figcaption>Set 1 · src01</figcaption></figure>
         <figure><img src="images_A/a1_set1_src02.jpg" alt="Set 1 – src02"><figcaption>Set 1 · src02</figcaption></figure>
@@ -117,19 +134,20 @@
         <figure><img src="images_A/a1_set3_src02.jpg" alt="Set 3 – src02"><figcaption>Set 3 · src02</figcaption></figure>
         <figure><img src="images_A/a1_set3_src03.jpg" alt="Set 3 – src03"><figcaption>Set 3 · src03</figcaption></figure>
       </div>
+
       <h3>Rectification sources</h3>
       <div class="grid cols-2">
         <figure><img src="images_A/a1_rect_poster_raw.jpg" alt="Rectification – poster"><figcaption>Poster (oblique)</figcaption></figure>
         <figure><img src="images_A/a1_rect_tiles_raw.jpg" alt="Rectification – tiles"><figcaption>Tiles (oblique)</figcaption></figure>
       </div>
-      <p class="callout"><strong>Plain‑English goal.</strong> Given an oblique photo of a planar surface (poster/tiles), estimate a warp that makes it look fronto‑parallel—like you photographed it straight on.</p>
     </section>
 
     <section id="a2">
       <h2>A.2 – Homography (Manual Correspondences → 3×3 H)</h2>
       <p>
-        A <strong>homography</strong> is a 3×3 matrix that maps any point on a plane from one image to the other. In 3A, we select matching points by hand and then solve for <em>H</em> using a numerically stable version of the Direct Linear Transform (DLT) with point normalization.
+        A <strong>homography</strong> is a 3×3 matrix that maps any point on a plane from one image to another. In 3A, we select corresponding points by hand and then solve for <em>H</em> using a numerically stable, <em>normalized DLT</em>.
       </p>
+
       <h3>Implementation — Normalized DLT</h3>
       <pre class="code">def _normalize_points(xy: np.ndarray):
     mu = xy.mean(axis=0)
@@ -143,7 +161,7 @@
     return T, xy_n[:, :2]
 
 def dlt_homography(xy_src: np.ndarray, xy_dst: np.ndarray) -> np.ndarray:
-    assert xy_src.shape == xy_dst.shape and xy_src.shape[0] &gt;= 4
+    assert xy_src.shape == xy_dst.shape and xy_src.shape[0] >= 4
     T_src, src_n = _normalize_points(xy_src)
     T_dst, dst_n = _normalize_points(xy_dst)
     A = []
@@ -154,20 +172,42 @@ def dlt_homography(xy_src: np.ndarray, xy_dst: np.ndarray) -> np.ndarray:
     _, _, Vt = np.linalg.svd(A)
     Hn = Vt[-1].reshape(3, 3)
     H  = np.linalg.inv(T_dst) @ Hn @ T_src
-    if abs(H[2,2]) &gt; 1e-12: H /= H[2,2]
+    if abs(H[2,2]) > 1e-12: H /= H[2,2]
     return H</pre>
-      <p class="callout"><strong>Why normalize?</strong> Centering and scaling the points improves numerical conditioning so SVD returns a stable solution. We solve for <em>H</em> in the normalized space, then “de‑normalize” back to pixels.</p>
+
+      <h3>Walkthrough (deep dive)</h3>
+      <ol>
+        <li><strong>Collect reliable pairs.</strong> Pick at least 4 non‑collinear correspondences on the same physical plane (e.g., corners of posters, tile intersections). More points (6–12) help average out click noise; spread them across the plane to avoid degeneracy.</li>
+        <li><strong>Normalize both sets.</strong> <code>_normalize_points</code> recenters around the mean and scales so the average radius is √2. This makes the linear system well‑conditioned so SVD finds a stable nullspace vector. Skipping normalization often produces wildly different results depending on the coordinate scale.</li>
+        <li><strong>Build the DLT system.</strong> Each pair contributes two equations derived from <code>H [x,y,1]^T ∝ [u,v,1]^T</code>. Stacking all rows yields <code>A h = 0</code> up to scale. We solve for the last singular vector (the direction of minimal error).</li>
+        <li><strong>Denormalize & scale.</strong> Map <code>Hn</code> back to pixel space by <code>T_dst^{-1} · Hn · T_src</code>; divide so <code>H[2,2]=1</code> for readability. This doesn’t change the mapping, just the representation.</li>
+        <li><strong>Sanity checks.</strong> (a) Reproject the input points and report the RMS pixel error; you should see sub‑pixel to a few pixels depending on click noise. (b) Visualize epipolar‑looking distortions—if straight lines bend, you probably mixed planes or mis‑clicked.</li>
+        <li><strong>Edge cases.</strong> Four nearly collinear points make <code>A</code> rank‑deficient → unstable <em>H</em>. Avoid all points being from a tiny patch: lever arm is too short and errors explode away from the patch.</li>
+      </ol>
+
+      <h3>Applying H to points (numerical safety)</h3>
+      <pre class="code">def apply_homography_points(xy: np.ndarray, H: np.ndarray) -> np.ndarray:
+    xy_h = np.c_[xy, np.ones(len(xy))]
+    uvw  = (H @ xy_h.T).T
+    w = uvw[:, 2:3]
+    out = np.full((len(xy), 2), np.nan, dtype=np.float64)
+    good = np.abs(w) > 1e-8
+    if np.any(good):
+        out[good[:, 0]] = uvw[good[:, 0], :2] / w[good[:, 0]]
+    return out</pre>
+      <p class="callout"><strong>Why check <code>w</code>?</strong> Points that map near the projective horizon (<code>w ≈ 0</code>) would blow up under division. Marking them as <code>NaN</code> prevents downstream crashes and makes debugging footprints easier.</p>
     </section>
 
     <section id="a3">
       <h2>A.3 – Warping &amp; Rectification</h2>
       <p>
-        With <em>H</em> in hand, we render a rectified image via <strong>inverse warping</strong>: for each pixel on the output canvas, we map backwards through <em>H⁻¹</em> to sample the right spot in the input. This avoids holes and duplicates.
+        Given <em>H</em> from the oblique view to a fronto‑parallel target, we render a rectified image using <strong>inverse warping</strong>: for each output pixel, we ask “where in the source would this have come from?” and sample there. Inverse warping avoids holes and duplicated pixels.
       </p>
+
       <h3>Implementation — Inverse Warping + Bilinear Sampling</h3>
       <pre class="code">def bilinear_sample(img: np.ndarray, x: float, y: float):
     H, W = img.shape[:2]
-    if x &lt; 0 or y &lt; 0 or x &gt; W - 1 or y &gt; H - 1:
+    if x < 0 or y < 0 or x > W - 1 or y > H - 1:
         return None, False
     x0 = int(np.floor(x)); x1 = min(x0 + 1, W - 1)
     y0 = int(np.floor(y)); y1 = min(y0 + 1, H - 1)
@@ -191,7 +231,7 @@ def inverse_warp_to_canvas(src_img: np.ndarray, H_inv: np.ndarray,
         for X in range(out_w):
             Xc, Yc = float(X), float(Y)
             w = h2[0]*(Xc-ox) + h2[1]*(Yc-oy) + h2[2]
-            if abs(w) &lt; 1e-12: continue
+            if abs(w) < 1e-12: continue
             x = (h0[0]*(Xc-ox) + h0[1]*(Yc-oy) + h0[2]) / w
             y = (h1[0]*(Xc-ox) + h1[1]*(Yc-oy) + h1[2]) / w
             val, ok = sampler(src_img, x, y)
@@ -199,33 +239,56 @@ def inverse_warp_to_canvas(src_img: np.ndarray, H_inv: np.ndarray,
                 out[Y, X] = val
                 alpha[Y, X] = 1.0
     return out, alpha</pre>
+
+      <h3>Walkthrough (pixel‑accurate rectification)</h3>
+      <ol>
+        <li><strong>Target geometry.</strong> Decide the rectified canvas size by measuring the expected real‑world aspect ratio (e.g., poster width:height) or by warping four corners and taking their bounding box. Bigger canvases preserve detail but cost time.</li>
+        <li><strong>Back‑project each output pixel.</strong> We pre‑split <code>H⁻¹</code> rows (<code>h0,h1,h2</code>) so the tight inner loop only does a handful of multiplies and one division.</li>
+        <li><strong>Interpolate.</strong> Bilinear combines the four nearest neighbors weighted by fractional offsets; it smooths jaggies compared to nearest but preserves edges fairly well.</li>
+        <li><strong>Validity mask.</strong> We write 1 into <code>alpha</code> only when (x,y) lies inside the source bounds. This mask becomes crucial when blending multiple views.</li>
+        <li><strong>Offsets.</strong> <code>offset_xy</code> lets us place warped content with negative coordinates onto a positive‑indexed array. For single‑view rectification it’s usually (0,0); for mosaics it’s often nonzero.</li>
+        <li><strong>Quality tips.</strong> (a) If aliasing appears on fine patterns, pre‑blur slightly before warping. (b) If borders look dark, ensure out‑of‑bounds samples return <code>ok=False</code> rather than zeros that get averaged in.</li>
+      </ol>
+
       <div class="grid cols-2">
         <figure><img src="images_A/a3_rect1_warp_nn.jpg" alt="Rectification – poster (NN)"><figcaption>Poster rectified (nearest neighbor).</figcaption></figure>
         <figure><img src="images_A/a3_rect1_warp_bilinear.jpg" alt="Rectification – poster (bilinear)"><figcaption>Poster rectified (bilinear) — fewer jaggies.</figcaption></figure>
         <figure><img src="images_A/a3_rect2_warp_nn.jpg" alt="Rectification – tiles (NN)"><figcaption>Tiles rectified (nearest neighbor).</figcaption></figure>
         <figure><img src="images_A/a3_rect2_warp_bilinear.jpg" alt="Rectification – tiles (bilinear)"><figcaption>Tiles rectified (bilinear) — smoother lines.</figcaption></figure>
       </div>
-      <p class="callout"><strong>Takeaway.</strong> Nearest neighbor is fast but jaggy; bilinear is smoother because it averages the 4 closest pixels.</p>
+      <p class="callout"><strong>Takeaway.</strong> Nearest is fast but jaggy; bilinear trades a tiny bit of sharpness for much smoother edges. For mosaics you can consider bicubic or Lanczos, but bilinear is typically sufficient.</p>
     </section>
 
     <section id="a4">
-      <h2>A.4 – Panoramic Mosaics (3A)</h2>
+      <h2>A.4 – Panoramic Mosaics (Project 3A)</h2>
       <p>
-        For 3A mosaics, we registered each non‑reference image directly to a single reference, sized a common canvas from all warped footprints, inverse‑warped each image into that canvas, and <strong>feather‑blended</strong> overlaps.
+        We register all images to a single reference, estimate a canvas that fits every warped footprint, render each image with inverse warping, and <strong>feather‑blend</strong> overlaps so seams fade away.
       </p>
+
       <h3>Implementation — Canvas sizing & Feathered blending</h3>
-      <pre class="code">def global_canvas_from_pairs(img_shapes: list[tuple[int,int]], H_maps: list[np.ndarray]):
+      <pre class="code">def image_corners_wh(width: int, height: int) -> np.ndarray:
+    return np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float64)
+
+def warp_footprint_bbox(width: int, height: int, H_map: np.ndarray):
+    corners = image_corners_wh(width, height)
+    warped  = apply_homography_points(corners, H_map)
+    xs, ys  = warped[:, 0], warped[:, 1]
+    if np.all(np.isnan(xs)) or np.all(np.isnan(ys)):
+        return 0.0, 0.0, 0.0, 0.0
+    return np.nanmin(xs), np.nanmax(xs), np.nanmin(ys), np.nanmax(ys)
+
+def global_canvas_from_maps(image_shapes: List[Tuple[int, int]], H_maps: List[np.ndarray]):
     xs_min, xs_max, ys_min, ys_max = [], [], [], []
-    for (H, W), Hc in zip(img_shapes, H_maps):
+    for (H, W), Hc in zip(image_shapes, H_maps):
         xmin, xmax, ymin, ymax = warp_footprint_bbox(W, H, Hc)
         xs_min.append(xmin); xs_max.append(xmax)
         ys_min.append(ymin); ys_max.append(ymax)
     Xmin, Xmax = np.floor(min(xs_min)), np.ceil(max(xs_max))
     Ymin, Ymax = np.floor(min(ys_min)), np.ceil(max(ys_max))
-    out_w = int(max(1, Xmax - Xmin))
-    out_h = int(max(1, Ymax - Ymin))
-    offset = (-int(Xmin), -int(Ymin))
-    return out_h, out_w, offset
+    canvas_w = int(max(1, Xmax - Xmin))
+    canvas_h = int(max(1, Ymax - Ymin))
+    offset   = (-int(Xmin), -int(Ymin))
+    return canvas_h, canvas_w, offset
 
 def center_falloff_weights(alpha: np.ndarray) -> np.ndarray:
     H, W = alpha.shape
@@ -235,30 +298,40 @@ def center_falloff_weights(alpha: np.ndarray) -> np.ndarray:
     d_top,  d_bot   = y, (H - 1 - y)
     d = np.minimum(np.minimum(d_left, d_right), np.minimum(d_top, d_bot))
     d = d * alpha
-    m = d.max() if d.max() &gt; 0 else 1.0
+    m = d.max() if d.max() > 0 else 1.0
     return d / m
 
-def feather_blend_stack(images: list[np.ndarray], alphas: list[np.ndarray]) -> np.ndarray:
+def feather_blend(images: List[np.ndarray], alphas: List[np.ndarray]) -> np.ndarray:
     H, W, C = images[0].shape
     accum = np.zeros((H, W, C), dtype=np.float32)
     wsum  = np.zeros((H, W, 1), dtype=np.float32)
     for img, a in zip(images, alphas):
-        w = center_falloff_weights(a) * (a &gt; 0).astype(np.float32)
+        w = center_falloff_weights(a) * (a > 0).astype(np.float32)
         w = w[..., None]
         accum += w * img
         wsum  += w
     wsum[wsum == 0] = 1.0
     return accum / wsum</pre>
+
+      <h3>Walkthrough (full pipeline)</h3>
+      <ol>
+        <li><strong>Choose a reference.</strong> Pick the most central or sharpest frame as the origin (identity homography). Estimate <em>H</em> for every other image that maps it into this reference frame (manual correspondences in 3A).</li>
+        <li><strong>Predict footprints.</strong> Warp each image’s four corners using its <em>H</em>. Taking global min/max over x and y gives the canvas bounds; the negative mins become the <code>offset</code>.</li>
+        <li><strong>Render with masks.</strong> For each image, call <code>inverse_warp_to_canvas</code> to get an RGB array and an <code>alpha</code> mask indicating valid pixels. Store both.</li>
+        <li><strong>Feather weights.</strong> Convert <code>alpha</code> to a smooth weight that decays near borders so overlaps blend gently instead of creating hard seams. (For even better results, multi‑band blending is a drop‑in upgrade.)</li>
+        <li><strong>Accumulate & normalize.</strong> Sum <code>w * I</code> across all images and divide by the sum of weights per pixel. Pixels that only one image covers get weight 1; overlaps become a weighted average.</li>
+        <li><strong>Practical tips.</strong> (a) Render the reference frame last or give it slightly higher weights to anchor exposure. (b) If exposures differ a lot, do a quick per‑image gain match in the overlap region before blending.</li>
+      </ol>
+
       <div class="grid cols-3">
         <figure class="wide"><img src="images_A/a4_mosaic1_final.jpg" alt="3A mosaic 1"><figcaption>3A · Mosaic 1.</figcaption></figure>
-        <figure class="wide"><img src="images_A/a4_mosaic2_final.jpg" alt="3A mosaic 1"><figcaption>3A · Mosaic 2.</figcaption></figure>
-        <figure class="wide"><img src="images_A/a4_mosaic3_final.jpg" alt="3A mosaic 1"><figcaption>3A · Mosaic 3.</figcaption></figure>
+        <figure class="wide"><img src="images_A/a4_mosaic2_final.jpg" alt="3A mosaic 2"><figcaption>3A · Mosaic 2.</figcaption></figure>
+        <figure class="wide"><img src="images_A/a4_mosaic3_final.jpg" alt="3A mosaic 3"><figcaption>3A · Mosaic 3.</figcaption></figure>
       </div>
-      <p class="callout"><strong>Blending intuition.</strong> In overlaps, we down‑weight pixels near each image border (where alignment is slightly less reliable), so the middle of each image contributes more. The result is a gentler, seam‑free transition.</p>
     </section>
-
     <!-- ===================== end 3A content ===================== -->
 
+    <!-- ===================== 3B CONTENT ===================== -->
     <section id="b1">
       <h2>B.1 – Harris Corner Detection</h2>
       <p>
@@ -301,7 +374,7 @@ def feather_blend_stack(images: list[np.ndarray], alphas: list[np.ndarray]) -> n
     trace = sum_xx + sum_yy
     response = determinant - k_coeff * (trace ** 2)
     r_min, r_max = float(response.min()), float(response.max())
-    if r_max &gt; r_min:
+    if r_max > r_min:
         return (response - r_min) / (r_max - r_min)
     return np.zeros_like(response)
 
@@ -312,7 +385,7 @@ def nms_local_maxima(harris_norm: np.ndarray, threshold_relative: float = harris
     for y in range(1, height - 1):
         for x in range(1, width - 1):
             value = harris_norm[y, x]
-            if value &lt; threshold_value:
+            if value < threshold_value:
                 continue
             window = harris_norm[y - 1:y + 2, x - 1:x + 2]
             if value == window.max() and np.count_nonzero(window == value) == 1:
@@ -332,7 +405,7 @@ def adaptive_nms(x_coords: np.ndarray, y_coords: np.ndarray, strengths: np.ndarr
         dx = x_coords[:i] - x_coords[i]
         dy = y_coords[:i] - y_coords[i]
         dist2 = dx * dx + dy * dy
-        radii_sq[i] = float(np.min(dist2)) if i &gt; 0 else np.inf
+        radii_sq[i] = float(np.min(dist2)) if i > 0 else np.inf
     radii_sq[0] = np.inf
     selected = np.argsort(-radii_sq)[:min(top_k, count)]
     return x_coords[selected], y_coords[selected], strengths[selected]</pre>
@@ -371,7 +444,7 @@ def adaptive_nms(x_coords: np.ndarray, y_coords: np.ndarray, strengths: np.ndarr
     half = size // 2
     x0, y0 = int(round(center_x)) - half, int(round(center_y)) - half
     x1, y1 = x0 + size, y0 + size
-    if x0 &lt; 0 or y0 &lt; 0 or x1 &gt; width or y1 &gt; height:
+    if x0 < 0 or y0 < 0 or x1 > width or y1 > height:
         return None
     return gray[y0:y1, x0:x1].copy()
 
@@ -385,7 +458,7 @@ def normalize_descriptor_vector(patch_8x8: np.ndarray) -> np.ndarray:
     vector = patch_8x8.flatten().astype(np.float32)
     mean_value = float(np.mean(vector))
     std_value = float(np.std(vector))
-    if std_value &lt; 1e-6:
+    if std_value < 1e-6:
         std_value = 1.0
     return (vector - mean_value) / std_value
 
@@ -408,15 +481,14 @@ def build_patch_descriptors(gray: np.ndarray, x_coords: np.ndarray, y_coords: np
       <p class="callout">
         Each corner produces a 40×40 patch (bounds-checked), which is bilinearly resized to 8×8 and z-score normalized to suppress illumination bias and gain differences.
       </p>
-    <p><strong>Step‑by‑step (from scratch):</strong></p>
-<ol>
-  <li>For each selected corner, crop a 40×40 grayscale window centered on it.</li>
-  <li>Downsample that window to 8×8 using bilinear interpolation. This reduces noise and makes all descriptors the same size.</li>
-  <li>Normalize the 64 values: subtract the mean and divide by the standard deviation (z‑score). This makes descriptors less sensitive to brightness/exposure.</li>
-  <li>Optionally visualize: draw 40×40 boxes on the original images and show grids of the 8×8 patches (shown above for Set 1).</li>
-</ol>
-
-      </section>
+      <p><strong>Step‑by‑step (from scratch):</strong></p>
+      <ol>
+        <li>For each selected corner, crop a 40×40 grayscale window centered on it.</li>
+        <li>Downsample that window to 8×8 using bilinear interpolation. This reduces noise and makes all descriptors the same size.</li>
+        <li>Normalize the 64 values: subtract the mean and divide by the standard deviation (z‑score). This makes descriptors less sensitive to brightness/exposure.</li>
+        <li>Optionally visualize: draw 40×40 boxes on the original images and show grids of the 8×8 patches (shown above for Set 1).</li>
+      </ol>
+    </section>
 
     <section id="b3">
       <h2>B.3 – Feature Matching</h2>
@@ -451,12 +523,12 @@ def build_patch_descriptors(gray: np.ndarray, x_coords: np.ndarray, y_coords: np
         row = distances[idx_left]
         order = np.argsort(row)
         idx_right_best = int(order[0])
-        idx_right_next = int(order[1]) if len(order) &gt; 1 else int(order[0])
+        idx_right_next = int(order[1]) if len(order) > 1 else int(order[0])
         best_dist = float(row[idx_right_best])
         next_dist = float(row[idx_right_next])
         if next_dist == 0:
             continue
-        if best_dist / next_dist &lt; ratio_threshold:
+        if best_dist / next_dist < ratio_threshold:
             matches.append((idx_left, idx_right_best, best_dist, next_dist))
     return matches</pre>
       <p class="callout"><strong>Walkthrough.</strong> We compute the dense left‑to‑right distance matrix once, then for each left descriptor pick the smallest (best) and second‑smallest (runner‑up) distances. A match is kept only if <code>best/next &lt; ratio_threshold</code> (default 0.7), which filters out ambiguous pairs that are likely false.</p>
@@ -486,18 +558,18 @@ def build_patch_descriptors(gray: np.ndarray, x_coords: np.ndarray, y_coords: np
     best_inlier_mask = None
     best_homography = None
     count = src_xy.shape[0]
-    if count &lt; 4:
+    if count < 4:
         return None, np.array([], dtype=bool)
     for _ in range(max_iters):
         sample_idx = np.random.choice(count, 4, replace=False)
         candidate = dlt_homography(src_xy[sample_idx], dst_xy[sample_idx])
         predicted = apply_homography_points(src_xy, candidate)
         error = np.sqrt(np.sum((predicted - dst_xy) ** 2, axis=1))
-        inliers = error &lt; eps
-        if best_inlier_mask is None or np.count_nonzero(inliers) &gt; np.count_nonzero(best_inlier_mask):
+        inliers = error < eps
+        if best_inlier_mask is None or np.count_nonzero(inliers) > np.count_nonzero(best_inlier_mask):
             best_inlier_mask = inliers
             best_homography = candidate
-    if best_inlier_mask is not None and np.count_nonzero(best_inlier_mask) &gt;= 4:
+    if best_inlier_mask is not None and np.count_nonzero(best_inlier_mask) >= 4:
         best_homography = dlt_homography(src_xy[best_inlier_mask], dst_xy[best_inlier_mask])
     else:
         best_homography = None
@@ -515,7 +587,7 @@ def inverse_warp_to_canvas(src_image: np.ndarray, inverse_homography: np.ndarray
         for X in range(canvas_width):
             Xc, Yc = float(X), float(Y)
             w = h2[0] * (Xc - offset_x) + h2[1] * (Yc - offset_y) + h2[2]
-            if abs(w) &lt; 1e-12:
+            if abs(w) < 1e-12:
                 continue
             x = (h0[0] * (Xc - offset_x) + h0[1] * (Yc - offset_y) + h0[2]) / w
             y = (h1[0] * (Xc - offset_x) + h1[1] * (Yc - offset_y) + h1[2]) / w
@@ -529,32 +601,22 @@ def inverse_warp_to_canvas(src_image: np.ndarray, inverse_homography: np.ndarray
         We randomly sample 4 correspondences to fit H (DLT), score inliers by reprojection error, keep the best consensus, refit on all inliers, then inverse-warp and feather-blend onto a common canvas.
       </p>
     </section>
+    <!-- ===================== end 3B content ===================== -->
 
     <section id="results">
       <h2>Results Gallery</h2>
-      <p>Below are stitched panoramas produced by the full pipeline. When judging quality, look for: (1) straight lines that stay straight across the join, (2) consistent exposure where the two images overlap, and (3) minimal “ghosting” of moving objects. Minor waviness or faint seams can occur when the scene isn’t perfectly planar or the overlap is small.</p>
+      <p>Stitched panoramas from the full automatic pipeline (3B). Click to view full resolution.</p>
       <div class="grid cols-3">
-        <figure class="wide">
-          <a href="images/set1_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set1_mosaic_auto.jpg" alt="Gallery mosaic – Set 1" /></a>
-          <figcaption>Gallery mosaic · Set 1.</figcaption>
-        </figure>
-        <figure class="wide">
-          <a href="images/set2_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set2_mosaic_auto.jpg" alt="Gallery mosaic – Set 2" /></a>
-          <figcaption>Gallery mosaic · Set 2.</figcaption>
-        </figure>
-        <figure class="wide">
-          <a href="images/set3_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set3_mosaic_auto.jpg" alt="Gallery mosaic – Set 3" /></a>
-          <figcaption>Gallery mosaic · Set 3.</figcaption>
-        </figure>
+        <figure class="wide"><a href="images/set1_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set1_mosaic_auto.jpg" alt="Gallery mosaic – Set 1" /></a><figcaption>Automatic mosaic · Set 1.</figcaption></figure>
+        <figure class="wide"><a href="images/set2_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set2_mosaic_auto.jpg" alt="Gallery mosaic – Set  2" /></a><figcaption>Automatic mosaic · Set 2.</figcaption></figure>
+        <figure class="wide"><a href="images/set3_mosaic_auto.jpg" target="_blank" rel="noopener"><img src="images/set3_mosaic_auto.jpg" alt="Gallery mosaic – Set 3" /></a><figcaption>Automatic mosaic · Set 3.</figcaption></figure>
       </div>
     </section>
 
     <section id="implementation">
       <h2>Implementation Notes</h2>
-      <p><strong>Parameters in plain English.</strong> The values below control how sensitive each stage is. Lowering the Harris threshold yields more corners (including noisy ones); raising it leaves only the most confident corners. The ratio threshold trades recall for precision in matching: smaller values mean fewer but cleaner matches. The RANSAC epsilon is the maximum reprojection error (in pixels) to accept a match as an inlier, and the iteration count controls how long we search for a good consensus.</p>
-      <p><strong>Common pitfalls.</strong> Blurry images or very small overlaps can reduce the number of reliable matches. Large exposure differences can also hurt descriptor comparisons; our z‑score normalization helps but doesn’t fix everything. If a scene isn’t close to planar (e.g., has strong parallax), a single homography cannot perfectly align it—some residual misalignment is expected.</p>
-      <pre class="code"># Example parameters (replace with your final values)
-max_keypoints_after_anms = 750
+      <p><strong>Parameters (plain English).</strong> Harris threshold trades recall vs. noise; ANMS count controls spatial spread; Lowe ratio trades precision vs. recall; RANSAC epsilon is the inlier pixel error; iterations control robustness to outliers.</p>
+      <pre class="code">max_keypoints_after_anms = 750
 harris_k_coeff = 0.04
 harris_window_size = 3
 harris_threshold_relative = 0.01
@@ -568,21 +630,18 @@ ransac_inlier_epsilon = 3.0</pre>
       <ul>
         <li>Brown, Szeliski, Winder. <em>Multi-Image Matching using Multi-Scale Oriented Patches (MOPS)</em>.</li>
         <li>Harris & Stephens. <em>A Combined Corner and Edge Detector</em>.</li>
-        <li>Lowe. <em>Distinctive Image Features from Scale-Invariant Keypoints</em> – ratio test idea.</li>
+        <li>Lowe. <em>Distinctive Image Features from Scale-Invariant Keypoints</em>.</li>
       </ul>
       <p class="footer">Last updated: <span id="last-updated">—</span></p>
     </section>
 
     <footer class="footer">
-      <p>
-        © 2025 Eduardo Cortes. This page is part of CS180/280A coursework. Images are my own unless otherwise noted.
-      </p>
+      <p>© 2025 Eduardo Cortes. This page is part of CS180/280A coursework. Images are my own unless otherwise noted.</p>
       <p class="ai-ack">AI acknowledgment: I used ChatGPT (GPT-5 Thinking) to help draft this HTML/CSS template and organize content. All experiments, code, images, offsets, and write-up are my own; I reviewed and verified technical details.</p>
     </footer>
   </div>
 
   <script>
-    // Set last updated time programmatically
     const span = document.getElementById('last-updated');
     if (span) {
       const d = new Date();
