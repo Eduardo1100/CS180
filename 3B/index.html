@@ -107,23 +107,52 @@
           <figcaption>Set 1 · Image B · ANMS-selected corners.</figcaption>
         </figure>
       </div>
+
+      <h3>Code (Harris + ANMS)</h3>
+      <pre class="code">left_response  = harris_corner_response(left_gray)
+right_response = harris_corner_response(right_gray)
+left_x_all,  left_y_all,  left_scores_all  = nms_local_maxima(left_response,  harris_threshold_relative)
+right_x_all, right_y_all, right_scores_all = nms_local_maxima(right_response, harris_threshold_relative)
+left_x,  left_y,  _ = adaptive_nms(left_x_all,  left_y_all,  left_scores_all,  max_keypoints_after_anms)
+right_x, right_y, _ = adaptive_nms(right_x_all, right_y_all, right_scores_all, max_keypoints_after_anms)</pre>
+      <p class="callout">
+        Harris response → local NMS → ANMS keeps strong, well-spaced corners.
+      </p>
     </section>
 
     <section id="b2">
       <h2>B.2 – Feature Descriptor Extraction</h2>
       <p>
         Around each selected corner, we sample a <strong>40×40</strong> window (blurred / downsampled) to produce a normalized <strong>8×8</strong> grayscale descriptor (bias–gain normalized).
+        Below are the <em>Set 1</em> overlays (40×40 boxes with center points at inlier corners) and the corresponding 8×8 descriptor montages.
       </p>
-      <div class="grid cols-2">
+
+      <div class="grid cols-4">
         <figure>
-          <img src="images/descriptor_visualization.jpg" alt="Patch locations overlaid on the source image" />
-          <figcaption>Patch locations used for descriptor extraction.</figcaption>
+          <img src="images/set1_desc_A_patch_boxes.jpg" alt="Set 1 – Image A patch boxes + centers" />
+          <figcaption>Set 1 · Image A · 40×40 patch boxes (inlier corners) + center points.</figcaption>
         </figure>
         <figure>
-          <img src="images/feature_patch_examples.jpg" alt="Montage of 8×8 normalized descriptor patches" />
-          <figcaption>Montage of several 8×8 normalized descriptor patches.</figcaption>
+          <img src="images/set1_desc_B_patch_boxes.jpg" alt="Set 1 – Image B patch boxes + centers" />
+          <figcaption>Set 1 · Image B · 40×40 patch boxes (inlier corners) + center points.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/set1_desc_A_montage.png" alt="Set 1 – Image A montage of 8×8 descriptors" />
+          <figcaption>Set 1 · Image A · Montage of 8×8 normalized descriptor patches.</figcaption>
+        </figure>
+        <figure>
+          <img src="images/set1_desc_B_montage.png" alt="Set 1 – Image B montage of 8×8 descriptors" />
+          <figcaption>Set 1 · Image B · Montage of 8×8 normalized descriptor patches.</figcaption>
         </figure>
       </div>
+
+      <h3>Code (Patch → 8×8 → z-score)</h3>
+      <pre class="code">patch   = extract_square_patch(gray, x_val, y_val, size=40)
+patch8  = resize_patch_to_8x8(patch)             # 40→8
+descriptor = normalize_descriptor_vector(patch8)  # z-score</pre>
+      <p class="callout">
+        Each corner yields a 40×40 patch, resized to 8×8 and z-scored to reduce illumination effects.
+      </p>
     </section>
 
     <section id="b3">
@@ -141,6 +170,28 @@
           <figcaption>Set 2 · Filtered matches (post ratio test).</figcaption>
         </figure>
       </div>
+
+      <h3>Code (Lowe ratio)</h3>
+      <pre class="code">def match_with_lowe_ratio(descriptors_left: np.ndarray, descriptors_right: np.ndarray, ratio_threshold: float = lowe_ratio_threshold):
+    matches = []
+    if len(descriptors_left) == 0 or len(descriptors_right) == 0:
+        return matches
+    distances = np.sum((descriptors_left[:, None, :] - descriptors_right[None, :, :]) ** 2, axis=2)
+    for idx_left in range(descriptors_left.shape[0]):
+        row = distances[idx_left]
+        order = np.argsort(row)
+        idx_right_best = int(order[0])
+        idx_right_next = int(order[1]) if len(order) > 1 else int(order[0])
+        best_dist = float(row[idx_right_best])
+        next_dist = float(row[idx_right_next])
+        if next_dist == 0:
+            continue
+        if best_dist / next_dist &lt; ratio_threshold:
+            matches.append((idx_left, idx_right_best, best_dist, next_dist))
+    return matches</pre>
+      <p class="callout">
+        Accept a match only if best/second-best distance ratio is below <code>lowe_ratio_threshold</code>.
+      </p>
     </section>
 
     <section id="b4">
@@ -159,21 +210,31 @@
         </figure>
       </div>
 
-      <h3>Additional Automatic Mosaics (≥ 3)</h3>
-      <div class="grid cols-3">
-        <figure>
-          <img src="images/set1_mosaic_auto.jpg" alt="Automatic mosaic – Set 1" />
-          <figcaption>Automatic mosaic · Set 1.</figcaption>
-        </figure>
-        <figure>
-          <img src="images/set2_mosaic_auto.jpg" alt="Automatic mosaic – Set 2" />
-          <figcaption>Automatic mosaic · Set 2.</figcaption>
-        </figure>
-        <figure>
-          <img src="images/set3_mosaic_auto.jpg" alt="Automatic mosaic – Set 3" />
-          <figcaption>Automatic mosaic · Set 3.</figcaption>
-        </figure>
-      </div>
+      <h3>Code (RANSAC + warp)</h3>
+      <pre class="code">def ransac_fit_homography(src_xy: np.ndarray, dst_xy: np.ndarray, max_iters: int = ransac_max_iterations, eps: float = ransac_inlier_epsilon):
+    best_inlier_mask = None
+    best_homography = None
+    count = src_xy.shape[0]
+    if count &lt; 4:
+        return None, np.array([], dtype=bool)
+    for _ in range(max_iters):
+        sample_idx = np.random.choice(count, 4, replace=False)
+        candidate = dlt_homography(src_xy[sample_idx], dst_xy[sample_idx])
+        predicted = apply_homography_points(src_xy, candidate)
+        error = np.sqrt(np.sum((predicted - dst_xy) ** 2, axis=1))
+        inliers = error &lt; eps
+        if best_inlier_mask is None or np.count_nonzero(inliers) &gt; np.count_nonzero(best_inlier_mask):
+            best_inlier_mask = inliers
+            best_homography = candidate
+    if best_inlier_mask is not None and np.count_nonzero(best_inlier_mask) &gt;= 4:
+        best_homography = dlt_homography(src_xy[best_inlier_mask], dst_xy[best_inlier_mask])
+    else:
+        best_homography = None
+        best_inlier_mask = np.zeros(count, dtype=bool)
+    return best_homography, best_inlier_mask</pre>
+      <p class="callout">
+        Sample 4 correspondences → fit H (DLT) → score inliers by reprojection error → keep best set → refit on inliers → inverse-warp + feather-blend.
+      </p>
     </section>
 
     <section id="b5">
@@ -219,15 +280,14 @@
       <p>
         Briefly summarize key implementation choices (e.g., Harris parameters, ANMS radius logic, descriptor normalization, ratio threshold, RANSAC iterations and inlier metric), and include any ablations or pitfalls.
       </p>
-      <pre class="code"># Example parameters (replace with your final values)
-HARRIS_K = 0.04
-HARRIS_WINDOW = 3
-ANMS_MAX_CORNERS = 750
-DESC_SIZE = 8  # final 8x8
-PATCH_SIZE = 40  # sampled then blurred/downsampled
-LOWE_RATIO = 0.7
-RANSAC_ITERS = 2000
-RANSAC_EPS = 3.0  # inlier pixel threshold</pre>
+      <pre class="code">
+max_keypoints_after_anms = 750
+harris_k_coeff = 0.04
+harris_window_size = 3
+harris_threshold_relative = 0.01
+lowe_ratio_threshold = 0.7
+ransac_max_iterations = 2000
+ransac_inlier_epsilon = 3.0</pre>
     </section>
 
     <section id="references">
