@@ -966,14 +966,42 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         <figcaption>PSNR vs training iteration for the Lego scene. The curve stabilizes once the network fits all views consistently.</figcaption>
       </figure>
 
+      <!-- NEW: Lego loss curve deliverable -->
+      <figure class="wide">
+        <img src="part2_lego_nerf/loss_curve_lego.png" alt="Training loss curve for Lego NeRF" />
+        <figcaption>MSE training loss vs iteration for the Lego NeRF model, complementing the PSNR curve.</figcaption>
+      </figure>
+
       <figure class="wide">
         <img src="part2_lego_nerf/viser_rays_and_samples.png" alt="Visualization of cameras, rays, and samples in Viser" />
         <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
       </figure>
 
+      <!-- UPDATED: richer spherical render deliverables -->
+      <h3>B.6 Spherical Novel-View Rendering</h3>
+      <p>
+        To demonstrate true 3D understanding, I render novel views of the Lego scene from a spherical trajectory around the object.
+        The NeRF is never explicitly told about these views; it synthesizes them from the learned radiance field.
+      </p>
+
+      <div class="grid grid-3">
+        <figure>
+          <img src="part2_lego_nerf/lego_spherical_frame00.png" alt="Lego spherical rendering frame 0" />
+          <figcaption>Frame 0 – initial viewpoint from the training set’s general region.</figcaption>
+        </figure>
+        <figure>
+          <img src="part2_lego_nerf/lego_spherical_frame07.png" alt="Lego spherical rendering frame 7" />
+          <figcaption>Frame 7 – midway through the orbit, revealing previously occluded parts.</figcaption>
+        </figure>
+        <figure>
+          <img src="part2_lego_nerf/lego_spherical_frame14.png" alt="Lego spherical rendering frame 14" />
+          <figcaption>Frame 14 – later in the orbit, showing consistent geometry and appearance.</figcaption>
+        </figure>
+      </div>
+
       <figure class="wide">
-        <img src="part2_lego_nerf/lego_spherical_frame01.png" alt="Frame from Lego spherical rendering" />
-        <figcaption>Frame from the spherical rendering video of the Lego scene. (Full video: <code>lego_spherical_video.mp4</code>.)</figcaption>
+        <img src="part2_lego_nerf/lego_spherical.gif" alt="Lego spherical orbit GIF" />
+        <figcaption>Full spherical orbit GIF for the Lego scene, illustrating smooth novel views around the entire object.</figcaption>
       </figure>
 
       <p class="callout">
@@ -1049,6 +1077,12 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
           <figcaption>Novel view frame 3.</figcaption>
         </figure>
       </div>
+
+      <!-- NEW: GIF deliverable for custom object -->
+      <figure class="wide">
+        <img src="part2_6_your_object/object_spherical.gif" alt="My object orbit GIF" />
+        <figcaption>Full orbit GIF for my object, showing consistent geometry across viewpoints.</figcaption>
+      </figure>
 
       <figure class="wide">
         <img src="part2_6_your_object/object_spherical_frame04.png" alt="My object spherical rendering frame 4" />
