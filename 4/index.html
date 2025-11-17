@@ -658,11 +658,11 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-3">
         <figure>
-          <img src="images/part2_lego_nerf/train_lego_iter000.png" alt="Lego NeRF training iteration 0" />
+          <img src="images/part2_lego_nerf/train_lego_iter0000.png" alt="Lego NeRF training iteration 0" />
           <figcaption>Lego NeRF at iteration 0 – essentially noise.</figcaption>
         </figure>
         <figure>
-          <img src="images/part2_lego_nerf/train_lego_iter200.png" alt="Lego NeRF training iteration 200" />
+          <img src="images/part2_lego_nerf/train_lego_iter0200.png" alt="Lego NeRF training iteration 200" />
           <figcaption>Iteration 200 – rough geometry visible.</figcaption>
         </figure>
         <figure>
@@ -676,10 +676,19 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         <figcaption>PSNR vs training iteration for the Lego scene. The curve stabilizes once the network fits all views consistently.</figcaption>
       </figure>
 
+      <figure class="wide">
+        <img src="images/part2_lego_nerf/loss_curve_lego.png" alt="Loss curve for Lego NeRF validation set" />
+        <figcaption>Loss vs training iteration for the Lego scene.</figcaption>
+      </figure>
+
       <!-- Removed: optional Lego loss curve figure -->
 
       <figure class="wide">
-        <img src="images/part2_lego_nerf/viser_rays_and_samples.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <img src="images/part2_lego_nerf/viser_rays_and_samples_1.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="images/part2_lego_nerf/viser_rays_and_samples_2.png" alt="Visualization of cameras, rays, and samples in Viser" />
         <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
       </figure>
 
@@ -695,11 +704,11 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
           <figcaption>Frame 0 – initial viewpoint from the training set’s general region.</figcaption>
         </figure>
         <figure>
-          <img src="images/part2_lego_nerf/lego_spherical_frame07.png" alt="Lego spherical rendering frame 7" />
+          <img src="images/part2_lego_nerf/lego_spherical_frame20.png" alt="Lego spherical rendering frame 7" />
           <figcaption>Frame 7 – midway through the orbit, revealing previously occluded parts.</figcaption>
         </figure>
         <figure>
-          <img src="images/part2_lego_nerf/lego_spherical_frame14.png" alt="Lego spherical rendering frame 14" />
+          <img src="images/part2_lego_nerf/lego_spherical_frame40.png" alt="Lego spherical rendering frame 14" />
           <figcaption>Frame 14 – later in the orbit, showing consistent geometry and appearance.</figcaption>
         </figure>
       </div>
