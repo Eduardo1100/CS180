@@ -89,27 +89,13 @@
     figcaption { margin-top: 6px; font-size: 0.83rem; color: var(--ink-muted); }
 
     /* Code Blocks */
-    pre.code {
-      margin: 0.8rem 0 0.4rem;
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      background: radial-gradient(circle at top left, #121b30, #050811);
-      border: 1px solid var(--code-border);
-      overflow-x: auto;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.55);
-    }
-    pre.code code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Code",
-        "Fira Code", monospace;
-      font-size: 0.86rem;
-      color: #e7e9ff;
-      white-space: pre;
-    }
-    /* Lightweight pseudo-syntax highlighting */
-    pre.code code .kw  { color: #9cdcfe; }
-    pre.code code .fn  { color: #dcdcaa; }
-    pre.code code .str { color: #ce9178; }
-    pre.code code .num { color: #b5cea8; }
+    pre.code { margin: 0.8rem 0 0.4rem; padding: 12px 14px; border-radius: var(--radius-sm); background: radial-gradient(circle at top left, #121b30, #050811); border: 1px solid var(--code-border); overflow-x: auto; box-shadow: 0 12px 28px rgba(0,0,0,0.55); }
+    pre.code code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Code", "Fira Code", monospace; font-size: 0.86rem; color: #f3f4ff; }
+    .code .kw { color: #9cdcfe; }
+    .code .fn { color: #dcdcaa; }
+    .code .str { color: #ce9178; }
+    .code .num { color: #b5cea8; }
+    .code .cm { color: #6a9955; }
 
     .walkthrough { margin: 0.3rem 0 0.9rem; padding: 10px 12px 6px; border-left: 2px solid rgba(255,255,255,0.12); background: linear-gradient(to right, rgba(255,255,255,0.02), transparent); border-radius: 0 10px 10px 0; }
     .walkthrough p { font-size: 0.93rem; }
@@ -131,10 +117,10 @@
       <div class="nav-title">CS180 · Project 4 · Neural Radiance Fields</div>
       <nav class="nav-links">
         <a href="#overview" class="primary-link">Overview</a>
-        <a href="#part0">Part 0 – Capture</a>
-        <a href="#partA">Part A – 2D Neural Field</a>
-        <a href="#partB">Part B – Lego NeRF</a>
-        <a href="#partC">Part C – My Object NeRF</a>
+        <a href="#part0">Part 0 – Calibration & Scan</a>
+        <a href="#part1">Part 1 – 2D Neural Field</a>
+        <a href="#part2">Part 2 – Lego NeRF</a>
+        <a href="#part26">Part 2.6 – My Object NeRF</a>
         <a href="#impl-notes">Implementation Notes</a>
         <a href="#references">References</a>
       </nav>
@@ -165,7 +151,7 @@
 
     <!-- Part 0: Camera Calibration & 3D Capture -->
     <section id="part0">
-      <h2>Part 0 – Camera Calibration & 3D Capture</h2>
+      <h2>Part 0 – Calibrating Your Camera and Capturing a 3D Scan (0.1–0.4)</h2>
       <p>
         Before training any NeRF, we need accurate camera parameters. This part covers:
       </p>
@@ -184,56 +170,41 @@
       </p>
 
       <pre class="code"><code>
-<span class="kw">import</span> os
-<span class="kw">import</span> glob
-<span class="kw">import</span> <span class="fn">numpy</span> <span class="kw">as</span> np
-<span class="kw">import</span> cv2
+<span class="kw">import</span> cv2, numpy <span class="kw">as</span> np
 
-TAG_SIZE_M = <span class="num">0.02</span>
+aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+aruco_params = cv2.aruco.DetectorParameters()
 
-<span class="kw">def</span> <span class="fn">tag_corners_3d</span>(tag_size_m=TAG_SIZE_M):
-    s = <span class="fn">float</span>(tag_size_m)
+objpoints, imgpoints = [], []
+
+<span class="kw">def</span> <span class="fn">tag_corners_3d</span>(tag_size_m=0.02):
+    s = tag_size_m
     <span class="kw">return</span> np.array([
-        [<span class="num">0.0</span>, <span class="num">0.0</span>, <span class="num">0.0</span>],
-        [s,          <span class="num">0.0</span>, <span class="num">0.0</span>],
-        [s,          s,          <span class="num">0.0</span>],
-        [<span class="num">0.0</span>, s,          <span class="num">0.0</span>],
+        [0.0, 0.0, 0.0],
+        [s,   0.0, 0.0],
+        [s,   s,   0.0],
+        [0.0, s,   0.0],
     ], dtype=np.float32)
 
-<span class="kw">def</span> <span class="fn">create_aruco_detector</span>():
-    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
-    aruco_params = cv2.aruco.DetectorParameters()
-    <span class="kw">return</span> aruco_dict, aruco_params
+world_corners = tag_corners_3d()
 
-<span class="kw">def</span> <span class="fn">run_part0_calibration</span>(calib_dir, out_path):
-    image_paths = <span class="fn">sorted</span>(glob.glob(os.path.join(calib_dir, <span class="str">"*.jpg"</span>)))
-    aruco_dict, aruco_params = <span class="fn">create_aruco_detector</span>()
+<span class="kw">for</span> path <span class="kw">in</span> calibration_image_paths:
+    img = cv2.imread(path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    objpoints, imgpoints = [], []
-    image_size = <span class="kw">None</span>
+    corners, ids, _ = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=aruco_params)
+    <span class="kw">if</span> ids is <span class="kw">None</span>:
+        <span class="kw">continue</span>
 
-    <span class="kw">for</span> path <span class="kw">in</span> image_paths:
-        img = cv2.imread(path)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        image_size = (gray.shape[<span class="num">1</span>], gray.shape[<span class="num">0</span>])
+    img_corners = np.concatenate(corners, axis=0).reshape(-1, 2).astype(np.float32)
+    imgpoints.append(img_corners)
 
-        corners, ids, _ = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=aruco_params)
-        <span class="kw">if</span> ids <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> <span class="fn">len</span>(corners) == <span class="num">0</span>:
-            <span class="kw">continue</span>
+    obj_corners = np.tile(world_corners, (len(ids), 1))
+    objpoints.append(obj_corners)
 
-        img_corners = corners[<span class="num">0</span>].reshape(-<span class="num">1</span>, <span class="num">2</span>).astype(np.float32)
-        imgpoints.append(img_corners)
-        objpoints.append(<span class="fn">tag_corners_3d</span>())
-
-    objpoints = [op.reshape(-<span class="num">1</span>, <span class="num">1</span>, <span class="num">3</span>) <span class="kw">for</span> op <span class="kw">in</span> objpoints]
-    imgpoints = [ip.reshape(-<span class="num">1</span>, <span class="num">1</span>, <span class="num">2</span>) <span class="kw">for</span> ip <span class="kw">in</span> imgpoints]
-
-    ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
-        objpoints, imgpoints, image_size, <span class="kw">None</span>, <span class="kw">None</span>
-    )
-
-    np.savez(out_path, K=K, dist_coeffs=dist_coeffs, image_size=np.array(image_size))
-    <span class="kw">return</span> K, dist_coeffs, image_size
+ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
+    objpoints, imgpoints, gray.shape[::-1], <span class="kw">None</span>, <span class="kw">None</span>
+)
       </code></pre>
 
       <div class="walkthrough">
@@ -243,11 +214,12 @@ TAG_SIZE_M = <span class="num">0.02</span>
           infer the camera’s focal length and principal point.
         </p>
         <ol>
-          <li><strong>Tag geometry:</strong> <code>tag_corners_3d</code> encodes the 2 cm edge length of the printed tag into a consistent 3D coordinate frame on the <code>z = 0</code> plane. This scale propagates all the way into NeRF.</li>
-          <li><strong>Detector setup:</strong> <code>create_aruco_detector</code> fixes the marker family and parameters so that detection behavior is reproducible across runs.</li>
-          <li><strong>Image loop:</strong> For each calibration image, I read it with OpenCV, convert to grayscale, and detect markers. If a frame has no detections, I skip it so a few bad photos don’t hurt calibration.</li>
-          <li><strong>2D–3D correspondences:</strong> I take the first detected tag’s corners as 2D image points and pair them with the canonical 3D corners for that tag. <code>calibrateCamera</code> expects them reshaped into <code>(N,1,·)</code> arrays.</li>
-          <li><strong>Solving:</strong> <code>calibrateCamera</code> returns the intrinsic matrix <code>K</code> and distortion coefficients that define my camera model. I save everything to an <code>.npz</code> file so later scripts can reuse the results without re-running calibration.</li>
+          <li><strong>ArUco setup:</strong> I create the predefined 4×4 ArUco dictionary and detector parameters. This tells OpenCV which family of markers to look for.</li>
+          <li><strong>3D tag geometry:</strong> <code>tag_corners_3d</code> returns the four corners of a square tag in meters. I treat the tag as lying on the <code>z = 0</code> plane.</li>
+          <li><strong>Loop over images:</strong> For each calibration photo, I convert to grayscale and run <code>detectMarkers</code>. If detection fails, I skip the image so the pipeline is robust.</li>
+          <li><strong>Collect 2D points:</strong> I concatenate all detected corners into a single 2D array <code>img_corners</code>, which holds pixel coordinates.</li>
+          <li><strong>Collect 3D points:</strong> For every detected tag, I append a copy of the 3D tag corner coordinates to <code>objpoints</code>, giving the solver many 3D–2D correspondences.</li>
+          <li><strong>Calibration:</strong> Finally, <code>cv2.calibrateCamera</code> estimates <code>K</code> (intrinsics) and <code>dist_coeffs</code> (lens distortion). These are the foundations for all later pose and NeRF computations.</li>
         </ol>
       </div>
 
@@ -258,6 +230,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
       </p>
       <ul>
         <li><strong>Exposure</strong> roughly constant (no automatic brightness jumps).</li>
+        <li><strong>Distance</strong> such that the object occupies ~50% of the frame.</li>
         <li><strong>Blur</strong> minimal by holding the phone steady.</li>
       </ul>
 
@@ -287,53 +260,53 @@ TAG_SIZE_M = <span class="num">0.02</span>
       </p>
     </section>
 
-    <!-- Part A: 2D Neural Field -->
-    <section id="partA">
-      <h2>Part A – 2D Neural Field (A.1–A.4)</h2>
+    <!-- Part 1: 2D Neural Field -->
+    <section id="part1">
+      <h2>Part 1 – Fit a Neural Field to a 2D Image (1.1–1.4)</h2>
       <p>
         Before tackling full 3D NeRFs, I first train a <strong>2D neural field</strong> that maps pixel coordinates to colors in a single
         image. This is an easier sandbox to understand positional encoding, MLP architecture, and training behavior.
       </p>
 
-      <h3>A.1 Objective & Intuition</h3>
+      <h3>1.1 Objective & Intuition</h3>
       <p>
         The neural field is a function <code>F(u, v) → RGB</code> that takes continuous, normalized pixel coordinates and outputs
         the color at that point. Instead of storing the image as a grid of values, I store it as the weights of a neural network—
         a kind of compressed, continuous representation.
       </p>
 
-      <h3>A.2 Network & Positional Encoding</h3>
+      <h3>1.2 Network & Positional Encoding</h3>
       <p>
         I use a small MLP with sinusoidal positional encoding (PE). PE expands coordinates into a higher-dimensional space using
         sines and cosines, enabling the network to capture fine details and edges.
       </p>
 
       <pre class="code"><code>
-<span class="kw">import</span> math
 <span class="kw">import</span> torch
 <span class="kw">import</span> torch.nn <span class="kw">as</span> nn
 
 <span class="kw">class</span> <span class="fn">PosEnc</span>(nn.Module):
-    <span class="kw">def</span> <span class="fn">__init__</span>(self, num_freqs=<span class="num">10</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, num_freqs: <span class="kw">int</span> = 10):
         <span class="kw">super</span>().__init__()
         self.num_freqs = num_freqs
 
     <span class="kw">def</span> <span class="fn">forward</span>(self, x):
         encodings = [x]
         <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(self.num_freqs):
-            freq = <span class="num">2.0</span> ** i * math.pi
+            freq = 2.0 ** i * torch.pi
             encodings.append(torch.sin(freq * x))
             encodings.append(torch.cos(freq * x))
-        <span class="kw">return</span> torch.cat(encodings, dim=-<span class="num">1</span>)
+        <span class="kw">return</span> torch.cat(encodings, dim=-1)
+
 
 <span class="kw">class</span> <span class="fn">NeuralField2D</span>(nn.Module):
-    <span class="kw">def</span> <span class="fn">__init__</span>(self, width=<span class="num">128</span>, num_freqs=<span class="num">10</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, width=128, num_freqs=10):
         <span class="kw">super</span>().__init__()
-        self.pe = <span class="fn">PosEnc</span>(num_freqs)
-        in_dim = <span class="num">2</span> + <span class="num">2</span> * <span class="num">2</span> * num_freqs
+        self.pe = PosEnc(num_freqs)
+        in_dim = 2 + 2 * 2 * num_freqs
 
         layers = []
-        hidden_dims = [width] * <span class="num">4</span>
+        hidden_dims = [width] * 4
         last_dim = in_dim
         <span class="kw">for</span> h <span class="kw">in</span> hidden_dims:
             layers.append(nn.Linear(last_dim, h))
@@ -342,7 +315,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
 
         self.mlp = nn.Sequential(*layers)
         self.out_layer = nn.Sequential(
-            nn.Linear(last_dim, <span class="num">3</span>),
+            nn.Linear(last_dim, 3),
             nn.Sigmoid(),
         )
 
@@ -362,13 +335,13 @@ TAG_SIZE_M = <span class="num">0.02</span>
         <ol>
           <li><strong><code>PosEnc</code>:</strong> The positional encoding layer takes raw <code>(u, v)</code> coordinates in <code>[0, 1]</code> and builds a richer feature vector using sine and cosine at exponentially increasing frequencies. This lets the MLP represent both smooth regions and sharp edges.</li>
           <li><strong>Frequency loop:</strong> For each <code>i</code>, I compute <code>freq = 2^i · π</code>. Applying <code>sin(freq · x)</code> and <code>cos(freq · x)</code> at multiple frequencies effectively creates a Fourier-like basis over coordinates.</li>
-          <li><strong>Input dimension:</strong> The MLP input has the original 2 coordinates plus <code>2 · (sin, cos) · num_freqs</code> values per coordinate. Concatenating all of these yields a high-dimensional input describing the position.</li>
+          <li><strong>Input dimension:</strong> The MLP input has the original 2 coordinates plus <code>2*(sin, cos)*num_freqs</code> values per coordinate. Concatenating all of these yields a high-dimensional input describing the position.</li>
           <li><strong>MLP architecture:</strong> I use 4 fully connected layers with ReLU activations. This is enough capacity to memorize a moderate-resolution image without being too slow.</li>
           <li><strong>Output layer:</strong> The final <code>Linear → Sigmoid</code> block maps to three channels in <code>[0, 1]</code>, which correspond directly to RGB values.</li>
         </ol>
       </div>
 
-      <h3>A.3 Training & PSNR</h3>
+      <h3>1.3 Training & PSNR</h3>
       <p>
         During training, I randomly sample 10k pixels at each iteration, feed their normalized coordinates into the network,
         and compare predicted colors against ground truth using mean squared error (MSE). I track reconstruction quality using
@@ -385,7 +358,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
           <figcaption>Provided image: structure emerging (iteration 300).</figcaption>
         </figure>
         <figure>
-          <img src="images/part1_2d_neural_field/train_provided_iter2000.png" alt="Training progression on provided image, final iteration" />
+          <img src="images/part1_2d_neural_field/train_provided_iter2000.png" alt="Training progression on provided image, iteration 2000" />
           <figcaption>Provided image: final reconstruction closely matches the original (iteration 2000).</figcaption>
         </figure>
       </div>
@@ -400,7 +373,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
           <figcaption>My own image: major structure appears within a few hundred steps (iteration 300).</figcaption>
         </figure>
         <figure>
-          <img src="images/part1_2d_neural_field/train_own_iter2000.png" alt="Training progression on my own image, final iteration" />
+          <img src="images/part1_2d_neural_field/train_own_iter2000.png" alt="Training progression on my own image, iteration 2000" />
           <figcaption>My own image: final neural reconstruction (iteration 2000).</figcaption>
         </figure>
       </div>
@@ -410,7 +383,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
         <figcaption>PSNR vs iteration for the 2D neural field. The curve plateaus when the network has fully memorized the image.</figcaption>
       </figure>
 
-      <h3>A.4 Hyperparameter Sweeps</h3>
+      <h3>1.4 Hyperparameter Sweeps</h3>
       <p>
         I sweep over two key hyperparameters: the width of the MLP and the maximum PE frequency <code>L</code>. The following grid
         shows how capacity and frequency content affect sharpness:
@@ -442,61 +415,59 @@ TAG_SIZE_M = <span class="num">0.02</span>
       </p>
     </section>
 
-    <!-- Part B: Lego NeRF -->
-    <section id="partB">
-      <h2>Part B – Lego NeRF (B.1–B.5)</h2>
+    <!-- Part 2: Lego NeRF -->
+    <section id="part2">
+      <h2>Part 2 – Fit a Neural Radiance Field from Multi-view Images (2.1–2.5)</h2>
       <p>
         With 2D neural fields working, I move to the full 3D NeRF setup on the classic Lego dataset. Here the model takes 3D points
         and viewing directions as input and predicts both density and color, which are combined using volume rendering.
       </p>
 
-      <h3>B.1 Rays from Cameras</h3>
+      <h3>2.1 Rays from Cameras</h3>
       <p>
         I first convert pixel coordinates into 3D rays using the camera intrinsics and camera-to-world matrices. Each ray has an
         origin (camera center) and a direction in world space.
       </p>
 
       <pre class="code"><code>
-<span class="kw">import</span> <span class="fn">numpy</span> <span class="kw">as</span> np
+<span class="kw">import</span> torch
 
-<span class="kw">def</span> <span class="fn">get_rays</span>(H, W, focal, c2w):
-    fx = fy = <span class="fn">float</span>(focal)
-    cx, cy = W * <span class="num">0.5</span>, H * <span class="num">0.5</span>
+<span class="kw">def</span> <span class="fn">pixel_to_camera</span>(K, uv, depth=1.0):
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
 
-    u = np.arange(W)
-    v = np.arange(H)
-    uu, vv = np.meshgrid(u, v, indexing=<span class="str">"xy"</span>)
+    u, v = uv[..., 0], uv[..., 1]
+    x = (u - cx) / fx * depth
+    y = (v - cy) / fy * depth
+    z = torch.full_like(x, depth)
+    <span class="kw">return</span> torch.stack([x, y, z], dim=-1)
 
-    x = (uu + <span class="num">0.5</span> - cx) / fx
-    y = (vv + <span class="num">0.5</span> - cy) / fy
-    z = np.ones_like(x, dtype=np.float32)
 
-    dirs_cam = np.stack([x, y, z], axis=-<span class="num">1</span>)
-    dirs_cam = dirs_cam / (np.linalg.norm(dirs_cam, axis=-<span class="num">1</span>, keepdims=<span class="kw">True</span>) + <span class="num">1e-9</span>)
+<span class="kw">def</span> <span class="fn">pixel_to_ray</span>(K, c2w, uv):
+    depth = 1.0
+    cam_pts = pixel_to_camera(K, uv, depth)
 
-    R = c2w[:<span class="num">3</span>, :<span class="num">3</span>]
-    t = c2w[:<span class="num">3</span>, <span class="num">3</span>]
+    R = c2w[:3, :3]
+    t = c2w[:3, 3]
+    world_pts = (R @ cam_pts.T).T + t
 
-    dirs_world = (R @ dirs_cam.reshape(-<span class="num">1</span>, <span class="num">3</span>).T).T
-    dirs_world = dirs_world / (np.linalg.norm(dirs_world, axis=-<span class="num">1</span>, keepdims=<span class="kw">True</span>) + <span class="num">1e-9</span>)
-    dirs_world = dirs_world.reshape(H, W, <span class="num">3</span>)
-
-    origins = np.broadcast_to(t.reshape(<span class="num">1</span>, <span class="num">1</span>, <span class="num">3</span>), (H, W, <span class="num">3</span>)).copy()
-
-    <span class="kw">return</span> origins.astype(np.float32), dirs_world.astype(np.float32)
+    ray_o = t.expand_as(world_pts)
+    ray_d = world_pts - ray_o
+    ray_d = ray_d / ray_d.norm(dim=-1, keepdim=<span class="kw">True</span>)
+    <span class="kw">return</span> ray_o, ray_d
       </code></pre>
 
       <div class="walkthrough">
         <h4>Walkthrough</h4>
         <p>
-          This function is the precise implementation I use everywhere (training, evaluation, and visualizations) to map pixels to 3D rays.
+          This code bridges 2D image space and 3D world space, which is essential for NeRF: we must know which 3D line each pixel corresponds to.
         </p>
         <ol>
-          <li><strong>Pixel grid:</strong> I build a grid of integer pixel indices using <code>np.meshgrid</code> with <code>indexing="xy"</code>, which matches the convention used by my <code>RaysData</code> dataset class.</li>
-          <li><strong>Camera-frame directions:</strong> The pinhole model converts pixel offsets from the principal point <code>(cx, cy)</code> into normalized directions in camera space, with <code>+Z</code> as the forward direction.</li>
-          <li><strong>Normalization:</strong> I explicitly normalize the direction vectors to unit length to avoid scale issues when sampling along the ray.</li>
-          <li><strong>World-frame transform:</strong> Multiplying by the 3×3 block of <code>c2w</code> and adding the translation gives the ray directions and origins in world coordinates. The camera center is the same for every pixel, so I broadcast <code>t</code> over the grid.</li>
-          <li><strong>Consistency:</strong> Because <code>get_rays</code> is used both for training batches and for full-image validation renders, any subtle choice (like pixel-center offsets or which axis is forward) is shared across the entire pipeline.</li>
+          <li><strong><code>pixel_to_camera</code>:</strong> Uses the pinhole camera model: subtract the principal point <code>(cx, cy)</code>, divide by focal lengths, and scale by depth. This “unprojects” a pixel into a 3D point at distance 1 along the camera’s optical axis.</li>
+          <li><strong>Camera coordinates to world coordinates:</strong> Multiplying by <code>R</code> and adding <code>t</code> effectively rotates and translates points from the camera’s frame to the world frame.</li>
+          <li><strong>Ray origin:</strong> The ray origin is just the camera center, which is <code>t</code> when <code>c2w</code> is camera-to-world.</li>
+          <li><strong>Ray direction:</strong> I compute <code>world_pts - ray_o</code> and normalize it to get a unit direction vector.</li>
+          <li><strong>Batching:</strong> Everything is implemented in a vectorized way to efficiently handle many rays per training step.</li>
         </ol>
       </div>
 
@@ -531,30 +502,26 @@ TAG_SIZE_M = <span class="num">0.02</span>
       </div>
 
 
-      <h3>B.2 Sampling Points along Rays</h3>
+      <h3>2.2 Sampling Points along Rays</h3>
       <p>
         For each ray, I sample a set of points between a near and far bound (2.0 and 6.0 for the Lego scene). During training,
         I add small random perturbations to encourage the model to cover the entire interval and avoid overfitting to a fixed grid.
       </p>
 
       <pre class="code"><code>
-<span class="kw">import</span> torch
-
-<span class="kw">def</span> <span class="fn">sample_along_rays</span>(rays_o, rays_d, n_samples=<span class="num">64</span>, near=<span class="num">2.0</span>, far=<span class="num">6.0</span>, perturb=<span class="kw">True</span>):
-    device_ = rays_o.device
-    B = rays_o.shape[<span class="num">0</span>]
-
-    t_vals = torch.linspace(near, far, n_samples, device=device_)
+<span class="kw">def</span> <span class="fn">sample_along_rays</span>(rays_o, rays_d, n_samples=64, near=2.0, far=6.0, perturb=<span class="kw">True</span>):
+    B = rays_o.shape[0]
+    t_vals = torch.linspace(near, far, n_samples, device=rays_o.device)
     t_vals = t_vals.expand(B, n_samples)
 
     <span class="kw">if</span> perturb:
-        mids = <span class="num">0.5</span> * (t_vals[:, :-<span class="num">1</span>] + t_vals[:, <span class="num">1</span>:])
-        widths = t_vals[:, <span class="num">1</span>:] - t_vals[:, :-<span class="num">1</span>]
-        noise = (torch.rand_like(mids) - <span class="num">0.5</span>) * widths
-        t_vals = torch.cat([mids + noise, t_vals[:, -<span class="num">1</span>:]], dim=-<span class="num">1</span>)
+        mids = 0.5 * (t_vals[:, :-1] + t_vals[:, 1:])
+        widths = t_vals[:, 1:] - t_vals[:, :-1]
+        noise = (torch.rand_like(mids) - 0.5) * widths
+        t_vals = torch.cat([mids + noise, t_vals[:, -1:]], dim=-1)
 
-    pts = rays_o[..., <span class="num">None</span>, :] + rays_d[..., <span class="num">None</span>, :] * t_vals[..., <span class="num">None</span>]
-    <span class="kw">return</span> pts, t_vals
+    points = rays_o[..., <span class="num">None</span>, :] + rays_d[..., <span class="num">None</span>, :] * t_vals[..., <span class="num">None</span>]
+    <span class="kw">return</span> points, t_vals
       </code></pre>
 
       <div class="walkthrough">
@@ -563,113 +530,89 @@ TAG_SIZE_M = <span class="num">0.02</span>
           NeRF is essentially integrating along each ray, so we approximate that integral by sampling discrete points.
         </p>
         <ol>
-          <li><strong>Shared depth grid:</strong> I start with <code>torch.linspace(near, far, n_samples)</code> to get evenly spaced depths along the ray interval. This is expanded to all rays in the batch.</li>
-          <li><strong>Device awareness:</strong> The samples are created directly on <code>rays_o.device</code>, which lets this function work seamlessly on both CPU and GPU without extra copies.</li>
-          <li><strong>Perturbation:</strong> When <code>perturb=True</code>, I jitter the samples inside each interval using uniform noise. This behaves like anti-aliasing and reduces banding artifacts in the final render.</li>
-          <li><strong>3D points:</strong> The formula <code>rays_o + t · rays_d</code> gives the 3D point at depth <code>t</code> along each ray. Broadcasting over <code>[B, N]</code> gives a dense grid of samples suitable for feeding into the NeRF MLP.</li>
-          <li><strong>Output shapes:</strong> I return both the sampled 3D points and the scalar depth values, which are later needed by the volume renderer.</li>
+          <li><strong>Base sampling:</strong> <code>torch.linspace(near, far, n_samples)</code> gives evenly spaced depths along the ray. Each ray shares the same initial sample depths.</li>
+          <li><strong>Perturbation:</strong> To avoid aliasing artifacts, I jitter the sample positions inside each interval. This is similar to anti-aliasing in rendering and helps cover the continuous volume more uniformly.</li>
+          <li><strong>3D point computation:</strong> The formula <code>rays_o + rays_d * t</code> gives the 3D point at distance <code>t</code> along the ray.</li>
+          <li><strong>Shape:</strong> The result <code>points</code> has shape <code>[B, N, 3]</code>, which is convenient for feeding into the NeRF MLP.</li>
         </ol>
       </div>
 
-      <h3>B.3 NeRF Network Architecture</h3>
+      <h3>2.3 NeRF Network Architecture</h3>
       <p>
         The NeRF network takes in 3D points and viewing directions, applies separate positional encodings, and outputs a density
-        (scalar) and an RGB color conditioned on direction. The implementation below matches the 8-layer architecture from the
-        spec, with a skip connection and a separate feature branch for color.
+        (scalar) and an RGB color conditioned on direction.
       </p>
 
       <pre class="code"><code>
-<span class="kw">import</span> torch
-<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
-<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
-
 <span class="kw">class</span> <span class="fn">NeRF</span>(nn.Module):
-    <span class="kw">def</span> <span class="fn">__init__</span>(self, pos_freqs=<span class="num">10</span>, dir_freqs=<span class="num">4</span>, width=<span class="num">256</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pos_freqs=10, dir_freqs=4, width=256):
         <span class="kw">super</span>().__init__()
+        self.pos_pe = PosEnc(pos_freqs)
+        self.dir_pe = PosEnc(dir_freqs)
 
-        self.pos_pe = <span class="fn">PosEnc</span>(pos_freqs)
-        self.dir_pe = <span class="fn">PosEnc</span>(dir_freqs)
+        pos_dim = 3 + 2 * 3 * pos_freqs
+        dir_dim = 3 + 2 * 3 * dir_freqs
 
-        pos_dim = <span class="num">3</span> + <span class="num">2</span> * <span class="num">3</span> * pos_freqs
-        dir_dim = <span class="num">3</span> + <span class="num">2</span> * <span class="num">3</span> * dir_freqs
+        self.fc_pos = nn.Sequential(
+            nn.Linear(pos_dim, width), nn.ReLU(<span class="kw">True</span>),
+            nn.Linear(width, width),   nn.ReLU(<span class="kw">True</span>),
+            nn.Linear(width, width),   nn.ReLU(<span class="kw">True</span>),
+            nn.Linear(width, width),   nn.ReLU(<span class="kw">True</span>),
+        )
 
-        self.fc1 = nn.Linear(pos_dim, width)
-        self.fc2 = nn.Linear(width,   width)
-        self.fc3 = nn.Linear(width,   width)
-        self.fc4 = nn.Linear(width,   width)
-
-        self.fc5 = nn.Linear(width + pos_dim, width)
-        self.fc6 = nn.Linear(width,           width)
-        self.fc7 = nn.Linear(width,           width)
-        self.fc8 = nn.Linear(width,           width)
+        self.fc_pos2 = nn.Sequential(
+            nn.Linear(width + pos_dim, width),
+            nn.ReLU(<span class="kw">True</span>),
+        )
 
         self.sigma_head = nn.Sequential(
-            nn.Linear(width, <span class="num">1</span>),
-            nn.ReLU(inplace=<span class="kw">True</span>),
+            nn.Linear(width, 1),
+            nn.ReLU(),
         )
 
-        self.fc_feat = nn.Sequential(
-            nn.Linear(width, width),
-            nn.ReLU(inplace=<span class="kw">True</span>),
-        )
-
+        self.fc_feat = nn.Linear(width, width)
         self.fc_rgb = nn.Sequential(
-            nn.Linear(width + dir_dim, <span class="num">128</span>),
-            nn.ReLU(inplace=<span class="kw">True</span>),
-            nn.Linear(<span class="num">128</span>, <span class="num">3</span>),
+            nn.Linear(width + dir_dim, width // 2),
+            nn.ReLU(<span class="kw">True</span>),
+            nn.Linear(width // 2, 3),
             nn.Sigmoid(),
         )
 
     <span class="kw">def</span> <span class="fn">forward</span>(self, x, d):
         B, N, _ = x.shape
 
-        x_flat = x.reshape(-<span class="num">1</span>, <span class="num">3</span>)
-        d_flat = d.reshape(-<span class="num">1</span>, <span class="num">3</span>)
-
-        x_enc = self.pos_pe(x_flat)
-        d_enc = self.dir_pe(d_flat)
-
-        h = F.relu(self.fc1(x_enc))
-        h = F.relu(self.fc2(h))
-        h = F.relu(self.fc3(h))
-        h = F.relu(self.fc4(h))
-
-        h = torch.cat([h, x_enc], dim=-<span class="num">1</span>)
-
-        h = F.relu(self.fc5(h))
-        h = F.relu(self.fc6(h))
-        h = F.relu(self.fc7(h))
-        h = F.relu(self.fc8(h))
+        x_enc = self.pos_pe(x.view(-1, 3))
+        h = self.fc_pos(x_enc)
+        h = self.fc_pos2(torch.cat([h, x_enc], dim=-1))
 
         sigma = self.sigma_head(h)
 
+        d_enc = self.dir_pe(d.view(-1, 3))
         feat = self.fc_feat(h)
-        h_color = torch.cat([feat, d_enc], dim=-<span class="num">1</span>)
+        h_color = torch.cat([feat, d_enc], dim=-1)
         rgb = self.fc_rgb(h_color)
 
-        sigma = sigma.view(B, N, <span class="num">1</span>)
-        rgb   = rgb.view(B, N, <span class="num">3</span>)
+        sigma = sigma.view(B, N, 1)
+        rgb = rgb.view(B, N, 3)
         <span class="kw">return</span> sigma, rgb
       </code></pre>
 
       <div class="walkthrough">
         <h4>Walkthrough</h4>
         <p>
-          This is the final NeRF architecture I use for both Lego and my own object. It closely follows the original paper and
-          the project specification.
+          This is the core of the NeRF: a network that translates coordinates and directions into physical quantities used by the volume renderer.
         </p>
         <ol>
-          <li><strong>Shared positional encoders:</strong> I reuse the <code>PosEnc</code> module from Part A to encode both positions and view directions. Positions get more frequencies (<code>L = 10</code>) than directions (<code>L = 4</code>), since geometry is more spatially complex.</li>
-          <li><strong>Deep position trunk:</strong> The first four fully connected layers operate only on the encoded position <code>PE(x)</code>, building a high-level representation of local geometry.</li>
-          <li><strong>Skip connection:</strong> After layer 4, I concatenate the original positional encoding <code>PE(x)</code> back into the hidden representation. This helps gradients flow and lets the network preserve low-level spatial detail even in deep layers.</li>
-          <li><strong>Second stage:</strong> Layers <code>fc5–fc8</code> refine this combined representation. This 8-layer trunk is deep enough to capture fine geometric structure across the scene.</li>
-          <li><strong>Density head:</strong> The <code>sigma_head</code> maps the final hidden state to a single non-negative scalar <code>σ</code> per sample. Through volume rendering, this density controls where rays “stop.”</li>
-          <li><strong>Color head:</strong> A separate feature branch feeds into the color head, where I concatenate the geometry features with the encoded view direction <code>PE(d)</code>. This enables view-dependent effects such as specular highlights.</li>
-          <li><strong>Batch-friendly shapes:</strong> I treat <code>B × N</code> samples as a big flat batch inside the MLP, then reshape back to <code>[B, N, ·]</code> so the outputs line up with the sampled points along each ray.</li>
+          <li><strong>Separate encodings:</strong> I encode <code>x</code> (3D position) and <code>d</code> (view direction) separately. Positions usually require higher frequencies than directions.</li>
+          <li><strong>Position branch:</strong> The encoded position goes through several fully connected layers with ReLU, forming a deep feature representation of local geometry.</li>
+          <li><strong>Skip connection:</strong> Concatenating <code>h</code> with <code>x_enc</code> mid-way helps the network keep track of the original spatial location and improves training stability.</li>
+          <li><strong>Density head:</strong> The <code>sigma_head</code> predicts a non-negative density through a ReLU, representing how much light is absorbed or scattered at each point.</li>
+          <li><strong>Color head:</strong> The color branch takes both the feature vector from geometry and the encoded viewing direction. This allows the network to model view-dependent effects like specular highlights.</li>
+          <li><strong>Reshaping:</strong> After computing <code>sigma</code> and <code>rgb</code> for <code>B·N</code> points, I reshape them back to <code>[B, N, ·]</code> so they line up with the sampled points along each ray.</li>
         </ol>
       </div>
 
-      <h3>B.4 Volume Rendering</h3>
+      <h3>2.4 Volume Rendering</h3>
       <p>
         To render a pixel, I convert densities to opacities and integrate colors along the ray using the NeRF volume rendering equation.
         In discrete form, each sample contributes:
@@ -680,45 +623,19 @@ TAG_SIZE_M = <span class="num">0.02</span>
       </p>
 
       <pre class="code"><code>
-<span class="kw">import</span> torch
-
-<span class="kw">def</span> <span class="fn">volume_render</span>(sigmas, rgbs, t_vals_or_step):
+<span class="kw">def</span> <span class="fn">volume_render</span>(sigmas, rgbs, t_vals):
     B, N, _ = sigmas.shape
-    sigma = sigmas.squeeze(-<span class="num">1</span>)
+    deltas = t_vals[:, 1:] - t_vals[:, :-1]
+    deltas = torch.cat([deltas, deltas[:, -1:]], dim=-1)
 
-    <span class="kw">if</span> torch.is_tensor(t_vals_or_step) <span class="kw">and</span> t_vals_or_step.ndim == <span class="num">2</span>:
-        t_vals = t_vals_or_step
+    alpha = 1.0 - torch.exp(-sigmas.squeeze(-1) * deltas)
 
-        deltas = t_vals[:, <span class="num">1</span>:] - t_vals[:, :-<span class="num">1</span>]
-        last_delta = torch.full_like(deltas[:, :<span class="num">1</span>], <span class="num">1e10</span>)
-        deltas = torch.cat([deltas, last_delta], dim=-<span class="num">1</span>)
-    <span class="kw">else</span>:
-        step_size = <span class="fn">float</span>(t_vals_or_step)
-        deltas = torch.full(
-            (B, N),
-            step_size,
-            device=sigmas.device,
-            dtype=sigmas.dtype,
-        )
-
-    alpha = <span class="num">1.0</span> - torch.exp(-sigma * deltas)
-
-    T = torch.cumprod(
-        torch.cat(
-            [torch.ones(B, <span class="num">1</span>, device=sigma.device, dtype=sigma.dtype),
-             <span class="num">1.0</span> - alpha + <span class="num">1e-10</span>],
-            dim=-<span class="num">1</span>,
-        ),
-        dim=-<span class="num">1</span>,
-    )[:, :-<span class="num">1</span>]
+    accum = torch.cumsum(-sigmas.squeeze(-1) * deltas, dim=-1)
+    T = torch.exp(torch.cat([torch.zeros(B, 1, device=sigmas.device), accum[:, :-1]], dim=-1))
 
     weights = T * alpha
-    rgb_map = torch.sum(weights[..., <span class="num">None</span>] * rgbs, dim=<span class="num">1</span>)
-
-    <span class="kw">if</span> torch.is_tensor(t_vals_or_step) <span class="kw">and</span> t_vals_or_step.ndim == <span class="num">2</span>:
-        <span class="kw">return</span> rgb_map, weights
-    <span class="kw">else</span>:
-        <span class="kw">return</span> rgb_map
+    rgb_map = (weights[..., <span class="num">None</span>] * rgbs).sum(dim=1)
+    <span class="kw">return</span> rgb_map
       </code></pre>
 
       <div class="walkthrough">
@@ -727,33 +644,18 @@ TAG_SIZE_M = <span class="num">0.02</span>
           This function numerically approximates the continuous volume rendering integral using the discrete samples produced earlier.
         </p>
         <ol>
-          <li><strong>Two call modes:</strong> For most of my training and evaluation I pass a full <code>t_vals</code> tensor, but I also support a scalar step size to match a reference test provided in the starter code.</li>
-          <li><strong>Δt handling:</strong> When <code>t_vals</code> is provided, I compute per-interval distances and give the last sample a huge “catch-all” <code>Δt</code>, ensuring that any remaining density is absorbed at the end of the ray.</li>
-          <li><strong>Opacity computation:</strong> Densities are converted into opacities via <code>α = 1 − exp(−σ Δt)</code>, which comes directly from the Beer–Lambert law for light attenuation.</li>
-          <li><strong>Transmittance via <code>cumprod</code>:</strong> I compute the survival probability <code>T</code> using a cumulative product over <code>(1 − α)</code>. This is numerically stable and matches the project’s reference implementation.</li>
-          <li><strong>Weights and colors:</strong> Each sample’s contribution is <code>w_i = T_i α_i</code>, meaning “the ray survives up to this point and terminates here.” I then take a weighted sum of the RGB values to get one color per ray.</li>
-          <li><strong>Spec compatibility:</strong> The dual API (returning weights only when <code>t_vals</code> is passed) allows this function to both satisfy the autograder test and be reused in my own training code without extra wrappers.</li>
+          <li><strong>Δt computation:</strong> <code>deltas</code> stores the distance between consecutive samples along the ray. The last interval is copied from the previous one.</li>
+          <li><strong>Opacity α:</strong> I convert densities into opacities using <code>α = 1 − exp(−σ Δt)</code>. This comes from the Beer–Lambert law of light attenuation.</li>
+          <li><strong>Transmittance T:</strong> The cumulative sum of <code>−σ Δt</code> gives the accumulated optical thickness. Exponentiating yields transmittance: the probability that light survives from the ray origin to the current sample.</li>
+          <li><strong>Weights:</strong> Each sample’s contribution is <code>T · α</code>, meaning “the ray reaches this point and then terminates here.”</li>
+          <li><strong>Final color:</strong> I multiply each sample’s color by its weight and sum along the ray dimension, producing one RGB value per ray.</li>
         </ol>
       </div>
 
-      <h3>B.5 Training & Results on the Lego Scene</h3>
+      <h3>2.5 Training & Results on the Lego Scene</h3>
       <p>
-        I train NeRF on the Lego dataset using Adam (learning rate 5e-4) with 10k rays per iteration. I use 96 samples per ray
-        for Lego (<code>n_samples=96</code> between <code>near=2.0</code> and <code>far=6.0</code>), which gave a small PSNR boost
-        over 64 samples while staying within the time budget.
-      </p>
-      <p>
-        The training loop randomly samples rays across all views using a <code>RaysData</code> helper, then:
-      </p>
-      <ol>
-        <li>Samples points along each ray with <code>sample_along_rays</code>.</li>
-        <li>Feeds the points and directions into the <code>NeRF</code> MLP.</li>
-        <li>Uses <code>volume_render</code> to get a predicted RGB color per ray.</li>
-        <li>Computes MSE loss against ground-truth pixel colors and updates the network with Adam.</li>
-      </ol>
-      <p>
-        In addition to the per-batch PSNR, I periodically call a separate <code>evaluate_nerf_psnr</code> routine that renders a fixed
-        subset of rays from the first training image. This gives a stable, comparable PSNR curve over training.
+        I train NeRF on the Lego dataset using Adam (learning rate 5e-4) with 10k rays per iteration. The validation PSNR reaches
+        above the 23 dB target within 1000 gradient steps.
       </p>
 
       <div class="grid grid-3">
@@ -781,7 +683,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
         <figcaption>Loss vs training iteration for the Lego scene.</figcaption>
       </figure>
 
-      <h3>B.6 Spherical Novel-View Rendering</h3>
+      <h3>2.5.1 Spherical Novel-View Rendering</h3>
       <p>
         To demonstrate true 3D understanding, I render novel views of the Lego scene from a spherical trajectory around the object.
         The NeRF is never explicitly told about these views; it synthesizes them from the learned radiance field.
@@ -814,15 +716,15 @@ TAG_SIZE_M = <span class="num">0.02</span>
       </p>
     </section>
 
-    <!-- Part C: My Own Object NeRF -->
-    <section id="partC">
-      <h2>Part C – NeRF on My Own Object (C.1–C.4)</h2>
+    <!-- Part 2.6: My Own Object NeRF -->
+    <section id="part26">
+      <h2>Part 2.6 – Training with My Own Object Data (2.6.1–2.6.4)</h2>
       <p>
         Finally, I apply the entire NeRF pipeline to the dataset I captured in Part 0, training a NeRF that can synthesize novel
         views of my own object.
       </p>
 
-      <h3>C.1 Dataset & Preprocessing</h3>
+      <h3>2.6.1 Dataset & Preprocessing</h3>
       <p>
         I use the undistorted images and <code>c2w</code> matrices produced earlier and package them into
         <code>images_train</code>, <code>images_val</code>, <code>c2ws_train</code>, and <code>c2ws_val</code>. I slightly adjust
@@ -830,7 +732,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
         <code>far ≈ 0.5</code>, 64 samples per ray).
       </p>
 
-      <h3>C.2 Training Behavior</h3>
+      <h3>2.6.2 Training Behavior</h3>
       <p>
         Training behavior is similar to Lego but a bit more sensitive to hyperparameters, since my capture is less “perfect” than
         the synthetic dataset. The loss curve below shows the training loss decreasing over time.
@@ -860,7 +762,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
         </figure>
       </div>
 
-      <h3>C.3 Novel View Animation</h3>
+      <h3>2.6.3 Novel View Animation</h3>
       <p>
         I synthesize a small orbiting camera path around the object by creating new <code>c2w</code> matrices that place the camera
         on a circle, always looking at the origin. For each frame, I render an image using the trained NeRF and combine them into a GIF.
@@ -886,7 +788,7 @@ TAG_SIZE_M = <span class="num">0.02</span>
         <figcaption>Full orbit GIF for my object, showing consistent geometry across viewpoints.</figcaption>
       </figure>
 
-      <h3>C.4 Reflection</h3>
+      <h3>2.6.4 Reflection</h3>
       <p>
         Compared to the Lego scene, my own data is noisier, less uniformly lit, and has fewer views. Nonetheless, NeRF is able to
         reconstruct a coherent 3D model that produces convincing novel views. This highlights both the power and fragility of
