@@ -252,11 +252,11 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-2">
         <figure class="wide">
-          <img src="part0_camera_calibration/viser_frustum_view1.png" alt="Viser visualization of camera frustums – view 1" />
+          <img src="images/part0_camera_calibration/viser_frustum_view1.png" alt="Viser visualization of camera frustums – view 1" />
           <figcaption>Viser visualization of all camera frustums orbiting the object (view 1).</figcaption>
         </figure>
         <figure class="wide">
-          <img src="part0_camera_calibration/viser_frustum_view2.png" alt="Viser visualization of camera frustums – view 2" />
+          <img src="images/part0_camera_calibration/viser_frustum_view2.png" alt="Viser visualization of camera frustums – view 2" />
           <figcaption>Another viewpoint of the same cloud of cameras, confirming a reasonably smooth arc.</figcaption>
         </figure>
       </div>
@@ -363,36 +363,36 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-3">
         <figure>
-          <img src="part1_2d_neural_field/train_provided_iter000.png" alt="Training progression on provided image, iteration 0" />
+          <img src="images/part1_2d_neural_field/train_provided_iter000.png" alt="Training progression on provided image, iteration 0" />
           <figcaption>Provided image: random initialization (iteration 0).</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_provided_iter300.png" alt="Training progression on provided image, iteration 300" />
+          <img src="images/part1_2d_neural_field/train_provided_iter300.png" alt="Training progression on provided image, iteration 300" />
           <figcaption>Provided image: structure emerging around iteration 300.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_provided_2000.png" alt="Training progression on provided image, final iteration" />
+          <img src="images/part1_2d_neural_field/train_provided_2000.png" alt="Training progression on provided image, final iteration" />
           <figcaption>Provided image: final reconstruction closely matches the original.</figcaption>
         </figure>
       </div>
 
       <div class="grid grid-3">
         <figure>
-          <img src="part1_2d_neural_field/train_own_iter000.png" alt="Training progression on my own image, iteration 0" />
+          <img src="images/part1_2d_neural_field/train_own_iter000.png" alt="Training progression on my own image, iteration 0" />
           <figcaption>My own image: random initialization (iteration 0).</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_own_iter300.png" alt="Training progression on my own image, iteration 300" />
+          <img src="images/part1_2d_neural_field/train_own_iter300.png" alt="Training progression on my own image, iteration 300" />
           <figcaption>My own image: major structure appears within a few hundred steps.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_own_2000.png" alt="Training progression on my own image, final iteration" />
+          <img src="images/part1_2d_neural_field/train_own_2000.png" alt="Training progression on my own image, final iteration" />
           <figcaption>My own image: final neural reconstruction.</figcaption>
         </figure>
       </div>
 
       <figure class="wide">
-        <img src="part1_2d_neural_field/psnr_curve_own.png" alt="PSNR curve over training iterations for the 2D neural field" />
+        <img src="images/part1_2d_neural_field/psnr_curve_own.png" alt="PSNR curve over training iterations for the 2D neural field" />
         <figcaption>PSNR vs iteration for the 2D neural field. The curve plateaus when the network has fully memorized the image.</figcaption>
       </figure>
 
@@ -404,19 +404,19 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-2">
         <figure>
-          <img src="part1_2d_neural_field/train_grid_L4_W64_iter1000.png" alt="Low frequency, low width" />
+          <img src="images/part1_2d_neural_field/train_grid_L4_W64_iter1000.png" alt="Low frequency, low width" />
           <figcaption>Low PE frequency = 4, low width = 64: overly smooth, blurred edges.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_grid_L4_W128_iter1000.png" alt="Low frequency, high width" />
+          <img src="images/part1_2d_neural_field/train_grid_L4_W128_iter1000.png" alt="Low frequency, high width" />
           <figcaption>Low PE frequency = 4, high width = 128: more capacity but still lacking fine detail.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_grid_L10_W64_iter1000.png" alt="High frequency, low width" />
+          <img src="images/part1_2d_neural_field/train_grid_L10_W64_iter1000.png" alt="High frequency, low width" />
           <figcaption>High PE frequency = 10, low width = 64: some high-frequency detail, but underfit in complex regions.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_grid_L10_W128_iter1000.png" alt="High frequency, high width" />
+          <img src="images/part1_2d_neural_field/train_grid_L10_W128_iter1000.png" alt="High frequency, high width" />
           <figcaption>High PE frequency = 10, high width = 128: sharpest reconstruction, but with higher computational cost.</figcaption>
         </figure>
       </div>
@@ -658,28 +658,28 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-3">
         <figure>
-          <img src="part2_lego_nerf/train_lego_iter000.png" alt="Lego NeRF training iteration 0" />
+          <img src="images/part2_lego_nerf/train_lego_iter000.png" alt="Lego NeRF training iteration 0" />
           <figcaption>Lego NeRF at iteration 0 – essentially noise.</figcaption>
         </figure>
         <figure>
-          <img src="part2_lego_nerf/train_lego_iter200.png" alt="Lego NeRF training iteration 200" />
+          <img src="images/part2_lego_nerf/train_lego_iter200.png" alt="Lego NeRF training iteration 200" />
           <figcaption>Iteration 200 – rough geometry visible.</figcaption>
         </figure>
         <figure>
-          <img src="part2_lego_nerf/train_lego_iter1000.png" alt="Lego NeRF training iteration 1000" />
+          <img src="images/part2_lego_nerf/train_lego_iter1000.png" alt="Lego NeRF training iteration 1000" />
           <figcaption>Iteration 1000 – refined textures and clear object boundaries.</figcaption>
         </figure>
       </div>
 
       <figure class="wide">
-        <img src="part2_lego_nerf/psnr_curve_lego.png" alt="PSNR curve for Lego NeRF validation set" />
+        <img src="images/part2_lego_nerf/psnr_curve_lego.png" alt="PSNR curve for Lego NeRF validation set" />
         <figcaption>PSNR vs training iteration for the Lego scene. The curve stabilizes once the network fits all views consistently.</figcaption>
       </figure>
 
       <!-- Removed: optional Lego loss curve figure -->
 
       <figure class="wide">
-        <img src="part2_lego_nerf/viser_rays_and_samples.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <img src="images/part2_lego_nerf/viser_rays_and_samples.png" alt="Visualization of cameras, rays, and samples in Viser" />
         <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
       </figure>
 
@@ -691,21 +691,21 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-3">
         <figure>
-          <img src="part2_lego_nerf/lego_spherical_frame00.png" alt="Lego spherical rendering frame 0" />
+          <img src="images/part2_lego_nerf/lego_spherical_frame00.png" alt="Lego spherical rendering frame 0" />
           <figcaption>Frame 0 – initial viewpoint from the training set’s general region.</figcaption>
         </figure>
         <figure>
-          <img src="part2_lego_nerf/lego_spherical_frame07.png" alt="Lego spherical rendering frame 7" />
+          <img src="images/part2_lego_nerf/lego_spherical_frame07.png" alt="Lego spherical rendering frame 7" />
           <figcaption>Frame 7 – midway through the orbit, revealing previously occluded parts.</figcaption>
         </figure>
         <figure>
-          <img src="part2_lego_nerf/lego_spherical_frame14.png" alt="Lego spherical rendering frame 14" />
+          <img src="images/part2_lego_nerf/lego_spherical_frame14.png" alt="Lego spherical rendering frame 14" />
           <figcaption>Frame 14 – later in the orbit, showing consistent geometry and appearance.</figcaption>
         </figure>
       </div>
 
       <figure class="wide">
-        <img src="part2_lego_nerf/lego_spherical.gif" alt="Lego spherical orbit GIF" />
+        <img src="images/part2_lego_nerf/lego_spherical.gif" alt="Lego spherical orbit GIF" />
         <figcaption>Full spherical orbit GIF for the Lego scene, illustrating smooth novel views around the entire object.</figcaption>
       </figure>
 
@@ -739,25 +739,25 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
       </p>
 
       <figure class="wide">
-        <img src="part2_6_your_object/object_loss_curve.png" alt="Training loss curve for my object NeRF" />
+        <img src="images/part2_6_your_object/object_loss_curve.png" alt="Training loss curve for my object NeRF" />
         <figcaption>Training loss over iterations for my own object NeRF.</figcaption>
       </figure>
 
       <div class="grid grid-4">
         <figure>
-          <img src="part2_6_your_object/object_intermediate_iter050.png" alt="NeRF of my object, iteration 50" />
+          <img src="images/part2_6_your_object/object_intermediate_iter050.png" alt="NeRF of my object, iteration 50" />
           <figcaption>Iteration 50 – noisy but coarse silhouette is visible.</figcaption>
         </figure>
         <figure>
-          <img src="part2_6_your_object/object_intermediate_iter200.png" alt="NeRF of my object, iteration 200" />
+          <img src="images/part2_6_your_object/object_intermediate_iter200.png" alt="NeRF of my object, iteration 200" />
           <figcaption>Iteration 200 – main geometry emerges.</figcaption>
         </figure>
         <figure>
-          <img src="part2_6_your_object/object_intermediate_iter500.png" alt="NeRF of my object, iteration 500" />
+          <img src="images/part2_6_your_object/object_intermediate_iter500.png" alt="NeRF of my object, iteration 500" />
           <figcaption>Iteration 500 – textures sharpening.</figcaption>
         </figure>
         <figure>
-          <img src="part2_6_your_object/object_intermediate_iter1000.png" alt="NeRF of my object, iteration 1000" />
+          <img src="images/part2_6_your_object/object_intermediate_iter1000.png" alt="NeRF of my object, iteration 1000" />
           <figcaption>Iteration 1000 – final reconstruction.</figcaption>
         </figure>
       </div>
@@ -770,22 +770,22 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-3">
         <figure>
-          <img src="part2_6_your_object/object_spherical_frame01.png" alt="My object spherical rendering frame 1" />
+          <img src="images/part2_6_your_object/object_spherical_frame01.png" alt="My object spherical rendering frame 1" />
           <figcaption>Novel view frame 1.</figcaption>
         </figure>
         <figure>
-          <img src="part2_6_your_object/object_spherical_frame02.png" alt="My object spherical rendering frame 2" />
+          <img src="images/part2_6_your_object/object_spherical_frame02.png" alt="My object spherical rendering frame 2" />
           <figcaption>Novel view frame 2.</figcaption>
         </figure>
         <figure>
-          <img src="part2_6_your_object/object_spherical_frame03.png" alt="My object spherical rendering frame 3" />
+          <img src="images/part2_6_your_object/object_spherical_frame03.png" alt="My object spherical rendering frame 3" />
           <figcaption>Novel view frame 3.</figcaption>
         </figure>
       </div>
 
       <!-- Keep only the required GIF; remove extra still frame -->
       <figure class="wide">
-        <img src="part2_6_your_object/object_spherical.gif" alt="My object orbit GIF" />
+        <img src="images/part2_6_your_object/object_spherical.gif" alt="My object orbit GIF" />
         <figcaption>Full orbit GIF for my object, showing consistent geometry across viewpoints.</figcaption>
       </figure>
 
