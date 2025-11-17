@@ -193,7 +193,7 @@ world_corners = tag_corners_3d()
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     corners, ids, _ = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=aruco_params)
-    <span class="kw">if</span> ids is <span class="kw">None</span>:
+    <span class="kw">if</span> ids <span class="kw">is</span> <span class="kw">None</span>:
         <span class="kw">continue</span>
 
     img_corners = np.concatenate(corners, axis=0).reshape(-1, 2).astype(np.float32)
@@ -284,6 +284,7 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
       <pre class="code"><code>
 <span class="kw">import</span> torch
 <span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> torch.nn.functional <span class="kw">as</span> F
 
 <span class="kw">class</span> <span class="fn">PosEnc</span>(nn.Module):
     <span class="kw">def</span> <span class="fn">__init__</span>(self, num_freqs: <span class="kw">int</span> = 10):
@@ -347,6 +348,67 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         and compare predicted colors against ground truth using mean squared error (MSE). I track reconstruction quality using
         PSNR (Peak Signal-to-Noise Ratio).
       </p>
+
+      <pre class="code"><code>
+<span class="kw">def</span> <span class="fn">train_2d_field</span>(
+    target_img,
+    num_iters=2000,
+    batch_size=8192,
+    width=128,
+    num_freqs=10,
+    device=<span class="kw">None</span>,
+):
+    <span class="kw">if</span> device <span class="kw">is</span> <span class="kw">None</span>:
+        device = torch.device(<span class="str">"cuda"</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">"cpu"</span>)
+
+    target = torch.as_tensor(target_img, dtype=torch.float32, device=device)
+    target = target / 255.0 <span class="kw">if</span> target.max() &gt; 1.0 <span class="kw">else</span> target
+    H, W, _ = target.shape
+
+    xs = torch.linspace(0.0, 1.0, W, device=device)
+    ys = torch.linspace(0.0, 1.0, H, device=device)
+    grid_x, grid_y = torch.meshgrid(xs, ys, indexing=<span class="str">"xy"</span>)
+    coords = torch.stack([grid_x, grid_y], dim=-1).view(-1, 2)
+    colors = target.view(-1, 3)
+
+    model = NeuralField2D(width=width, num_freqs=num_freqs).to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+    psnr_history = []
+
+    <span class="kw">for</span> it <span class="kw">in</span> <span class="fn">range</span>(num_iters):
+        idx = torch.randint(0, coords.shape[0], (batch_size,), device=device)
+        uv = coords[idx]
+        rgb_gt = colors[idx]
+
+        rgb_pred = model(uv)
+        loss = F.mse_loss(rgb_pred, rgb_gt)
+
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+        mse = loss.detach()
+        psnr = -10.0 * torch.log10(mse)
+        psnr_history.append(psnr.item())
+
+    <span class="kw">return</span> model, psnr_history
+      </code></pre>
+
+      <div class="walkthrough">
+        <h4>Walkthrough</h4>
+        <p>
+          This training loop turns the static image into a dataset of coordinates and colors, then optimizes the MLP to regress
+          from the former to the latter.
+        </p>
+        <ol>
+          <li><strong>Coordinate grid:</strong> I create a full grid of normalized <code>(u, v)</code> coordinates and flatten it so each row corresponds to a pixel.</li>
+          <li><strong>Targets:</strong> The target image is reshaped to match, so each coordinate has a matching RGB color.</li>
+          <li><strong>Mini-batches:</strong> At every iteration, I sample <code>batch_size</code> random pixels to improve convergence speed and generalization.</li>
+          <li><strong>Optimization:</strong> I use Adam with a small learning rate and optimize MSE between predicted and target colors.</li>
+          <li><strong>PSNR tracking:</strong> I convert the MSE on each batch into PSNR and store it for plotting the learning curve.</li>
+        </ol>
+      </div>
 
       <div class="grid grid-3">
         <figure>
@@ -470,37 +532,6 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
           <li><strong>Batching:</strong> Everything is implemented in a vectorized way to efficiently handle many rays per training step.</li>
         </ol>
       </div>
-
-      <figure class="wide">
-        <img src="images/part2_lego_nerf/viser_rays_and_samples_1.png" alt="Visualization of cameras, rays, and samples in Viser" />
-        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
-      </figure>
-      <figure class="wide">
-        <img src="images/part2_lego_nerf/viser_rays_and_samples_2.png" alt="Visualization of cameras, rays, and samples in Viser" />
-        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
-      </figure>
-
-      <div class="walkthrough">
-        <h4>Why include the Viser validation visuals?</h4>
-        <p>
-          These 3D plots are a quick, visual “sanity check” that all upstream geometry is consistent <em>before</em> training NeRF. They confirm that
-          intrinsics (from calibration), undistortion, PnP poses, and my camera-to-world (<code>c2w</code>) convention agree with each other in a single,
-          real-world coordinate frame.
-        </p>
-        <ul>
-          <li><strong>Pose coherence:</strong> Camera frustums form a smooth arc around the object, with consistent “up” direction. Sudden jumps or twists usually mean a flipped axis or mixed conventions (<code>w2c</code> vs <code>c2w</code>).</li>
-          <li><strong>Scale & bounds:</strong> Distances between cameras and the tag/object look physically plausible, helping me pick reasonable <code>near</code>/<code>far</code> ranges for ray sampling.</li>
-          <li><strong>Coverage:</strong> The orbit shows whether viewpoints sufficiently wrap the object (front, sides, some elevation). Sparse or clustered views predict holes/blur in the NeRF.</li>
-          <li><strong>Error spotting:</strong> Mis-undistortion, wrong principal point, or transposed rotations manifest immediately as crossed frustums, shears, or cameras pointing the wrong way.</li>
-        </ul>
-        <p class="callout">
-          <span class="label">How to read the plots</span><br/>
-          The pyramids are camera “cones” pointing where each photo looked. A clean ring with cones aimed at the same target implies consistent
-          poses. If cones diverge, flip, or intersect oddly, fix calibration/EXIF/pose code <em>before</em> training—otherwise the NeRF will try to
-          explain bad geometry with blurry density.
-        </p>
-      </div>
-
 
       <h3>2.2 Sampling Points along Rays</h3>
       <p>
@@ -658,6 +689,97 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         above the 23 dB target within 1000 gradient steps.
       </p>
 
+      <pre class="code"><code>
+<span class="kw">def</span> <span class="fn">train_nerf_lego</span>(
+    images,
+    c2ws,
+    focal,
+    num_iters=1000,
+    rays_per_batch=10000,
+    n_samples=64,
+    near=2.0,
+    far=6.0,
+    device=<span class="kw">None</span>,
+):
+    <span class="kw">if</span> device <span class="kw">is</span> <span class="kw">None</span>:
+        device = torch.device(<span class="str">"cuda"</span> <span class="kw">if</span> torch.cuda.is_available() <span class="kw">else</span> <span class="str">"cpu"</span>)
+
+    imgs = torch.as_tensor(images, dtype=torch.float32, device=device)
+    imgs = imgs / 255.0 <span class="kw">if</span> imgs.max() &gt; 1.0 <span class="kw">else</span> imgs
+    N, H, W, _ = imgs.shape
+    imgs_flat = imgs.view(-1, 3)
+
+    K = torch.tensor(
+        [[focal, 0.0, W / 2.0],
+         [0.0,   focal, H / 2.0],
+         [0.0,   0.0,   1.0]],
+        dtype=torch.float32,
+        device=device,
+    )
+
+    ix, iy = torch.meshgrid(
+        torch.arange(W, device=device),
+        torch.arange(H, device=device),
+        indexing=<span class="str">"xy"</span>
+    )
+    uv = torch.stack([ix + 0.5, iy + 0.5], dim=-1).view(-1, 2)
+
+    rays_o_all = []
+    rays_d_all = []
+    <span class="kw">for</span> c2w <span class="kw">in</span> c2ws:
+        c2w_t = torch.as_tensor(c2w, dtype=torch.float32, device=device)
+        ray_o, ray_d = pixel_to_ray(K, c2w_t, uv)
+        rays_o_all.append(ray_o)
+        rays_d_all.append(ray_d)
+
+    rays_o_all = torch.cat(rays_o_all, dim=0)
+    rays_d_all = torch.cat(rays_d_all, dim=0)
+
+    model = NeRF().to(device)
+    opt = torch.optim.Adam(model.parameters(), lr=5e-4)
+
+    psnr_history = []
+
+    <span class="kw">for</span> it <span class="kw">in</span> <span class="fn">range</span>(num_iters):
+        idx = torch.randint(0, rays_o_all.shape[0], (rays_per_batch,), device=device)
+        rays_o = rays_o_all[idx]
+        rays_d = rays_d_all[idx]
+        target = imgs_flat[idx]
+
+        pts, t_vals = sample_along_rays(rays_o, rays_d, n_samples, near, far, perturb=<span class="kw">True</span>)
+        sigmas, rgbs = model(
+            pts,
+            rays_d[..., <span class="num">None</span>, :].expand_as(pts),
+        )
+        rgb_map = volume_render(sigmas, rgbs, t_vals)
+
+        loss = F.mse_loss(rgb_map, target)
+
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+        mse = loss.detach()
+        psnr = -10.0 * torch.log10(mse)
+        psnr_history.append(psnr.item())
+
+    <span class="kw">return</span> model, psnr_history
+      </code></pre>
+
+      <div class="walkthrough">
+        <h4>Walkthrough</h4>
+        <p>
+          This training loop ties together rays, samples, the NeRF MLP, and the volume renderer into a single optimization problem.
+        </p>
+        <ol>
+          <li><strong>Ray precomputation:</strong> I build a pinhole intrinsics matrix from the Lego focal length, then unproject every pixel of every view into a world-space ray using <code>pixel_to_ray</code>.</li>
+          <li><strong>Dataset flattening:</strong> All ray origins, ray directions, and RGB colors are flattened so each index corresponds to a single ray–pixel pair.</li>
+          <li><strong>Mini-batch sampling:</strong> At each iteration I randomly choose <code>rays_per_batch</code> rays, sample 3D points along them, and query the NeRF network.</li>
+          <li><strong>Rendering:</strong> <code>volume_render</code> integrates densities and colors along each ray to produce a batch of predicted pixel colors.</li>
+          <li><strong>Loss + PSNR:</strong> I minimize MSE between rendered colors and ground-truth pixels using Adam, and track PSNR to monitor how quickly the model is fitting the multi-view data.</li>
+        </ol>
+      </div>
+
       <div class="grid grid-3">
         <figure>
           <img src="images/part2_lego_nerf/train_lego_iter0000.png" alt="Lego NeRF training iteration 0" />
@@ -683,6 +805,15 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         <figcaption>Loss vs training iteration for the Lego scene.</figcaption>
       </figure>
 
+      <figure class="wide">
+        <img src="images/part2_lego_nerf/viser_rays_and_samples_1.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="images/part2_lego_nerf/viser_rays_and_samples_2.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
+      </figure>
+
       <h3>2.5.1 Spherical Novel-View Rendering</h3>
       <p>
         To demonstrate true 3D understanding, I render novel views of the Lego scene from a spherical trajectory around the object.
@@ -695,12 +826,12 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
           <figcaption>Frame 0 – initial viewpoint from the training set’s general region.</figcaption>
         </figure>
         <figure>
-          <img src="images/part2_lego_nerf/lego_spherical_frame20.png" alt="Lego spherical rendering frame 7" />
-          <figcaption>Frame 7 – midway through the orbit, revealing previously occluded parts.</figcaption>
+          <img src="images/part2_lego_nerf/lego_spherical_frame20.png" alt="Lego spherical rendering frame 20" />
+          <figcaption>Frame 20 – midway through the orbit, revealing previously occluded parts.</figcaption>
         </figure>
         <figure>
-          <img src="images/part2_lego_nerf/lego_spherical_frame40.png" alt="Lego spherical rendering frame 14" />
-          <figcaption>Frame 14 – later in the orbit, showing consistent geometry and appearance.</figcaption>
+          <img src="images/part2_lego_nerf/lego_spherical_frame40.png" alt="Lego spherical rendering frame 40" />
+          <figcaption>Frame 40 – later in the orbit, showing consistent geometry and appearance.</figcaption>
         </figure>
       </div>
 
