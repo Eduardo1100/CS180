@@ -902,8 +902,8 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
       </p>
 
       <figure class="wide">
-        <img src="images/part2_6_your_object/pnsr_curve_myobject.png" alt="Training pnsr curve for my object NeRF" />
-        <figcaption>Training pnsr over iterations for my own object NeRF.</figcaption>
+        <img src="images/part2_6_your_object/psnr_curve_myobject.png" alt="Training pnsr curve for my object NeRF" />
+        <figcaption>Training psnr over iterations for my own object NeRF.</figcaption>
       </figure>
       <figure class="wide">
         <img src="images/part2_6_your_object/loss_curve_myobject.png" alt="Training loss curve for my object NeRF" />
@@ -913,19 +913,19 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
       <div class="grid grid-4">
         <figure>
           <img src="images/part2_6_your_object/train_myobject_iter0050.png" alt="NeRF of my object, iteration 50" />
-          <figcaption>Iteration 50 – noisy but coarse silhouette is visible.</figcaption>
+          <figcaption>Iteration 50 – noisy.</figcaption>
         </figure>
         <figure>
           <img src="images/part2_6_your_object/train_myobject_iter0200.png" alt="NeRF of my object, iteration 200" />
-          <figcaption>Iteration 200 – main geometry emerges.</figcaption>
+          <figcaption>Iteration 200 – less noisy.</figcaption>
         </figure>
         <figure>
           <img src="images/part2_6_your_object/train_myobject_iter0500.png" alt="NeRF of my object, iteration 500" />
-          <figcaption>Iteration 500 – textures sharpening.</figcaption>
+          <figcaption>Iteration 500 – noisy but coarse silhouette is visible.</figcaption>
         </figure>
         <figure>
           <img src="images/part2_6_your_object/object_intermediate_iter1000.png" alt="NeRF of my object, iteration 1000" />
-          <figcaption>Iteration 1000 – final reconstruction.</figcaption>
+          <figcaption>Iteration 1000 – main geometry emerges.</figcaption>
         </figure>
       </div>
 
