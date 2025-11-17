@@ -501,6 +501,37 @@ TAG_SIZE_M = <span class="num">0.02</span>
         </ol>
       </div>
 
+      <figure class="wide">
+        <img src="images/part2_lego_nerf/viser_rays_and_samples_1.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
+      </figure>
+      <figure class="wide">
+        <img src="images/part2_lego_nerf/viser_rays_and_samples_2.png" alt="Visualization of cameras, rays, and samples in Viser" />
+        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
+      </figure>
+
+      <div class="walkthrough">
+        <h4>Why include the Viser validation visuals?</h4>
+        <p>
+          These 3D plots are a quick, visual “sanity check” that all upstream geometry is consistent <em>before</em> training NeRF. They confirm that
+          intrinsics (from calibration), undistortion, PnP poses, and my camera-to-world (<code>c2w</code>) convention agree with each other in a single,
+          real-world coordinate frame.
+        </p>
+        <ul>
+          <li><strong>Pose coherence:</strong> Camera frustums form a smooth arc around the object, with consistent “up” direction. Sudden jumps or twists usually mean a flipped axis or mixed conventions (<code>w2c</code> vs <code>c2w</code>).</li>
+          <li><strong>Scale & bounds:</strong> Distances between cameras and the tag/object look physically plausible, helping me pick reasonable <code>near</code>/<code>far</code> ranges for ray sampling.</li>
+          <li><strong>Coverage:</strong> The orbit shows whether viewpoints sufficiently wrap the object (front, sides, some elevation). Sparse or clustered views predict holes/blur in the NeRF.</li>
+          <li><strong>Error spotting:</strong> Mis-undistortion, wrong principal point, or transposed rotations manifest immediately as crossed frustums, shears, or cameras pointing the wrong way.</li>
+        </ul>
+        <p class="callout">
+          <span class="label">How to read the plots</span><br/>
+          The pyramids are camera “cones” pointing where each photo looked. A clean ring with cones aimed at the same target implies consistent
+          poses. If cones diverge, flip, or intersect oddly, fix calibration/EXIF/pose code <em>before</em> training—otherwise the NeRF will try to
+          explain bad geometry with blurry density.
+        </p>
+      </div>
+
+
       <h3>B.2 Sampling Points along Rays</h3>
       <p>
         For each ray, I sample a set of points between a near and far bound (2.0 and 6.0 for the Lego scene). During training,
@@ -749,15 +780,6 @@ TAG_SIZE_M = <span class="num">0.02</span>
       <figure class="wide">
         <img src="images/part2_lego_nerf/loss_curve_lego.png" alt="Loss curve for Lego NeRF validation set" />
         <figcaption>Loss vs training iteration for the Lego scene.</figcaption>
-      </figure>
-
-      <figure class="wide">
-        <img src="images/part2_lego_nerf/viser_rays_and_samples_1.png" alt="Visualization of cameras, rays, and samples in Viser" />
-        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
-      </figure>
-      <figure class="wide">
-        <img src="images/part2_lego_nerf/viser_rays_and_samples_2.png" alt="Visualization of cameras, rays, and samples in Viser" />
-        <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
       </figure>
 
       <h3>B.6 Spherical Novel-View Rendering</h3>
