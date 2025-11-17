@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -35,14 +35,8 @@
       --nav-height: 64px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       background: radial-gradient(circle at top, #181d2b 0, #05060a 55%, #020308 100%);
@@ -51,317 +45,68 @@
       line-height: 1.7;
       -webkit-font-smoothing: antialiased;
     }
-
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
     /* Top Navigation */
     header.top-nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(18px);
+      position: sticky; top: 0; z-index: 100; backdrop-filter: blur(18px);
       background: linear-gradient(to right, rgba(3,6,12,0.94), rgba(4,8,16,0.9));
       border-bottom: 1px solid rgba(255,255,255,0.04);
     }
-
-    .nav-inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .nav-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-      white-space: nowrap;
-    }
-
-    .nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 0.85rem;
-    }
-
-    .nav-links a {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      color: var(--ink-muted);
-      background: transparent;
-      transition: all 0.15s ease;
-    }
-
-    .nav-links a:hover {
-      border-color: rgba(255,255,255,0.07);
-      background: rgba(255,255,255,0.03);
-      color: var(--ink);
-      text-decoration: none;
-    }
-
-    .nav-links a.primary-link {
-      border-color: rgba(255,255,255,0.08);
-      background: radial-gradient(circle at top left, rgba(106,184,255,0.14), rgba(15,22,40,0.8));
-      color: var(--ink);
-    }
+    .nav-inner { max-width: var(--max-width); margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .nav-title { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); white-space: nowrap; }
+    .nav-links { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.85rem; }
+    .nav-links a { padding: 6px 10px; border-radius: 999px; border: 1px solid transparent; color: var(--ink-muted); background: transparent; transition: all 0.15s ease; }
+    .nav-links a:hover { border-color: rgba(255,255,255,0.07); background: rgba(255,255,255,0.03); color: var(--ink); text-decoration: none; }
+    .nav-links a.primary-link { border-color: rgba(255,255,255,0.08); background: radial-gradient(circle at top left, rgba(106,184,255,0.14), rgba(15,22,40,0.8)); color: var(--ink); }
 
     /* Layout */
-    main {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 30px 18px 60px;
-    }
-
-    section {
-      margin-bottom: 52px;
-      padding: 26px 22px 28px;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(145deg, rgba(11,16,27,0.98), rgba(5,7,13,0.98));
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(255,255,255,0.02);
-    }
-
-    section.compact {
-      margin-bottom: 30px;
-      padding: 18px 18px 20px;
-      box-shadow: var(--shadow-subtle);
-    }
-
-    h1, h2, h3, h4 {
-      margin-top: 0;
-      color: var(--ink);
-    }
-
-    h1 {
-      font-size: 2.1rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      font-weight: 800;
-      margin-bottom: 0.5rem;
-    }
-
-    h2 {
-      font-size: 1.4rem;
-      margin-bottom: 0.4rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding-bottom: 0.25rem;
-    }
-
-    h3 {
-      font-size: 1.15rem;
-      margin-top: 1.4rem;
-      margin-bottom: 0.35rem;
-    }
-
-    h4 {
-      font-size: 1.0rem;
-      margin-top: 1.1rem;
-      margin-bottom: 0.25rem;
-      color: var(--ink-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    p {
-      margin-top: 0.4rem;
-      margin-bottom: 0.6rem;
-      color: var(--ink-muted);
-      font-size: 0.96rem;
-    }
-
-    p.lead {
-      font-size: 1.02rem;
-      color: var(--ink);
-      max-width: 80ch;
-    }
-
-    p.callout {
-      margin-top: 0.8rem;
-      margin-bottom: 0.8rem;
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      background: var(--callout-bg);
-      border: 1px solid var(--callout-border);
-      color: var(--ink);
-      font-size: 0.94rem;
-    }
-
-    p.callout span.label {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      display: inline-block;
-      margin-bottom: 4px;
-    }
-
-    ul, ol {
-      margin-top: 0.4rem;
-      margin-bottom: 0.8rem;
-      padding-left: 1.2rem;
-      color: var(--ink-muted);
-      font-size: 0.95rem;
-    }
-
-    li + li {
-      margin-top: 0.18rem;
-    }
-
-    strong {
-      color: var(--ink);
-    }
+    main { max-width: var(--max-width); margin: 0 auto; padding: 30px 18px 60px; }
+    section { margin-bottom: 52px; padding: 26px 22px 28px; border-radius: var(--radius-lg); background: linear-gradient(145deg, rgba(11,16,27,0.98), rgba(5,7,13,0.98)); box-shadow: var(--shadow-soft); border: 1px solid rgba(255,255,255,0.02); }
+    section.compact { margin-bottom: 30px; padding: 18px 18px 20px; box-shadow: var(--shadow-subtle); }
+    h1, h2, h3, h4 { margin-top: 0; color: var(--ink); }
+    h1 { font-size: 2.1rem; letter-spacing: 0.03em; text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.4rem; margin-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.25rem; }
+    h3 { font-size: 1.15rem; margin-top: 1.4rem; margin-bottom: 0.35rem; }
+    h4 { font-size: 1.0rem; margin-top: 1.1rem; margin-bottom: 0.25rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    p { margin-top: 0.4rem; margin-bottom: 0.6rem; color: var(--ink-muted); font-size: 0.96rem; }
+    p.lead { font-size: 1.02rem; color: var(--ink); max-width: 80ch; }
+    p.callout { margin-top: 0.8rem; margin-bottom: 0.8rem; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--callout-bg); border: 1px solid var(--callout-border); color: var(--ink); font-size: 0.94rem; }
+    p.callout span.label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); display: inline-block; margin-bottom: 4px; }
+    ul, ol { margin-top: 0.4rem; margin-bottom: 0.8rem; padding-left: 1.2rem; color: var(--ink-muted); font-size: 0.95rem; }
+    li + li { margin-top: 0.18rem; }
+    strong { color: var(--ink); }
 
     /* Grids & Figures */
-    .grid {
-      display: grid;
-      gap: 14px;
-      margin: 0.6rem 0 1.0rem;
-    }
-
-    .grid-2 {
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    }
-
-    .grid-3 {
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-
-    .grid-4 {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    }
-
-    figure {
-      margin: 0;
-      padding: 10px;
-      border-radius: 14px;
-      background: var(--bg-soft);
-      border: 1px solid rgba(255,255,255,0.05);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-    }
-
-    figure.wide {
-      grid-column: 1 / -1;
-    }
-
-    figure img {
-      display: block;
-      width: 100%;
-      border-radius: 10px;
-    }
-
-    figcaption {
-      margin-top: 6px;
-      font-size: 0.83rem;
-      color: var(--ink-muted);
-    }
+    .grid { display: grid; gap: 14px; margin: 0.6rem 0 1.0rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    figure { margin: 0; padding: 10px; border-radius: 14px; background: var(--bg-soft); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.35); }
+    figure.wide { grid-column: 1 / -1; }
+    figure img { display: block; width: 100%; border-radius: 10px; }
+    figcaption { margin-top: 6px; font-size: 0.83rem; color: var(--ink-muted); }
 
     /* Code Blocks */
-    pre.code {
-      margin: 0.8rem 0 0.4rem;
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      background: radial-gradient(circle at top left, #121b30, #050811);
-      border: 1px solid var(--code-border);
-      overflow-x: auto;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.55);
-    }
-
-    pre.code code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Code", "Fira Code", monospace;
-      font-size: 0.86rem;
-      color: #f3f4ff;
-    }
-
-    /* Poor man’s syntax tinting */
+    pre.code { margin: 0.8rem 0 0.4rem; padding: 12px 14px; border-radius: var(--radius-sm); background: radial-gradient(circle at top left, #121b30, #050811); border: 1px solid var(--code-border); overflow-x: auto; box-shadow: 0 12px 28px rgba(0,0,0,0.55); }
+    pre.code code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Code", "Fira Code", monospace; font-size: 0.86rem; color: #f3f4ff; }
     .code .kw { color: #9cdcfe; }
     .code .fn { color: #dcdcaa; }
     .code .str { color: #ce9178; }
     .code .num { color: #b5cea8; }
     .code .cm { color: #6a9955; }
 
-    .walkthrough {
-      margin: 0.3rem 0 0.9rem;
-      padding: 10px 12px 6px;
-      border-left: 2px solid rgba(255,255,255,0.12);
-      background: linear-gradient(to right, rgba(255,255,255,0.02), transparent);
-      border-radius: 0 10px 10px 0;
-    }
+    .walkthrough { margin: 0.3rem 0 0.9rem; padding: 10px 12px 6px; border-left: 2px solid rgba(255,255,255,0.12); background: linear-gradient(to right, rgba(255,255,255,0.02), transparent); border-radius: 0 10px 10px 0; }
+    .walkthrough p { font-size: 0.93rem; }
+    .walkthrough ol { font-size: 0.9rem; }
 
-    .walkthrough p {
-      font-size: 0.93rem;
-    }
+    .meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.14em; }
+    .meta-pill { padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); }
 
-    .walkthrough ol {
-      font-size: 0.9rem;
-    }
-
-    /* Meta badges */
-    .meta-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 0.4rem;
-      font-size: 0.8rem;
-      color: var(--ink-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-    }
-
-    .meta-pill {
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.02);
-    }
-
-    /* Footer */
-    footer {
-      max-width: var(--max-width);
-      margin: 0 auto 32px;
-      padding: 14px 18px 6px;
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(255,255,255,0.04);
-      background: radial-gradient(circle at top left, rgba(255,255,255,0.03), rgba(1,2,5,0.98));
-      font-size: 0.8rem;
-      color: var(--ink-muted);
-    }
-
-    footer p {
-      margin: 4px 0;
-    }
-
-    @media (max-width: 720px) {
-      .nav-inner {
-        padding-inline: 14px;
-      }
-      main {
-        padding-inline: 14px;
-      }
-      section {
-        padding-inline: 16px;
-      }
-      h1 {
-        font-size: 1.7rem;
-      }
-      .nav-title {
-        display: none;
-      }
-    }
+    footer { max-width: var(--max-width); margin: 0 auto 32px; padding: 14px 18px 6px; border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.04); background: radial-gradient(circle at top left, rgba(255,255,255,0.03), rgba(1,2,5,0.98)); font-size: 0.8rem; color: var(--ink-muted); }
+    footer p { margin: 4px 0; }
+    @media (max-width: 720px) { .nav-inner { padding-inline: 14px; } main { padding-inline: 14px; } section { padding-inline: 16px; } h1 { font-size: 1.7rem; } .nav-title { display: none; } }
   </style>
 </head>
 
@@ -396,10 +141,6 @@
         <strong>Neural Radiance Fields (NeRF)</strong>. The pipeline includes camera calibration and pose estimation, fitting a
         2D neural field on an image, training a full NeRF on the classic Lego dataset, and finally learning a NeRF of my own object.
       </p>
-      <p>
-        The goal is to make the entire process understandable to an intelligent non-expert. I’ll explain what each component does,
-        why it’s necessary, and how all the pieces fit together to produce smooth novel views from only a sparse set of photographs.
-      </p>
       <p class="callout">
         <span class="label">High-level Intuition</span><br />
         Rather than storing a 3D model as meshes or voxels, NeRF learns a <em>continuous function</em> that, given a point in 3D space
@@ -428,20 +169,7 @@
         <code>cv2.calibrateCamera</code> estimates the camera intrinsics matrix and lens distortion.
       </p>
 
-      <div class="grid grid-3">
-        <figure>
-          <img src="part0_camera_calibration/calibration_tag.jpg" alt="Printed ArUco calibration grid" />
-          <figcaption>Printed ArUco grid used for calibration.</figcaption>
-        </figure>
-        <figure>
-          <img src="part0_camera_calibration/calibration_sample1.jpg" alt="Sample calibration image 1" />
-          <figcaption>Example calibration image with the grid at an oblique angle.</figcaption>
-        </figure>
-        <figure>
-          <img src="part0_camera_calibration/calibration_sample2.jpg" alt="Sample calibration image 2" />
-          <figcaption>Another view to give the solver different geometric constraints.</figcaption>
-        </figure>
-      </div>
+      <!-- Removed: non-deliverable calibration photos grid -->
 
       <pre class="code"><code>
 <span class="cm"># Part 0.1 – Estimate camera intrinsics with ArUco tags</span>
@@ -513,16 +241,7 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         <li><strong>Blur</strong> minimal by holding the phone steady.</li>
       </ul>
 
-      <div class="grid grid-2">
-        <figure>
-          <img src="part0_camera_calibration/object_scan_sample1.jpg" alt="Object scan image 1" />
-          <figcaption>Sample capture of the object with an ArUco tag in frame.</figcaption>
-        </figure>
-        <figure>
-          <img src="part0_camera_calibration/object_scan_sample2.jpg" alt="Object scan image 2" />
-          <figcaption>Another capture from a different angle to improve coverage.</figcaption>
-        </figure>
-      </div>
+      <!-- Removed: non-deliverable object capture example photos -->
 
       <h3>0.3 Pose Estimation and Viser Visualization</h3>
       <p>
@@ -549,16 +268,7 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         <code>c2w</code> matrices, split into train/val/test.
       </p>
 
-      <div class="grid grid-2">
-        <figure>
-          <img src="part0_camera_calibration/undistort_before.jpg" alt="Distorted original image" />
-          <figcaption>Original image with subtle barrel distortion.</figcaption>
-        </figure>
-        <figure>
-          <img src="part0_camera_calibration/undistort_after.jpg" alt="Undistorted image" />
-          <figcaption>Undistorted and cropped image ready for NeRF training.</figcaption>
-        </figure>
-      </div>
+      <!-- Removed: non-deliverable undistort before/after images -->
     </section>
 
     <!-- Part A: 2D Neural Field -->
@@ -749,9 +459,9 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
 
 <span class="kw">def</span> <span class="fn">pixel_to_ray</span>(K, c2w, uv):
-    <span class="cm">"""Convert pixel coordinates to a ray origin & direction in world space.</span>
-<span class="cm">       K: [3,3], c2w: [4,4], uv: [B,2] (pixel centers).</span>
-<span class="cm">    """</span>
+    <span class="cm">"""Convert pixel coordinates to a ray origin & direction in world space.
+       K: [3,3], c2w: [4,4], uv: [B,2] (pixel centers).
+    """</span>
     depth = 1.0
     cam_pts = pixel_to_camera(K, uv, depth)  <span class="cm"># [B, 3]</span>
 
@@ -908,9 +618,9 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
       <pre class="code"><code>
 <span class="cm"># Volume rendering along rays</span>
 <span class="kw">def</span> <span class="fn">volume_render</span>(sigmas, rgbs, t_vals):
-    <span class="cm">"""sigmas: [B, N, 1], rgbs: [B, N, 3], t_vals: [B, N]</span>
-<span class="cm">       Returns: [B, 3] rendered RGB colors for each ray.</span>
-<span class="cm">    """</span>
+    <span class="cm">"""sigmas: [B, N, 1], rgbs: [B, N, 3], t_vals: [B, N]
+       Returns: [B, 3] rendered RGB colors for each ray.
+    """</span>
     B, N, _ = sigmas.shape
     deltas = t_vals[:, 1:] - t_vals[:, :-1]          <span class="cm"># [B, N-1]</span>
     deltas = torch.cat([deltas, deltas[:, -1:]], dim=-1)  <span class="cm"># assume last interval same as previous</span>
@@ -966,18 +676,13 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         <figcaption>PSNR vs training iteration for the Lego scene. The curve stabilizes once the network fits all views consistently.</figcaption>
       </figure>
 
-      <!-- NEW: Lego loss curve deliverable -->
-      <figure class="wide">
-        <img src="part2_lego_nerf/loss_curve_lego.png" alt="Training loss curve for Lego NeRF" />
-        <figcaption>MSE training loss vs iteration for the Lego NeRF model, complementing the PSNR curve.</figcaption>
-      </figure>
+      <!-- Removed: optional Lego loss curve figure -->
 
       <figure class="wide">
         <img src="part2_lego_nerf/viser_rays_and_samples.png" alt="Visualization of cameras, rays, and samples in Viser" />
         <figcaption>Viser visualization showing camera frustums, sampled rays, and 3D points along them.</figcaption>
       </figure>
 
-      <!-- UPDATED: richer spherical render deliverables -->
       <h3>B.6 Spherical Novel-View Rendering</h3>
       <p>
         To demonstrate true 3D understanding, I render novel views of the Lego scene from a spherical trajectory around the object.
@@ -1078,16 +783,13 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         </figure>
       </div>
 
-      <!-- NEW: GIF deliverable for custom object -->
+      <!-- Keep only the required GIF; remove extra still frame -->
       <figure class="wide">
         <img src="part2_6_your_object/object_spherical.gif" alt="My object orbit GIF" />
         <figcaption>Full orbit GIF for my object, showing consistent geometry across viewpoints.</figcaption>
       </figure>
 
-      <figure class="wide">
-        <img src="part2_6_your_object/object_spherical_frame04.png" alt="My object spherical rendering frame 4" />
-        <figcaption>Another frame from the orbit. (Full GIF: <code>object_video.gif</code>.)</figcaption>
-      </figure>
+      <!-- Removed: extra single still frame beyond the GIF -->
 
       <h3>C.4 Reflection</h3>
       <p>
@@ -1104,26 +806,16 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
         This section summarizes key parameter choices and practical issues I encountered while implementing NeRF from scratch.
       </p>
       <ul>
-        <li>
-          <strong>Batch size:</strong> I used around 10k rays per iteration for Lego. Larger batches stabilize training but increase GPU memory usage.
-        </li>
-        <li>
-          <strong>Near/Far bounds:</strong> Getting these wrong either wastes samples (too wide) or chops off geometry (too tight).
-          For my object I tuned <code>near</code> and <code>far</code> by visualizing depth and trying a few ranges.
-        </li>
-        <li>
-          <strong>Positional encoding frequencies:</strong> Very high frequencies can cause ringing artifacts if the network or data
-          can’t support them. I found <code>pos_freqs≈10</code>, <code>dir_freqs≈4</code> to be a good balance.
-        </li>
-        <li>
-          <strong>Learning rate:</strong> For Lego I used <code>5e-4</code> with Adam. Higher learning rates converged faster but risked
+        <li><strong>Batch size:</strong> I used around 10k rays per iteration for Lego. Larger batches stabilize training but increase GPU memory usage.</li>
+        <li><strong>Near/Far bounds:</strong> Getting these wrong either wastes samples (too wide) or chops off geometry (too tight).
+          For my object I tuned <code>near</code> and <code>far</code> by visualizing depth and trying a few ranges.</li>
+        <li><strong>Positional encoding frequencies:</strong> Very high frequencies can cause ringing artifacts if the network or data
+          can’t support them. I found <code>pos_freqs≈10</code>, <code>dir_freqs≈4</code> to be a good balance.</li>
+        <li><strong>Learning rate:</strong> For Lego I used <code>5e-4</code> with Adam. Higher learning rates converged faster but risked
           oscillations in PSNR.</li>
-        <li>
-          <strong>Data quality:</strong> Slight miscalibration (especially in intrinsics) can produce subtle ghosting in the final NeRF.
-          Carefully checking the Viser camera cloud was essential before committing to long training runs.
-        </li>
-        <li>
-          <strong>Debugging strategy:</strong> I verified each stage (ray directions, sampling locations, volume rendering) with small,
+        <li><strong>Data quality:</strong> Slight miscalibration (especially in intrinsics) can produce subtle ghosting in the final NeRF.
+          Carefully checking the Viser camera cloud was essential before committing to long training runs.</li>
+        <li><strong>Debugging strategy:</strong> I verified each stage (ray directions, sampling locations, volume rendering) with small,
           synthetic tests before combining them. This helped isolate bugs that would otherwise manifest as “blurry renderings.”</li>
       </ul>
 
