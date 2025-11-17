@@ -371,7 +371,7 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
           <figcaption>Provided image: structure emerging around iteration 300.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_provided_final.png" alt="Training progression on provided image, final iteration" />
+          <img src="part1_2d_neural_field/train_provided_2000.png" alt="Training progression on provided image, final iteration" />
           <figcaption>Provided image: final reconstruction closely matches the original.</figcaption>
         </figure>
       </div>
@@ -386,13 +386,13 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
           <figcaption>My own image: major structure appears within a few hundred steps.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/train_own_final.png" alt="Training progression on my own image, final iteration" />
+          <img src="part1_2d_neural_field/train_own_2000.png" alt="Training progression on my own image, final iteration" />
           <figcaption>My own image: final neural reconstruction.</figcaption>
         </figure>
       </div>
 
       <figure class="wide">
-        <img src="part1_2d_neural_field/psnr_curve_part1.png" alt="PSNR curve over training iterations for the 2D neural field" />
+        <img src="part1_2d_neural_field/psnr_curve_own.png" alt="PSNR curve over training iterations for the 2D neural field" />
         <figcaption>PSNR vs iteration for the 2D neural field. The curve plateaus when the network has fully memorized the image.</figcaption>
       </figure>
 
@@ -404,20 +404,20 @@ ret, K, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
 
       <div class="grid grid-2">
         <figure>
-          <img src="part1_2d_neural_field/hyperparam_freqLow_widthLow.png" alt="Low frequency, low width" />
-          <figcaption>Low PE frequency, low width: overly smooth, blurred edges.</figcaption>
+          <img src="part1_2d_neural_field/train_grid_L4_W64_iter1000.png" alt="Low frequency, low width" />
+          <figcaption>Low PE frequency = 4, low width = 64: overly smooth, blurred edges.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/hyperparam_freqLow_widthHigh.png" alt="Low frequency, high width" />
-          <figcaption>Low PE frequency, high width: more capacity but still lacking fine detail.</figcaption>
+          <img src="part1_2d_neural_field/train_grid_L4_W128_iter1000.png" alt="Low frequency, high width" />
+          <figcaption>Low PE frequency = 4, high width = 128: more capacity but still lacking fine detail.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/hyperparam_freqHigh_widthLow.png" alt="High frequency, low width" />
-          <figcaption>High PE frequency, low width: some high-frequency detail, but underfit in complex regions.</figcaption>
+          <img src="part1_2d_neural_field/train_grid_L10_W64_iter1000.png" alt="High frequency, low width" />
+          <figcaption>High PE frequency = 10, low width = 64: some high-frequency detail, but underfit in complex regions.</figcaption>
         </figure>
         <figure>
-          <img src="part1_2d_neural_field/hyperparam_freqHigh_widthHigh.png" alt="High frequency, high width" />
-          <figcaption>High PE frequency, high width: sharpest reconstruction, but with higher computational cost.</figcaption>
+          <img src="part1_2d_neural_field/train_grid_L10_W128_iter1000.png" alt="High frequency, high width" />
+          <figcaption>High PE frequency = 10, high width = 128: sharpest reconstruction, but with higher computational cost.</figcaption>
         </figure>
       </div>
 
