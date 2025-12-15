@@ -557,7 +557,7 @@
         More starting noise gives the model more freedom to “rewrite” the image. Less noise preserves details but changes less.
       </p>
 
-      <h3>1.7 · Campanile</h3>
+      <h3>Campanile Edit</h3>
       <div class="grid cols-3">
         <figure><img src="images/p17_camp_i1.png" alt="camp i1"><figcaption>Campanile · i_start=1</figcaption></figure>
         <figure><img src="images/p17_camp_i3.png" alt="camp i3"><figcaption>Campanile · i_start=3</figcaption></figure>
@@ -567,7 +567,7 @@
         <figure><img src="images/p17_camp_i20.png" alt="camp i20"><figcaption>Campanile · i_start=20</figcaption></figure>
       </div>
 
-      <h3>1.7 · My Own Image 1</h3>
+      <h3>My Own Image 1 Edit</h3>
       <div class="grid cols-3">
         <figure><img src="images/p17_custom1_i1.png" alt="c1 i1"><figcaption>Custom 1 · i_start=1</figcaption></figure>
         <figure><img src="images/p17_custom1_i3.png" alt="c1 i3"><figcaption>Custom 1 · i_start=3</figcaption></figure>
@@ -578,7 +578,7 @@
         <figure><img src="images/p17_custom1.png" alt="c1"><figcaption>Custom 1 · Original</figcaption></figure>
       </div>
 
-      <h3>1.7 · My Own Image 2</h3>
+      <h3>My Own Image 2 Edit</h3>
       <div class="grid cols-3">
         <figure><img src="images/p17_custom2_i1.png" alt="c2 i1"><figcaption>Custom 2 · i_start=1</figcaption></figure>
         <figure><img src="images/p17_custom2_i3.png" alt="c2 i3"><figcaption>Custom 2 · i_start=3</figcaption></figure>
@@ -589,7 +589,7 @@
         <figure><img src="images/p17_custom2.png" alt="c2"><figcaption>Custom 2 · Original</figcaption></figure>
       </div>
 
-      <h3 id="s171"> 1.7.1 · Web Image</h3>
+      <h3>Web Image Edit</h3>
        <div class="grid cols-3">
         <figure><img src="images/p171_web_i1.png" alt="c1 i1"><figcaption>Web Image · i_start=1</figcaption></figure>
         <figure><img src="images/p171_web_i3.png" alt="c1 i3"><figcaption>Web Image · i_start=3</figcaption></figure>
@@ -600,7 +600,7 @@
         <figure><img src="images/p171_web.png" alt="c1"><figcaption>Web Image · Original</figcaption></figure>
       </div>
 
-      <h3 id="s171"> 1.7.1 · Handrawn Image 1</h3>
+      <h3>Handrawn Image 1 Edit</h3>
        <div class="grid cols-3">
         <figure><img src="images/p171_handdrawn1_i1.png" alt="c2 i1"><figcaption>Hand-drawn 1 · i_start=1</figcaption></figure>
         <figure><img src="images/p171_handdrawn1_i3.png" alt="c2 i3"><figcaption>Hand-drawn 1· i_start=3</figcaption></figure>
@@ -611,7 +611,7 @@
         <figure><img src="images/p171_handdrawn1.png" alt="c2"><figcaption>Hand-drawn 1 · Original</figcaption></figure>
       </div>
 
-      <h3 id="s171"> 1.7.1 · Handrawn Image 2</h3>
+      <h3> Handrawn Image 2 Edit</h3>
        <div class="grid cols-3">
         <figure><img src="images/p171_handdrawn2_i1.png" alt="c2 i1"><figcaption>Hand-drawn 2 · i_start=1</figcaption></figure>
         <figure><img src="images/p171_handdrawn2_i3.png" alt="c2 i3"><figcaption>Hand-drawn 2· i_start=3</figcaption></figure>
@@ -662,12 +662,21 @@
         and then paste it into the unmasked region. This keeps the non-edit area stable while letting the masked area evolve.
       </p>
 
+      <h3>Campanile Inpainting</h3>
       <div class="grid cols-3">
         <figure><img src="images/p172_camp.png" alt="camp"><figcaption>Campanile</figcaption></figure>
         <figure><img src="images/p172_camp_mask.png" alt="camp mask"><figcaption>Campanile mask</figcaption></figure>
         <figure><img src="images/p172_camp_inpaint.png" alt="camp inpaint"><figcaption>Campanile inpainted</figcaption></figure>
       </div>
-      
+
+      <h3>Custom 1 Inpainting</h3>
+      <div class="grid cols-3">
+        <figure><img src="images/p172_custom1.png" alt="custom1 mask"><figcaption>Custom 1</figcaption></figure>
+        <figure><img src="images/p172_custom1_mask.png" alt="custom1 mask"><figcaption>Custom 1 mask</figcaption></figure>
+        <figure><img src="images/p172_custom1_inpaint.png" alt="custom1 inpaint"><figcaption>Custom 1 inpainted</figcaption></figure>
+      </div>
+
+      <h3>Custom 2 Inpainting</h3>
       <div class="grid cols-3">
         <figure><img src="images/p172_custom1.png" alt="custom1 mask"><figcaption>Custom 1</figcaption></figure>
         <figure><img src="images/p172_custom1_mask.png" alt="custom1 mask"><figcaption>Custom 1 mask</figcaption></figure>
@@ -684,18 +693,34 @@
         Goal: do the same edit procedure as 1.7, but now the prompt is a real creative instruction instead of “a high quality photo”.
       </p>
 
+      <h3>Campanile · Text Prompt: a quantum computer</h3>
       <div class="grid cols-3">
         <figure><img src="images/p173_camp_txt_i1.png" alt="camp txt i1"><figcaption>Campanile text-edit · i_start=1</figcaption></figure>
-        <figure><img src="images/p173_camp_txt_i7.png" alt="camp txt i7"><figcaption>Campanile text-edit · i_start=7</figcaption></figure>
-        <figure><img src="images/p173_camp_txt_i20.png" alt="camp txt i20"><figcaption>Campanile text-edit · i_start=20</figcaption></figure>
         <figure><img src="images/p173_camp_txt_i3.png" alt="camp txt i3"><figcaption>Campanile text-edit · i_start=3</figcaption></figure>
         <figure><img src="images/p173_camp_txt_i5.png" alt="camp txt i5"><figcaption>Campanile text-edit · i_start=5</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i7.png" alt="camp txt i7"><figcaption>Campanile text-edit · i_start=7</figcaption></figure>
         <figure><img src="images/p173_camp_txt_i10.png" alt="camp txt i10"><figcaption>Campanile text-edit · i_start=10</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i20.png" alt="camp txt i20"><figcaption>Campanile text-edit · i_start=20</figcaption></figure>
       </div>
 
-      <div class="grid cols-2">
-        <figure><img src="images/p173_custom1_txt.png" alt="custom1 text"><figcaption>Custom text-edit 1</figcaption></figure>
-        <figure><img src="images/p173_custom2_txt.png" alt="custom2 text"><figcaption>Custom text-edit 2</figcaption></figure>
+      <h3>Custom 1 · Text Prompt: an alien</h3>
+      <div class="grid cols-3">
+        <figure><img src="images/p173_custom1_txt_i1.png" alt="camp txt i1"><figcaption>Custom 1 text-edit · i_start=1</figcaption></figure>
+        <figure><img src="images/p173_custom1_txt_i3.png" alt="camp txt i3"><figcaption>CCustom 1 text-edit · i_start=3</figcaption></figure>
+        <figure><img src="images/p173_custom1_txt_i5.png" alt="camp txt i5"><figcaption>Custom 1 text-edit · i_start=5</figcaption></figure>
+        <figure><img src="images/p173_custom1_txt_i7.png" alt="camp txt i7"><figcaption>Custom 1 text-edit · i_start=7</figcaption></figure>
+        <figure><img src="images/p173_custom1_txt_i10.png" alt="camp txt i10"><figcaption>Custom 1 text-edit · i_start=10</figcaption></figure>
+        <figure><img src="images/p173_custom1_txt_i20.png" alt="camp txt i20"><figcaption>Custom 1 text-edit · i_start=20</figcaption></figure>
+      </div>
+
+      <h3>Custom 2 · Text Prompt: consciousness</h3>
+      <div class="grid cols-3">
+        <figure><img src="images/p173_custom2_txt_i1.png" alt="camp txt i1"><figcaption>Custom 2 text-edit · i_start=1</figcaption></figure>
+        <figure><img src="images/p173_custom2_txt_i3.png" alt="camp txt i3"><figcaption>CCustom 2 text-edit · i_start=3</figcaption></figure>
+        <figure><img src="images/p173_custom2_txt_i5.png" alt="camp txt i5"><figcaption>Custom 2 text-edit · i_start=5</figcaption></figure>
+        <figure><img src="images/p173_custom2_txt_i7.png" alt="camp txt i7"><figcaption>Custom 2 text-edit · i_start=7</figcaption></figure>
+        <figure><img src="images/p173_custom2_txt_i10.png" alt="camp txt i10"><figcaption>Custom 2 text-edit · i_start=10</figcaption></figure>
+        <figure><img src="images/p173_custom2_txt_i20.png" alt="camp txt i20"><figcaption>Custom 2 text-edit · i_start=20</figcaption></figure>
       </div>
 
       <p class="callout">
