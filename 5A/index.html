@@ -354,7 +354,9 @@
       <p class="subtle">
         Goal: start with a clean image (Campanile), and show what it looks like after adding noise at three different timesteps: t=250, 500, 750.
       </p>
-
+      
+      <figure><img src="images/campanile.jpg" alt="Campanile"><figcaption>Campanile</figcaption></figure>
+      
       <pre class="code"><code>
 <span class="cm"># Forward process: x_t = sqrt(alpha_bar[t]) * x_0 + sqrt(1 - alpha_bar[t]) * eps</span>
 <span class="kw">def</span> <span class="fn">noisy_im_forward</span>(x0, t, alphas_cumprod):
