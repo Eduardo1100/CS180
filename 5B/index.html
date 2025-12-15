@@ -1,1 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 5B: Flow Matching from Scratch</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --panel: #101827;
+      --panel2: #0f1623;
+      --text: #e7eefc;
+      --muted: #a7b3c9;
+      --faint: #7f8aa3;
+      --accent: #7aa2ff;
+      --accent2: #42d3bd;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --codebg: #0a1220;
+      --codeborder: rgba(122,162,255,.22);
+      --calloutbg: rgba(122,162,255,.08);
+      --calloutborder: rgba(122,162,255,.25);
+      --okbg: rgba(66,211,189,.08);
+      --okborder: rgba(66,211,189,.25);
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ margin:0; padding:0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    .wrap{
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+
+    /* Top header */
+    header{
+      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(122,162,255,0));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px 22px 18px;
+      box-shadow: var(--shadow);
+    }
+    header h1{
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+    }
+    header .sub{
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 90ch;
+    }
+    .meta{
+      margin-top: 12px;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--faint);
+      font-size: 13px;
+    }
+    .pill{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    /* Sticky nav */
+    nav{
+      position: sticky;
+      top: 10px;
+      z-index: 99;
+      margin: 18px 0 18px;
+      border: 1px solid var(--border);
+      background: rgba(16,24,39,.72);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    }
+    nav .row{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      padding: 10px 12px;
+      align-items:center;
+      justify-content: space-between;
+    }
+    nav .links{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    nav a{
+      color: var(--text);
+      font-size: 13px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+    }
+    nav a:hover{
+      border-color: var(--border);
+      background: rgba(255,255,255,.03);
+      text-decoration: none;
+    }
+
+    /* Sections */
+    section{
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+    }
+    h2{
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin: 18px 0 10px;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .kicker{
+      color: var(--muted);
+      line-height: 1.65;
+      margin: 8px 0 0;
+    }
+    p{
+      margin: 10px 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* Callouts */
+    .callout{
+      margin: 14px 0;
+      padding: 12px 12px;
+      background: var(--calloutbg);
+      border: 1px solid var(--calloutborder);
+      border-radius: 14px;
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .callout strong{ color: var(--text); }
+    .callout.ok{
+      background: var(--okbg);
+      border-color: var(--okborder);
+    }
+
+    /* Code blocks */
+    pre.code{
+      margin: 12px 0 10px;
+      padding: 12px 12px;
+      background: var(--codebg);
+      border: 1px solid var(--codeborder);
+      border-radius: 14px;
+      overflow-x: auto;
+      box-shadow: 0 10px 22px rgba(0,0,0,.25);
+    }
+    pre.code code{
+      color: #dbe7ff;
+      font-size: 12.5px;
+      line-height: 1.55;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space: pre;
+    }
+
+    /* Figures + grids */
+    figure{
+      margin: 12px 0;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px;
+    }
+    figure img{
+      width: 100%;
+      display:block;
+      border-radius: 12px;
+    }
+    figcaption{
+      margin-top: 8px;
+      color: var(--faint);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .grid{
+      display:grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .cols-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .cols-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .cols-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+
+    .wide{
+      grid-column: 1 / -1;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 860px){
+      .cols-4{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .cols-3{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 560px){
+      .cols-2, .cols-3, .cols-4{ grid-template-columns: 1fr; }
+      nav .row{ justify-content:flex-start; }
+    }
+
+    /* Footer */
+    footer{
+      margin-top: 18px;
+      color: var(--faint);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+      opacity: .95;
+    }
+    footer .line{
+      margin: 10px auto 0;
+      height: 1px;
+      width: 100%;
+      max-width: 860px;
+      background: var(--border);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header>
+      <h1>Project 5B: Flow Matching from Scratch</h1>
+      <p class="sub">
+        This project builds a UNet-based image generator in two phases:
+        first, a <strong>single-step denoiser</strong> that learns to “undo noise” in one jump,
+        and then a <strong>flow-matching model</strong> that learns a smooth “velocity field” to transform pure noise into MNIST digits over time.
+      </p>
+      <div class="meta">
+        <span class="pill">Dataset: MNIST</span>
+        <span class="pill">Backbone: UNet</span>
+        <span class="pill">Training: MSE loss</span>
+        <span class="pill">Sampling: Euler integration</span>
+        <span class="pill">Conditional: Class + CFG</span>
+      </div>
+    </header>
+
+    <nav>
+      <div class="row">
+        <div class="links">
+          <a href="#overview">Overview</a>
+          <a href="#part1">Part 1</a>
+          <a href="#part2">Part 2</a>
+          <a href="#results">Results</a>
+          <a href="#impl-notes">Implementation Notes</a>
+          <a href="#refs">References</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ===================== Overview ===================== -->
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>
+        The core idea is simple: we want a neural network that can create images, but instead of generating pixels from scratch in one shot,
+        we start from <strong>random noise</strong> and repeatedly “nudge” it toward a real digit.
+        The difference between Part 1 and Part 2 is <em>how many nudges</em> we use.
+      </p>
+
+      <p class="callout">
+        <strong>Intuition.</strong> Imagine a blurry photo. A denoiser learns how to sharpen it.
+        If we take this to the extreme and start from pure static, then “sharpening” becomes “inventing”.
+        Flow matching is the version that learns a <strong>continuous sharpening path</strong>, not just one step.
+      </p>
+
+      <p>
+        All implementations below are from my notebook-to-Python export :contentReference[oaicite:1]{index=1}, presented here with explanations
+        aimed at an intelligent reader without a CS background.
+      </p>
+    </section>
+
+    <!-- ===================== Part 1 ===================== -->
+    <section id="part1">
+      <h2>Part 1: Training a Single-step Denoising UNet</h2>
+
+      <h3>1.1 Implementing the UNet</h3>
+      <p>
+        A UNet is basically an “hourglass” network: it compresses an image into a smaller representation (down path),
+        then expands it back to full resolution (up path). The key trick is <strong>skip connections</strong>:
+        we copy high-detail features from the down path into the up path so the reconstruction stays sharp.
+      </p>
+
+      <pre class="code"><code>class Conv(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.conv_2d = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=3,
+            padding=1,
+            bias=True,
+        )
+        self.activation = nn.ReLU(inplace=True)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.activation(self.conv_2d(x))</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        This is the smallest “image processing unit” in the network.
+        The <code>Conv2d</code> layer scans a 3×3 window over the image and learns filters that respond to patterns (edges, curves, blobs).
+        <code>padding=1</code> keeps the output the same height/width as the input, so we don’t shrink the image accidentally.
+        Then <code>ReLU</code> acts like a gate: it keeps positive evidence for a pattern and discards negative values, which makes learning stable.
+      </p>
+
+      <pre class="code"><code>class DownBlock(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int):
+        super().__init__()
+        self.down_conv = DownConv(in_channels=in_channels, out_channels=out_channels)
+        self.conv_block = ConvBlock(in_channels=out_channels, out_channels=out_channels)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.down_conv(x)
+        x = self.conv_block(x)
+        return x</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        A down block does two jobs: (1) it reduces resolution (so the network can “think” in coarser shapes),
+        and (2) it applies a few more convolutions to learn stronger features at that scale.
+        The pooling operation is like viewing the image from farther away: you lose some fine detail, but you gain global structure.
+      </p>
+
+      <pre class="code"><code>class UnconditionalUNet(nn.Module):
+    def __init__(self, in_channels: int, num_hiddens: int):
+        super().__init__()
+        hidden_1 = num_hiddens
+        hidden_2 = num_hiddens * 2
+        hidden_3 = num_hiddens * 4
+
+        self.initial = ConvBlock(in_channels=in_channels, out_channels=hidden_1)
+        self.down1 = DownBlock(in_channels=hidden_1, out_channels=hidden_2)
+        self.down2 = DownBlock(in_channels=hidden_2, out_channels=hidden_3)
+
+        self.bottleneck = ConvBlock(in_channels=hidden_3, out_channels=hidden_3)
+
+        self.up1 = UpBlock(in_channels=hidden_3, out_channels=hidden_2)
+        self.up2 = UpBlock(in_channels=hidden_2, out_channels=hidden_1)
+
+        self.final_conv = nn.Conv2d(hidden_1, in_channels, kernel_size=1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        assert x.shape[-2:] == (28, 28), "Expect input shape to be (28, 28)."
+
+        skip0 = self.initial(x)
+        skip1 = self.down1(skip0)
+        x = self.down2(skip1)
+
+        x = self.bottleneck(x)
+
+        x = self.up1(x, skip=skip1)
+        x = self.up2(x, skip=skip0)
+
+        x = self.final_conv(x)
+        return x</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        Read this forward pass like a story:
+        <strong>(a)</strong> build features at full resolution (<code>skip0</code>),
+        <strong>(b)</strong> compress once and keep a copy (<code>skip1</code>),
+        <strong>(c)</strong> compress again to a small “core” representation,
+        <strong>(d)</strong> process the core (bottleneck),
+        <strong>(e)</strong> expand back up while re-injecting the saved details via skip connections,
+        and finally <strong>(f)</strong> use a 1×1 convolution to map back to a single grayscale channel.
+        The 1×1 convolution is like “mixing paint”: it combines the learned feature channels into the final pixel output.
+      </p>
+
+      <h3>1.2 Using the UNet to Train a Denoiser</h3>
+
+      <h3>1.2.1 Training</h3>
+      <p>
+        Here we train the UNet to take a noisy image and output the clean version.
+        We generate noisy inputs by adding Gaussian noise and clamping back to valid pixel range.
+      </p>
+
+      <pre class="code"><code>batch_size = 128
+learning_rate = 2e-4
+noise_level = 0.5
+hidden_dim = 64
+num_epochs = 2
+
+model = UnconditionalUNet(in_channels=1, num_hiddens=hidden_dim).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+criterion = nn.MSELoss()
+
+train_losses = []
+for epoch in range(num_epochs):
+    for i, (images, _) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}")):
+        images = images.to(device)
+        gaussian_noise = torch.randn_like(images) * noise_level
+        noisy_images = torch.clamp(images + gaussian_noise, 0.0, 1.0)
+
+        outputs = model(noisy_images)
+
+        loss = criterion(outputs, images)
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
+
+        train_losses.append(loss.item())</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        First we choose training settings (batch size, learning rate, and a single noise level).
+        Inside the loop, <code>torch.randn_like(images)</code> creates random noise shaped exactly like the image batch.
+        Multiplying by <code>noise_level</code> controls how “corrupted” the input is.
+        The model sees only the noisy image, but the loss compares the output to the clean image.
+        <code>MSELoss</code> means “average squared error per pixel”:
+        it punishes large mistakes heavily, which encourages the network to reconstruct precise shapes.
+        The <code>backward()</code> call computes how every parameter should change to reduce the loss, and <code>optimizer.step()</code> applies that change.
+      </p>
+
+      <p class="callout ok">
+        <strong>Takeaway.</strong> This Part 1 model learns “one-step repair”:
+        given a noisy digit, it tries to directly output the clean digit.
+        That’s helpful, but it’s not yet a full generative model because it doesn’t know how to do many small steps from pure noise.
+      </p>
+
+      <h3>1.2.2 Out-of-Distribution Testing</h3>
+      <p>
+        A good denoiser should still behave sensibly even if you test it on noise levels it wasn’t trained on.
+        Here we test multiple σ values and show the denoised outputs.
+      </p>
+
+      <h3>1.2.3 Denoising Pure Noise</h3>
+      <p>
+        Finally we feed pure random noise through the single-step denoiser.
+        This is a harsh test: the model never sees a “hint” of a digit. If it outputs digit-like blobs,
+        that means it has learned some implicit prior over MNIST shapes.
+      </p>
+    </section>
+
+    <!-- ===================== Part 2 ===================== -->
+    <section id="part2">
+      <h2>Part 2: Flow Matching</h2>
+      <p>
+        Part 2 upgrades the idea: instead of “fix in one jump”, we learn a <strong>velocity field</strong> that tells us
+        how to update an image a little bit at time <code>t</code>. Repeating that update gradually morphs noise into digits.
+      </p>
+
+      <h3>2.1 Implementing a Time-conditioned UNet</h3>
+      <p>
+        The main change is that the UNet now receives the current time <code>t</code> and uses it to adjust its behavior.
+        Early in the process, we’re working with near-random noise; later, we’re refining digit details.
+      </p>
+
+      <pre class="code"><code>class TimeConditionalUNet(nn.Module):
+    def __init__(self, in_channels: int, num_classes: int, num_hiddens: int):
+        super().__init__()
+        hidden_1 = num_hiddens
+        hidden_2 = num_hiddens * 2
+        hidden_3 = num_hiddens * 4
+
+        self.initial = ConvBlock(in_channels=in_channels, out_channels=hidden_1)
+        self.down1 = DownBlock(in_channels=hidden_1, out_channels=hidden_2)
+        self.down2 = DownBlock(in_channels=hidden_2, out_channels=hidden_3)
+        self.bottleneck_conv = ConvBlock(in_channels=hidden_3, out_channels=hidden_3)
+
+        self.flatten = Flatten()
+        self.unflatten = Unflatten(in_channels=hidden_3)
+
+        bottleneck_flat_dim = hidden_3 * 7 * 7
+        time_embed_dim = hidden_3
+
+        self.time_mlp = nn.Sequential(
+            nn.Linear(1, time_embed_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(time_embed_dim, time_embed_dim),
+        )
+
+        self.bottleneck_fc = FCBlock(
+            in_channels=bottleneck_flat_dim + time_embed_dim,
+            out_channels=bottleneck_flat_dim,
+        )
+
+        self.up1 = UpBlock(in_channels=hidden_3, out_channels=hidden_2)
+        self.up2 = UpBlock(in_channels=hidden_2, out_channels=hidden_1)
+        self.final_conv = nn.Conv2d(hidden_1, in_channels, kernel_size=1)</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        The down/up UNet shape stays the same, but we insert a “time pathway”:
+        <code>time_mlp</code> turns a single number (<code>t</code>) into a richer time embedding vector.
+        We then concatenate that embedding with the flattened bottleneck features, so the network can condition its prediction on time.
+        In plain terms: the UNet learns different behavior for “early coarse shaping” versus “late fine polishing”.
+      </p>
+
+      <h3>2.2 Training the Time-conditioned UNet (Flow Matching)</h3>
+      <p>
+        Flow matching trains the network to predict a “velocity” <code>v</code> that points from a noise sample <code>x_0</code>
+        toward a real data point <code>x_1</code>.
+      </p>
+
+      <pre class="code"><code>def time_fm_forward(unet, x_1, num_ts):
+    unet.train()
+    batch_size = x_1.shape[0]
+    device = x_1.device
+    dtype = x_1.dtype
+
+    t = torch.rand((batch_size,), device=device, dtype=dtype)
+    x_0 = torch.randn_like(x_1)
+
+    t_broadcast = t.view(batch_size, 1, 1, 1)
+    x_t = (1.0 - t_broadcast) * x_0 + t_broadcast * x_1
+
+    v_target = x_1 - x_0
+    v_pred = unet(x_t, t)
+
+    loss = F.mse_loss(v_pred, v_target)
+    return loss</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        This function constructs a supervised learning problem out of thin air:
+        we sample a real image <code>x_1</code> and a random noise image <code>x_0</code>.
+        We then pick a random time <code>t</code> and create an in-between image <code>x_t</code> by linear interpolation.
+        The “correct velocity” from noise to data is <code>v_target = x_1 - x_0</code>.
+        The UNet sees <code>(x_t, t)</code> and tries to predict that velocity.
+        Minimizing MSE teaches the UNet to output the right direction everywhere along the path.
+      </p>
+
+      <h3>2.3 Sampling from the Time-conditioned UNet</h3>
+      <pre class="code"><code>@torch.inference_mode()
+def time_fm_sample(unet, img_wh, num_ts, seed=0):
+    unet.eval()
+    height, width = img_wh
+    device = next(unet.parameters()).device
+    dtype = next(unet.parameters()).dtype
+
+    batch_size = 16
+    x = torch.randn((batch_size, 1, height, width), device=device, dtype=dtype)
+
+    dt = 1.0 / float(num_ts)
+    for step_index in range(num_ts):
+        t_scalar = (step_index + 0.5) * dt
+        t = torch.full((batch_size,), fill_value=t_scalar, device=device, dtype=dtype)
+        v = unet(x, t)
+        x = x + v * dt
+
+    x = torch.clamp((x + 3.0) / 6.0, 0.0, 1.0)
+    return x</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        This is the “generator”.
+        We start from pure noise <code>x</code>. Then, for each small time step, the UNet outputs a velocity <code>v</code>,
+        and we update <code>x ← x + v·dt</code> (Euler’s method).
+        Repeating this many times produces a smooth transformation from noise to digit-like structure.
+        The final clamp maps values into the visible range [0,1] so we can display them as images.
+      </p>
+
+      <h3>2.4–2.6 Class-conditioning + Classifier-Free Guidance (CFG)</h3>
+      <p>
+        Class-conditioning means: “generate a specific digit.”
+        CFG is a trick that makes conditioning stronger by combining a conditional prediction with an unconditional one.
+      </p>
+
+      <pre class="code"><code>v_cond = unet(x, c=c, t=t, mask=cond_mask)
+v_uncond = unet(x, c=c, t=t, mask=uncond_mask)
+v_cfg = v_uncond + guidance_scale * (v_cond - v_uncond)
+x = x + v_cfg * dt</code></pre>
+
+      <p><strong>Walkthrough.</strong>
+        We run the same model twice: once with the class information turned on (<code>v_cond</code>),
+        and once with it “masked out” (<code>v_uncond</code>).
+        The difference <code>(v_cond - v_uncond)</code> isolates the part of the velocity that’s specifically due to the class label.
+        Multiplying by <code>guidance_scale</code> turns that “class push” up or down.
+        This often improves sample quality and makes the digit match the target label more reliably.
+      </p>
+    </section>
+
+    <!-- ===================== Results ===================== -->
+    <section id="results">
+      <h2>Results</h2>
+      <p>
+        This section contains <strong>every required deliverable image</strong>.
+        Place your exported figures into <code>images/</code> with the exact filenames below.
+      </p>
+
+      <p class="callout">
+        <strong>File naming rule.</strong> All images referenced below assume short names like
+        <code>p1_s1_2_1_loss.png</code>, and live in <code>images/</code>.
+        If an image looks “too wide” (montages/grids), it gets the <code>.wide</code> class so it spans the full content width.
+      </p>
+
+      <h3>1.2.1 Training (Required)</h3>
+      <div class="grid cols-2">
+        <figure class="wide">
+          <img src="images/p1_s1_2_1_noising_seq.png" alt="Noising sequence visualization">
+          <figcaption><strong>Noise schedule visualization.</strong> The same MNIST digits with increasing Gaussian noise σ.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="images/p1_s1_2_1_loss.png" alt="Part 1 training loss curve">
+          <figcaption><strong>Training curve.</strong> MSE loss over training steps for the single-step denoiser.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="images/p1_s1_2_1_samples_e1.png" alt="Epoch 1 denoising samples">
+          <figcaption><strong>Epoch 1 samples.</strong> Early denoising outputs (typically still blurry or incomplete).</figcaption>
+        </figure>
+
+        <figure>
+          <img src="images/p1_s1_2_1_samples_e5.png" alt="Epoch 5 denoising samples">
+          <figcaption><strong>Epoch 5 samples.</strong> Later denoising outputs (sharper structure, clearer strokes).</figcaption>
+        </figure>
+      </div>
+
+      <h3>1.2.2 Out-of-Distribution Testing (Required)</h3>
+      <div class="grid cols-1">
+        <figure class="wide">
+          <img src="images/p1_s1_2_2_ood_sigma_grid.png" alt="OOD sigma grid">
+          <figcaption><strong>OOD denoising.</strong> Denoised outputs across multiple σ values, including unseen noise levels.</figcaption>
+        </figure>
+      </div>
+
+      <h3>1.2.3 Denoising Pure Noise (Required)</h3>
+      <div class="grid cols-2">
+        <figure>
+          <img src="images/p1_s1_2_3_loss.png" alt="Pure noise denoiser training loss">
+          <figcaption><strong>Training curve (pure noise).</strong> Loss curve for the pure-noise experiment.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="images/p1_s1_2_3_samples_e1.png" alt="Pure noise samples epoch 1">
+          <figcaption><strong>Epoch 1 generation.</strong> What the model produces when starting from random noise.</figcaption>
+        </figure>
+
+        <figure class="wide">
+          <img src="images/p1_s1_2_3_samples_e5.png" alt="Pure noise samples epoch 5">
+          <figcaption><strong>Epoch 5 generation.</strong> Later samples; ideally more digit-like patterns emerge.</figcaption>
+        </figure>
+      </div>
+
+      <h3>2.2 Training the Time-conditioned UNet (Required)</h3>
+      <div class="grid cols-1">
+        <figure class="wide">
+          <img src="images/p2_s2_2_loss.png" alt="Time-conditioned FM training curve">
+          <figcaption><strong>Flow Matching training curve.</strong> MSE loss over steps for the time-conditioned velocity model.</figcaption>
+        </figure>
+      </div>
+
+      <h3>2.3 Sampling from the Time-conditioned UNet (Required)</h3>
+      <div class="grid cols-3">
+        <figure>
+          <img src="images/p2_s2_3_samples_e1.png" alt="Time-FM samples epoch 1">
+          <figcaption><strong>Epoch 1 samples.</strong> Early time-conditioned generation outputs.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="images/p2_s2_3_samples_e5.png" alt="Time-FM samples epoch 5">
+          <figcaption><strong>Epoch 5 samples.</strong> Stronger digit structure as training progresses.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="images/p2_s2_3_samples_e10.png" alt="Time-FM samples epoch 10">
+          <figcaption><strong>Epoch 10 samples.</strong> Later samples; ideally clearer strokes and fewer artifacts.</figcaption>
+        </figure>
+      </div>
+
+      <h3>2.5 Training the Class-conditioned UNet (Required)</h3>
+      <div class="grid cols-1">
+        <figure class="wide">
+          <img src="images/p2_s2_5_loss.png" alt="Class-conditioned FM training curve">
+          <figcaption><strong>Class-conditioned training curve.</strong> MSE loss for the conditional velocity model.</figcaption>
+        </figure>
+      </div>
+
+      <h3>2.6 Sampling from the Class-conditioned UNet + CFG (Required)</h3>
+      <div class="grid cols-2">
+        <figure class="wide">
+          <img src="images/p2_s2_6_samples_e1.png" alt="Class-conditioned samples epoch 1">
+          <figcaption><strong>Epoch 1 conditional samples.</strong> Grid labeled by target digit (title = class).</figcaption>
+        </figure>
+
+        <figure class="wide">
+          <img src="images/p2_s2_6_samples_e10.png" alt="Class-conditioned samples epoch 10">
+          <figcaption><strong>Epoch 10 conditional samples.</strong> Stronger adherence to class label with guidance.</figcaption>
+        </figure>
+
+        <figure class="wide">
+          <img src="images/p2_s2_6_real_grid.png" alt="Real MNIST grid">
+          <figcaption><strong>Real MNIST reference.</strong> A comparable grid of real digits for qualitative comparison.</figcaption>
+        </figure>
+      </div>
+
+      <h3>Part 3: Bells &amp; Whistles (If Required)</h3>
+      <p>
+        If you’re doing the extra requirement, drop the improved visualization here:
+      </p>
+      <div class="grid cols-1">
+        <figure class="wide">
+          <img src="images/p3_s3_better_viz.png" alt="Better visualization">
+          <figcaption><strong>Better visualization.</strong> Enhanced sampling/trajectory visualization for the time-conditioned model.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===================== Implementation Notes ===================== -->
+    <section id="impl-notes">
+      <h2>Implementation Notes</h2>
+
+      <h3>Parameter choices (and what they do)</h3>
+      <ul>
+        <li><strong>Hidden dim = 64.</strong> Controls how many feature channels the UNet carries. Larger means more capacity, slower training.</li>
+        <li><strong>Learning rate = 2e-4.</strong> A common stable choice for Adam on diffusion-style training loops.</li>
+        <li><strong>Noise level (Part 1) = 0.5.</strong> This sets the corruption strength for the single-step denoiser.</li>
+        <li><strong>Timesteps (Part 2) = 50/100.</strong> More steps mean smoother sampling but more compute.</li>
+        <li><strong>CFG scale = 5.0.</strong> Strongly encourages the requested class, but too high can cause artifacts.</li>
+      </ul>
+
+      <p class="callout">
+        <strong>Pitfall.</strong> In Part 1, training on a single σ can make the denoiser brittle.
+        That’s why the OOD grid is useful: it reveals whether the model learned a general denoising behavior or just “memorized” one noise strength.
+      </p>
+
+      <p class="callout">
+        <strong>Pitfall.</strong> In Part 2 sampling, Euler integration quality depends on step count.
+        Too few steps can look undercooked (digits don’t fully form); too many steps can amplify model bias if the velocity field is imperfect.
+      </p>
+
+      <h3>Lessons Learned</h3>
+      <p>
+        The single-step denoiser is like a strong “image cleaner,” but flow matching turns that intuition into a proper generator:
+        you don’t need to guess the entire image at once, you only need to repeatedly guess the next small improvement.
+        That decomposition is the whole magic trick of diffusion-like models, and you can see it directly in the sampling loop.
+      </p>
+    </section>
+
+    <!-- ===================== References ===================== -->
+    <section id="refs">
+      <h2>References</h2>
+      <ul>
+        <li>UNet paper: Olaf Ronneberger et al., “U-Net: Convolutional Networks for Biomedical Image Segmentation” (2015).</li>
+        <li>PyTorch docs: <code>Conv2d</code>, <code>ConvTranspose2d</code>, <code>AvgPool2d</code>, <code>DataLoader</code>, <code>MNIST</code>.</li>
+        <li>Course assignment notebook implementation (this write-up mirrors the exported Python) :contentReference[oaicite:2]{index=2}</li>
+      </ul>
+    </section>
+
+    <footer>
+      <div class="line"></div>
+      <p>
+        © 2025 Eduardo Cortes. Built for CS180 Project 5B.
+        Website layout and explanations drafted with AI assistance (ChatGPT) and manually edited for clarity and correctness.
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>
 
