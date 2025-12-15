@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CS180 Project 5A · Diffusion Models</title>
+
+  <!-- Inter font (your usual vibe) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --panel: #0f1620;
+      --panel2:#0c131c;
+      --border:#1e2a3a;
+      --text:#e7edf6;
+      --muted:#a7b6cb;
+      --faint:#7f92aa;
+
+      --accent:#7aa2ff;     /* links / highlights */
+      --accent2:#43d9ad;    /* subtle success / “intuition” */
+      --warn:#ffcc66;       /* pitfalls */
+      --danger:#ff6b8a;     /* gotchas */
+      --codebg:#0b1220;
+
+      --radius: 16px;
+      --radius2: 12px;
+
+      --max: 1050px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 15% 10%, rgba(122,162,255,.12), transparent 60%),
+                  radial-gradient(1000px 600px at 85% 15%, rgba(67,217,173,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height:1.55;
+      letter-spacing: -0.01em;
+    }
+
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .wrap{ max-width: var(--max); margin:0 auto; padding: 28px 18px 80px; }
+
+    header.hero{
+      padding: 26px 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .title{
+      display:flex; flex-wrap:wrap; gap:10px 14px; align-items:baseline;
+    }
+    h1{
+      margin:0;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+    .meta{
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .pillbar{ margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; }
+    .pill{
+      font-size: 12px;
+      color: var(--muted);
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+
+    /* Sticky nav */
+    nav{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      margin-top: 18px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(11,15,20,.75);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 10px 12px;
+    }
+    .navrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px 14px;
+      align-items:center;
+      justify-content: space-between;
+    }
+    .navleft, .navright{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .navlink{
+      font-size: 13px;
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    .navlink:hover{
+      border-color: var(--border);
+      background: rgba(255,255,255,.02);
+      text-decoration:none;
+      color: var(--text);
+    }
+    .navhint{
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    main{ margin-top: 18px; }
+
+    section.card{
+      margin-top: 18px;
+      padding: 22px 22px 20px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    }
+
+    h2{
+      margin:0 0 10px;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin:22px 0 10px;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .subtle{ color:var(--muted); margin-top: 6px; }
+
+    .divider{
+      margin: 18px 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    /* Callouts */
+    p.callout{
+      margin: 14px 0;
+      padding: 12px 14px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      background: rgba(67,217,173,.06);
+      color: var(--text);
+    }
+    p.callout.warn{
+      background: rgba(255,204,102,.08);
+    }
+    p.callout.danger{
+      background: rgba(255,107,138,.08);
+    }
+    p.callout .tag{
+      display:inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      color: var(--muted);
+      margin-right: 8px;
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.02);
+      vertical-align: baseline;
+    }
+
+    /* Code blocks */
+    pre.code{
+      margin: 12px 0 8px;
+      padding: 14px 14px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      background: var(--codebg);
+      overflow:auto;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: #dbe7ff;
+    }
+    .code .kw{ color:#7aa2ff; }  /* “keyword-ish” */
+    .code .fn{ color:#43d9ad; }
+    .code .num{ color:#ffcc66; }
+    .code .cm{ color:#7f92aa; }
+    .code .st{ color:#ffd6a6; }
+
+    .walkthrough{
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    /* Grids + figures */
+    .grid{
+      display:grid;
+      gap: 12px;
+      margin: 14px 0 6px;
+    }
+    .cols-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .cols-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .cols-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    @media (max-width: 880px){
+      .cols-4{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 720px){
+      .cols-3, .cols-2, .cols-4{ grid-template-columns: 1fr; }
+    }
+
+    figure{
+      margin:0;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      overflow:hidden;
+    }
+    figure img{
+      width:100%;
+      display:block;
+      background: #070b10;
+    }
+    figure figcaption{
+      padding: 9px 10px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top:1px solid var(--border);
+    }
+
+    /* Full-width “montage” style */
+    .wide{
+      grid-column: 1 / -1;
+    }
+
+    footer{
+      margin-top: 22px;
+      padding: 18px 22px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.02);
+      color: var(--faint);
+      font-size: 12px;
+    }
+    .kicker{ color: var(--faint); font-size: 13px; margin: 8px 0 0; }
+    .small{ color: var(--faint); font-size: 12px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="title">
+        <h1>CS180 Project 5A · The Power of Diffusion Models</h1>
+        <div class="meta">DeepFloyd IF · sampling loops · inpainting · illusions · hybrids</div>
+      </div>
+      <p class="kicker">
+        This project explores diffusion models by implementing the core sampling loops ourselves (instead of treating the model like a black box),
+        then reusing that same loop to do practical edits like inpainting and also “mind-bending” optical illusions.
+      </p>
+      <div class="pillbar">
+        <span class="pill">dark academic</span>
+        <span class="pill">clean grids</span>
+        <span class="pill">code + concept symmetry</span>
+        <span class="pill">written for non-experts</span>
+      </div>
+    </header>
+
+    <nav>
+      <div class="navrow">
+        <div class="navleft">
+          <a class="navlink" href="#overview">Overview</a>
+          <a class="navlink" href="#results">Results</a>
+          <a class="navlink" href="#impl-notes">Implementation Notes</a>
+          <a class="navlink" href="#refs">References</a>
+        </div>
+        <div class="navright">
+          <span class="navhint">Jump to sections: <a class="navlink" href="#s11">1.1</a><a class="navlink" href="#s17">1.7</a><a class="navlink" href="#s172">1.7.2</a><a class="navlink" href="#s18">1.8</a><a class="navlink" href="#s19">1.9</a></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ========================= OVERVIEW ========================= -->
+    <section class="card" id="overview">
+      <h2>Overview</h2>
+      <p class="subtle">
+        A diffusion model makes images by starting from random noise and repeatedly “denoising” it.
+        The key idea is that the model learns how to take a slightly-noisy image and predict what noise was added, so we can subtract it away.
+      </p>
+
+      <p class="callout">
+        <span class="tag">Intuition</span>
+        If image generation were sculpting, diffusion is carving: you begin with a block of randomness and repeatedly remove the “wrong” parts until an image appears.
+      </p>
+
+      <h3>What we built (in plain English)</h3>
+      <ul>
+        <li><b>Forward process:</b> add controlled noise to a clean image at a chosen timestep.</li>
+        <li><b>One-step denoising:</b> ask the pretrained network what noise it sees and remove it once.</li>
+        <li><b>Iterative denoising:</b> repeat the denoise step many times to get a clean image.</li>
+        <li><b>CFG (Classifier-Free Guidance):</b> a trick to make prompts matter more (sharper, more on-topic images).</li>
+        <li><b>Image editing:</b> start from a noisy version of a real image and “pull it” back toward realism (SDEdit).</li>
+        <li><b>Inpainting:</b> lock most pixels to the original while letting a masked region regenerate.</li>
+        <li><b>Optical illusions:</b> generate one image that supports two different interpretations (flip / frequency mixing).</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <h3>Reproducibility</h3>
+      <p class="subtle">
+        Seed used for all parts: <b>[PUT YOUR SEED HERE]</b>. Prompt embeddings loaded from <code>prompt_embeds_dict.pth</code>.
+      </p>
+    </section>
+
+    <!-- ========================= RESULTS ========================= -->
+    <section class="card" id="results">
+      <h2>Results</h2>
+      <p class="subtle">
+        This section shows the required output images first (what a reader/grader wants), and then each subsection explains how the result was produced.
+      </p>
+
+      <!-- ------------------------- Part 0 ------------------------- -->
+      <h3 id="p0">Part 0 · Text-to-Image Sampling</h3>
+      <p class="subtle">
+        Goal: pick 3 creative prompts, generate images, and compare at least 2 inference-step settings to show the quality tradeoff.
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p0_prompt1_s20.png" alt="Prompt 1 steps 20"><figcaption>Prompt 1 · steps=20</figcaption></figure>
+        <figure><img src="images/p0_prompt1_s40.png" alt="Prompt 1 steps 40"><figcaption>Prompt 1 · steps=40</figcaption></figure>
+        <figure><img src="images/p0_prompt2_s20.png" alt="Prompt 2 steps 20"><figcaption>Prompt 2 · steps=20</figcaption></figure>
+
+        <figure><img src="images/p0_prompt2_s40.png" alt="Prompt 2 steps 40"><figcaption>Prompt 2 · steps=40</figcaption></figure>
+        <figure><img src="images/p0_prompt3_s20.png" alt="Prompt 3 steps 20"><figcaption>Prompt 3 · steps=20</figcaption></figure>
+        <figure><img src="images/p0_prompt3_s40.png" alt="Prompt 3 steps 40"><figcaption>Prompt 3 · steps=40</figcaption></figure>
+      </div>
+
+      <p class="callout">
+        <span class="tag">Takeaway</span>
+        More inference steps usually improves detail and coherence, but costs time. The “best” step count depends on whether you want speed or polish.
+      </p>
+
+      <!-- ------------------------- 1.1 ------------------------- -->
+      <h3 id="s11">1.1 · Forward Diffusion (Add Noise)</h3>
+      <p class="subtle">
+        Goal: start with a clean image (Campanile), and show what it looks like after adding noise at three different timesteps: t=250, 500, 750.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># Forward process: x_t = sqrt(alpha_bar[t]) * x_0 + sqrt(1 - alpha_bar[t]) * eps</span>
+<span class="kw">def</span> <span class="fn">noisy_im_forward</span>(x0, t, alphas_cumprod):
+    <span class="cm"># Sample Gaussian noise with same shape as image</span>
+    eps = torch.randn_like(x0)
+    alpha_bar_t = alphas_cumprod[t]
+    xt = torch.sqrt(alpha_bar_t) * x0 + torch.sqrt(<span class="num">1</span> - alpha_bar_t) * eps
+    <span class="kw">return</span> xt, eps
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        We simulate what the diffusion training data looks like. First we draw random noise <code>eps</code>.
+        Then we mix the clean image <code>x0</code> with that noise using a schedule value <code>alpha_bar_t</code>.
+        When <code>t</code> is small, <code>alpha_bar_t</code> is closer to 1 so the image is mostly intact.
+        When <code>t</code> is large, <code>alpha_bar_t</code> shrinks and the image becomes dominated by noise.
+        This “controlled corruption” is the foundation for both denoising and editing later.
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p11_campanile_t250.png" alt="Campanile noisy t=250"><figcaption>Campanile · noisy at t=250</figcaption></figure>
+        <figure><img src="images/p11_campanile_t500.png" alt="Campanile noisy t=500"><figcaption>Campanile · noisy at t=500</figcaption></figure>
+        <figure><img src="images/p11_campanile_t750.png" alt="Campanile noisy t=750"><figcaption>Campanile · noisy at t=750</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.2 ------------------------- -->
+      <h3 id="s12">1.2 · Classical Denoising (Gaussian Blur)</h3>
+      <p class="subtle">
+        Goal: try to “denoise” the noisy images using a simple baseline (Gaussian blur) and show the best result for each timestep.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># Classical baseline: blur removes high-frequency noise, but also removes real detail</span>
+<span class="kw">def</span> <span class="fn">gaussian_denoise</span>(xt, kernel_size=<span class="num">33</span>, sigma=<span class="num">2.0</span>):
+    <span class="kw">return</span> torchvision.transforms.functional.gaussian_blur(
+        xt, kernel_size=[kernel_size, kernel_size], sigma=[sigma, sigma]
+    )
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        Gaussian blur is a simple filter that smooths an image by averaging nearby pixels.
+        It often reduces “speckle” noise because noise changes rapidly from pixel to pixel.
+        But it also destroys real edges and textures (which are also high-frequency content),
+        so it’s a useful baseline: if the diffusion model beats this, we know it’s doing something smarter than smoothing.
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p12_gaussian_t250.png" alt="Gaussian denoise t=250"><figcaption>Gaussian blur denoise · t=250</figcaption></figure>
+        <figure><img src="images/p12_gaussian_t500.png" alt="Gaussian denoise t=500"><figcaption>Gaussian blur denoise · t=500</figcaption></figure>
+        <figure><img src="images/p12_gaussian_t750.png" alt="Gaussian denoise t=750"><figcaption>Gaussian blur denoise · t=750</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.3 ------------------------- -->
+      <h3 id="s13">1.3 · One-Step Denoising (Pretrained UNet)</h3>
+      <p class="subtle">
+        Goal: use the pretrained denoiser to predict the noise in each noisy image and remove it once.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># One-step: predict noise with UNet, then estimate x0 from xt</span>
+<span class="kw">def</span> <span class="fn">one_step_denoise</span>(xt, t, prompt_embeds, alphas_cumprod):
+    model_out = stage_1.unet(xt, t, encoder_hidden_states=prompt_embeds, return_dict=<span class="kw">False</span>)[<span class="num">0</span>]
+    <span class="cm"># DeepFloyd predicts (noise, variance); split by channel count</span>
+    noise_est, _ = torch.split(model_out, xt.shape[<span class="num">1</span>], dim=<span class="num">1</span>)
+    alpha_bar_t = alphas_cumprod[t]
+    x0_est = (xt - torch.sqrt(<span class="num">1</span> - alpha_bar_t) * noise_est) / torch.sqrt(alpha_bar_t)
+    <span class="kw">return</span> x0_est
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        The UNet is a neural network trained to look at a noisy image <code>xt</code> plus a timestep <code>t</code>
+        and answer: “what noise was added to get here?” If we know the noise, we can algebraically rearrange the forward equation
+        to estimate the original clean image <code>x0</code>. This is only one step, so it helps, but it’s not perfect.
+        The real power comes from repeating this logic many times (next section).
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p13_onestep_t250.png" alt="One-step t=250"><figcaption>One-step UNet denoise · t=250</figcaption></figure>
+        <figure><img src="images/p13_onestep_t500.png" alt="One-step t=500"><figcaption>One-step UNet denoise · t=500</figcaption></figure>
+        <figure><img src="images/p13_onestep_t750.png" alt="One-step t=750"><figcaption>One-step UNet denoise · t=750</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.4 ------------------------- -->
+      <h3 id="s14">1.4 · Iterative Denoising (Sampling Loop)</h3>
+      <p class="subtle">
+        Goal: implement the actual iterative loop: take a noisy image and gradually denoise it over a sequence of timesteps.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># Iterative denoising loop (core sampling idea)</span>
+<span class="kw">def</span> <span class="fn">iterative_denoise</span>(x_start, timesteps, prompt_embeds, alphas_cumprod):
+    x = x_start
+    <span class="kw">with</span> torch.no_grad():
+        <span class="kw">for</span> i <span class="kw">in</span> range(len(timesteps) - <span class="num">1</span>):
+            t = timesteps[i]
+            t_prev = timesteps[i + <span class="num">1</span>]
+
+            model_out = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds, return_dict=<span class="kw">False</span>)[<span class="num">0</span>]
+            noise_est, var_est = torch.split(model_out, x.shape[<span class="num">1</span>], dim=<span class="num">1</span>)
+
+            alpha_bar_t = alphas_cumprod[t]
+            alpha_bar_prev = alphas_cumprod[t_prev]
+
+            <span class="cm"># Estimate x0 (clean) at this step</span>
+            x0_est = (x - torch.sqrt(<span class="num">1</span> - alpha_bar_t) * noise_est) / torch.sqrt(alpha_bar_t)
+
+            <span class="cm"># Step to the previous timestep (less noise)</span>
+            x = torch.sqrt(alpha_bar_prev) * x0_est + torch.sqrt(<span class="num">1</span> - alpha_bar_prev) * noise_est
+    <span class="kw">return</span> x
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        This is the heart of diffusion. We begin at a noisy image <code>x_start</code>.
+        At each timestep <code>t</code>, the UNet predicts the noise. From that, we estimate what the clean image would be (<code>x0_est</code>).
+        Then we “rewind the clock” to a slightly less noisy timestep <code>t_prev</code> by recombining the clean estimate with the noise estimate.
+        Repeating this many times is what turns noise into structure.
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p14_iter_t90.png" alt="Iter t=90"><figcaption>Iterative · intermediate (t≈90)</figcaption></figure>
+        <figure><img src="images/p14_iter_t240.png" alt="Iter t=240"><figcaption>Iterative · intermediate (t≈240)</figcaption></figure>
+        <figure><img src="images/p14_iter_t390.png" alt="Iter t=390"><figcaption>Iterative · intermediate (t≈390)</figcaption></figure>
+        <figure><img src="images/p14_iter_t540.png" alt="Iter t=540"><figcaption>Iterative · intermediate (t≈540)</figcaption></figure>
+        <figure><img src="images/p14_iter_t690.png" alt="Iter t=690"><figcaption>Iterative · intermediate (t≈690)</figcaption></figure>
+        <figure class="wide"><img src="images/p14_iter_final.png" alt="Iter final"><figcaption>Iterative denoise · final result</figcaption></figure>
+      </div>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p14_iter_final.png" alt="Iterative final"><figcaption>Iterative (final)</figcaption></figure>
+        <figure><img src="images/p14_onestep_final.png" alt="One-step final"><figcaption>One-step (final)</figcaption></figure>
+        <figure><img src="images/p14_gaussian_final.png" alt="Gaussian final"><figcaption>Gaussian blur (final)</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.5 ------------------------- -->
+      <h3 id="s15">1.5 · Diffusion Sampling (from Random Noise)</h3>
+      <p class="subtle">
+        Goal: start from pure random noise and run the iterative denoise loop to generate images.
+      </p>
+
+      <div class="grid cols-4">
+        <figure><img src="images/p15_sample_01.png" alt="Sample 1"><figcaption>Sample 1</figcaption></figure>
+        <figure><img src="images/p15_sample_02.png" alt="Sample 2"><figcaption>Sample 2</figcaption></figure>
+        <figure><img src="images/p15_sample_03.png" alt="Sample 3"><figcaption>Sample 3</figcaption></figure>
+        <figure><img src="images/p15_sample_04.png" alt="Sample 4"><figcaption>Sample 4</figcaption></figure>
+        <figure class="wide"><img src="images/p15_sample_05.png" alt="Sample 5"><figcaption>Sample 5</figcaption></figure>
+      </div>
+
+      <p class="callout warn">
+        <span class="tag">Why it looks weak</span>
+        Without CFG, prompts influence the generation less strongly, so samples can look generic or off-topic. CFG fixes this next.
+      </p>
+
+      <!-- ------------------------- 1.6 ------------------------- -->
+      <h3 id="s16">1.6 · Classifier-Free Guidance (CFG)</h3>
+      <p class="subtle">
+        Goal: denoise twice each step: once with the prompt, once with an “empty” prompt, then combine them to strengthen conditioning.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># CFG: eps = eps_uncond + scale * (eps_cond - eps_uncond)</span>
+<span class="kw">def</span> <span class="fn">cfg_noise</span>(x, t, prompt_embeds, uncond_prompt_embeds, scale=<span class="num">7</span>):
+    cond_out = stage_1.unet(x, t, encoder_hidden_states=prompt_embeds, return_dict=<span class="kw">False</span>)[<span class="num">0</span>]
+    uncond_out = stage_1.unet(x, t, encoder_hidden_states=uncond_prompt_embeds, return_dict=<span class="kw">False</span>)[<span class="num">0</span>]
+    eps_c, _ = torch.split(cond_out, x.shape[<span class="num">1</span>], dim=<span class="num">1</span>)
+    eps_u, _ = torch.split(uncond_out, x.shape[<span class="num">1</span>], dim=<span class="num">1</span>)
+    <span class="kw">return</span> eps_u + scale * (eps_c - eps_u)
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        Think of <code>eps_uncond</code> as “what the model would do if you said nothing” and <code>eps_cond</code> as “what the model would do given your prompt.”
+        CFG pushes the generation away from the unconditional direction and toward the prompt direction.
+        The <code>scale</code> controls how strong that push is: higher gives more prompt adherence, but too high can make artifacts.
+      </p>
+
+      <div class="grid cols-4">
+        <figure><img src="images/p16_cfg_01.png" alt="CFG 1"><figcaption>CFG Sample 1</figcaption></figure>
+        <figure><img src="images/p16_cfg_02.png" alt="CFG 2"><figcaption>CFG Sample 2</figcaption></figure>
+        <figure><img src="images/p16_cfg_03.png" alt="CFG 3"><figcaption>CFG Sample 3</figcaption></figure>
+        <figure><img src="images/p16_cfg_04.png" alt="CFG 4"><figcaption>CFG Sample 4</figcaption></figure>
+        <figure class="wide"><img src="images/p16_cfg_05.png" alt="CFG 5"><figcaption>CFG Sample 5</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.7 ------------------------- -->
+      <h3 id="s17">1.7 · Image-to-Image Translation (SDEdit-style)</h3>
+      <p class="subtle">
+        Goal: start from a real image, add noise, then denoise with CFG so the result stays “close” to the original while becoming more “diffusion-realistic.”
+        We show a progression across noise levels [1, 3, 5, 7, 10, 20].
+      </p>
+
+      <p class="callout">
+        <span class="tag">Intuition</span>
+        More starting noise gives the model more freedom to “rewrite” the image. Less noise preserves details but changes less.
+      </p>
+
+      <h3>1.7 (Campanile)</h3>
+      <div class="grid cols-3">
+        <figure><img src="images/p17_camp_i1.png" alt="camp i1"><figcaption>Campanile · i_start=1</figcaption></figure>
+        <figure><img src="images/p17_camp_i3.png" alt="camp i3"><figcaption>Campanile · i_start=3</figcaption></figure>
+        <figure><img src="images/p17_camp_i5.png" alt="camp i5"><figcaption>Campanile · i_start=5</figcaption></figure>
+        <figure><img src="images/p17_camp_i7.png" alt="camp i7"><figcaption>Campanile · i_start=7</figcaption></figure>
+        <figure><img src="images/p17_camp_i10.png" alt="camp i10"><figcaption>Campanile · i_start=10</figcaption></figure>
+        <figure><img src="images/p17_camp_i20.png" alt="camp i20"><figcaption>Campanile · i_start=20</figcaption></figure>
+      </div>
+
+      <h3 id="s171">1.7.1 · Your Own Images (2 examples)</h3>
+      <div class="grid cols-3">
+        <figure><img src="images/p17_custom1_i1.png" alt="c1 i1"><figcaption>Custom 1 · i_start=1</figcaption></figure>
+        <figure><img src="images/p17_custom1_i7.png" alt="c1 i7"><figcaption>Custom 1 · i_start=7</figcaption></figure>
+        <figure><img src="images/p17_custom1_i20.png" alt="c1 i20"><figcaption>Custom 1 · i_start=20</figcaption></figure>
+
+        <figure><img src="images/p17_custom2_i1.png" alt="c2 i1"><figcaption>Custom 2 · i_start=1</figcaption></figure>
+        <figure><img src="images/p17_custom2_i7.png" alt="c2 i7"><figcaption>Custom 2 · i_start=7</figcaption></figure>
+        <figure><img src="images/p17_custom2_i20.png" alt="c2 i20"><figcaption>Custom 2 · i_start=20</figcaption></figure>
+      </div>
+      <p class="small">Full progression images included below for completeness.</p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p17_custom1_i3.png" alt="c1 i3"><figcaption>Custom 1 · i_start=3</figcaption></figure>
+        <figure><img src="images/p17_custom1_i5.png" alt="c1 i5"><figcaption>Custom 1 · i_start=5</figcaption></figure>
+        <figure><img src="images/p17_custom1_i10.png" alt="c1 i10"><figcaption>Custom 1 · i_start=10</figcaption></figure>
+
+        <figure><img src="images/p17_custom2_i3.png" alt="c2 i3"><figcaption>Custom 2 · i_start=3</figcaption></figure>
+        <figure><img src="images/p17_custom2_i5.png" alt="c2 i5"><figcaption>Custom 2 · i_start=5</figcaption></figure>
+        <figure><img src="images/p17_custom2_i10.png" alt="c2 i10"><figcaption>Custom 2 · i_start=10</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.7.2 ------------------------- -->
+      <h3 id="s172">1.7.2 · Inpainting</h3>
+      <p class="subtle">
+        Goal: regenerate only a masked region while keeping the rest of the image locked to the original.
+        The required deliverables are: (1) implemented <code>inpaint</code>, (2) Campanile inpainted, (3) two custom images inpainted :contentReference[oaicite:1]{index=1}
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># Inpainting loop: after each denoise step, force unmasked pixels to match the original (with correct noise level)</span>
+<span class="kw">def</span> <span class="fn">inpaint</span>(x_orig, mask, timesteps, prompt_embeds, uncond_prompt_embeds, alphas_cumprod, scale=<span class="num">7</span>):
+    x = torch.randn_like(x_orig).half().to(x_orig.device)
+    mask = mask.to(device=x.device, dtype=x.dtype)
+
+    <span class="kw">with</span> torch.no_grad():
+        <span class="kw">for</span> i <span class="kw">in</span> range(len(timesteps) - <span class="num">1</span>):
+            t = timesteps[i]
+            t_prev = timesteps[i + <span class="num">1</span>]
+
+            eps = cfg_noise(x, t, prompt_embeds, uncond_prompt_embeds, scale=scale)
+
+            alpha_bar_t = alphas_cumprod[t]
+            alpha_bar_prev = alphas_cumprod[t_prev]
+
+            x0_est = (x - torch.sqrt(<span class="num">1</span> - alpha_bar_t) * eps) / torch.sqrt(alpha_bar_t)
+            x = torch.sqrt(alpha_bar_prev) * x0_est + torch.sqrt(<span class="num">1</span> - alpha_bar_prev) * eps
+
+            <span class="cm"># Key line: keep everything outside the mask identical to the original (with matching noise for timestep t_prev)</span>
+            x_orig_noisy, _ = noisy_im_forward(x_orig, t_prev, alphas_cumprod)
+            x = mask * x + (<span class="num">1</span> - mask) * x_orig_noisy
+    <span class="kw">return</span> x
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        The trick is the final “force” line. After we denoise one step, we overwrite the pixels we are not editing.
+        But we don’t overwrite them with the clean original directly, because the current state <code>x</code> is still noisy.
+        So we take the original image, add exactly the right amount of noise for the current timestep (<code>x_orig_noisy</code>),
+        and then paste it into the unmasked region. This keeps the non-edit area stable while letting the masked area evolve.
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p172_camp_mask.png" alt="camp mask"><figcaption>Campanile mask</figcaption></figure>
+        <figure><img src="images/p172_camp_inpaint.png" alt="camp inpaint"><figcaption>Campanile inpainted</figcaption></figure>
+        <figure class="wide"><img src="images/p172_custom1_inpaint.png" alt="custom1 inpaint"><figcaption>Custom 1 inpainted (see mask below)</figcaption></figure>
+      </div>
+      <div class="grid cols-3">
+        <figure><img src="images/p172_custom1_mask.png" alt="custom1 mask"><figcaption>Custom 1 mask</figcaption></figure>
+        <figure><img src="images/p172_custom2_mask.png" alt="custom2 mask"><figcaption>Custom 2 mask</figcaption></figure>
+        <figure><img src="images/p172_custom2_inpaint.png" alt="custom2 inpaint"><figcaption>Custom 2 inpainted</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.7.3 ------------------------- -->
+      <h3 id="s173">1.7.3 · Text-Conditional Image-to-Image</h3>
+      <p class="subtle">
+        Goal: do the same edit procedure as 1.7, but now the prompt is a real creative instruction instead of “a high quality photo”.
+      </p>
+
+      <div class="grid cols-3">
+        <figure><img src="images/p173_camp_txt_i1.png" alt="camp txt i1"><figcaption>Campanile text-edit · i_start=1</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i7.png" alt="camp txt i7"><figcaption>Campanile text-edit · i_start=7</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i20.png" alt="camp txt i20"><figcaption>Campanile text-edit · i_start=20</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i3.png" alt="camp txt i3"><figcaption>Campanile text-edit · i_start=3</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i5.png" alt="camp txt i5"><figcaption>Campanile text-edit · i_start=5</figcaption></figure>
+        <figure><img src="images/p173_camp_txt_i10.png" alt="camp txt i10"><figcaption>Campanile text-edit · i_start=10</figcaption></figure>
+      </div>
+
+      <div class="grid cols-2">
+        <figure><img src="images/p173_custom1_txt.png" alt="custom1 text"><figcaption>Custom text-edit 1</figcaption></figure>
+        <figure><img src="images/p173_custom2_txt.png" alt="custom2 text"><figcaption>Custom text-edit 2</figcaption></figure>
+      </div>
+
+      <p class="callout">
+        <span class="tag">What prompting does</span>
+        The prompt doesn’t “paint pixels” directly. It nudges the denoising decisions repeatedly, so the final image converges toward something that matches the text.
+      </p>
+
+      <!-- ------------------------- 1.8 ------------------------- -->
+      <h3 id="s18">1.8 · Visual Anagrams (Flip Illusions)</h3>
+      <p class="subtle">
+        Goal: create a single image that looks like concept A, but when flipped upside down reveals concept B.
+        This is done by denoising both the image and its flipped version, then averaging the noise estimates.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># Visual anagrams: average the noise predicted for (image, prompt1) and (flipped image, prompt2)</span>
+<span class="kw">def</span> <span class="fn">visual_anagrams_step</span>(x, t, p1, p2, uncond, scale=<span class="num">7</span>):
+    eps1 = cfg_noise(x, t, p1, uncond, scale=scale)
+    x_flip = torch.flip(x, dims=[<span class="num">2</span>, <span class="num">3</span>])
+    eps2 = cfg_noise(x_flip, t, p2, uncond, scale=scale)
+    eps2 = torch.flip(eps2, dims=[<span class="num">2</span>, <span class="num">3</span>])
+    <span class="kw">return</span> (eps1 + eps2) / <span class="num">2</span>
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        A normal diffusion step uses one prompt and one image state. Here we do something sneaky:
+        we ask the model what noise it sees for the upright image (prompt 1), and also what noise it sees for the flipped image (prompt 2).
+        Then we flip that second noise back and average them. The denoising update now satisfies both “interpretations,”
+        so the final image becomes a compromise that works upright and upside-down.
+      </p>
+
+      <div class="grid cols-2">
+        <figure><img src="images/p18_anagram1_upright.png" alt="anagram1 upright"><figcaption>Anagram 1 · upright</figcaption></figure>
+        <figure><img src="images/p18_anagram1_flipped.png" alt="anagram1 flipped"><figcaption>Anagram 1 · flipped</figcaption></figure>
+        <figure><img src="images/p18_anagram2_upright.png" alt="anagram2 upright"><figcaption>Anagram 2 · upright</figcaption></figure>
+        <figure><img src="images/p18_anagram2_flipped.png" alt="anagram2 flipped"><figcaption>Anagram 2 · flipped</figcaption></figure>
+      </div>
+
+      <!-- ------------------------- 1.9 ------------------------- -->
+      <h3 id="s19">1.9 · Hybrid Images (Frequency-Mixed Prompts)</h3>
+      <p class="subtle">
+        Goal: create an image that contains one concept in low frequencies (overall shape) and another in high frequencies (fine detail).
+        We do this by mixing two noise predictions: low-pass one, high-pass the other, then add them.
+      </p>
+
+      <pre class="code"><code>
+<span class="cm"># Hybrid: combine low-frequency noise from prompt1 with high-frequency noise from prompt2</span>
+<span class="kw">def</span> <span class="fn">make_hybrid_noise</span>(x, t, p1, p2, uncond, scale=<span class="num">7</span>, k=<span class="num">33</span>, sigma=<span class="num">2.0</span>):
+    eps1 = cfg_noise(x, t, p1, uncond, scale=scale)
+    eps2 = cfg_noise(x, t, p2, uncond, scale=scale)
+
+    low = torchvision.transforms.functional.gaussian_blur(eps1, [k, k], [sigma, sigma])
+    low2 = torchvision.transforms.functional.gaussian_blur(eps2, [k, k], [sigma, sigma])
+    high = eps2 - low2
+    <span class="kw">return</span> low + high
+      </code></pre>
+
+      <p class="walkthrough">
+        <b>Walkthrough:</b>
+        “Low frequency” means big smooth patterns: silhouettes, large shading, global structure.
+        “High frequency” means sharp details: edges, textures, small contrasts.
+        We turn prompt 1 into the low-frequency driver by blurring its predicted noise.
+        We turn prompt 2 into the high-frequency driver by subtracting a blurred version from its noise (a simple high-pass filter).
+        Adding them produces an image that can read as one thing from afar and another up close.
+      </p>
+
+      <div class="grid cols-2">
+        <figure><img src="images/p19_hybrid_01.png" alt="hybrid 1"><figcaption>Hybrid 1</figcaption></figure>
+        <figure><img src="images/p19_hybrid_02.png" alt="hybrid 2"><figcaption>Hybrid 2</figcaption></figure>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 id="reflection">Reflection (optional)</h3>
+      <p class="subtle">
+        <b>What surprised me:</b> [write 3–6 sentences: e.g., CFG strength vs artifacts, how inpainting needs multiple tries, why higher noise gives more “creative freedom”.]
+      </p>
+      <p class="subtle">
+        <b>What I’d do next:</b> [write 2–4 sentences: e.g., try different guidance scales, more stride schedules, or compare stage-1 64×64 vs upsampled stage-2.]
+      </p>
+    </section>
+
+    <!-- ========================= IMPLEMENTATION NOTES ========================= -->
+    <section class="card" id="impl-notes">
+      <h2>Implementation Notes</h2>
+
+      <h3>Parameter choices</h3>
+      <ul>
+        <li><b>CFG scale (≈7):</b> strong prompt adherence without instantly exploding into artifacts (too high can cause weird texture “overconfidence”).</li>
+        <li><b>Stride schedule:</b> using a reduced set of timesteps makes sampling feasible while still producing clear denoising progress.</li>
+        <li><b>Hybrid blur (k=33, σ=2):</b> big enough kernel to isolate “shape” vs “detail” without washing everything out.</li>
+      </ul>
+
+      <p class="callout warn">
+        <span class="tag">Pitfall</span>
+        If you forget that DeepFloyd returns <i>(noise, variance)</i> concatenated, you’ll accidentally treat variance as noise and everything will look cursed.
+      </p>
+
+      <h3>Common failure modes (and what to do)</h3>
+      <ol>
+        <li><b>Images look washed-out:</b> check normalization. Many pipelines use [-1,1] internally and need mapping to [0,1] for display.</li>
+        <li><b>CFG produces artifacts:</b> lower scale, or use fewer steps. Too strong guidance can “force” texture hallucinations.</li>
+        <li><b>Inpainting won’t respect the background:</b> ensure you overwrite the unmasked region <i>every step</i>, using the correctly noised original.</li>
+        <li><b>Anagrams don’t read both ways:</b> try more steps or choose prompts with compatible visual geometry (two concepts that can share shapes).</li>
+      </ol>
+
+      <p class="callout danger">
+        <span class="tag">Repro note</span>
+        If you rerun cells in different orders, you may not reproduce the same outputs even with the same seed because random numbers get consumed in a different sequence.
+      </p>
+    </section>
+
+    <!-- ========================= REFERENCES ========================= -->
+    <section class="card" id="refs">
+      <h2>References</h2>
+      <ul>
+        <li>DeepFloyd IF (Diffusers pipeline documentation)</li>
+        <li>DDPM / diffusion model primer (Denoising Diffusion Probabilistic Models)</li>
+        <li>Classifier-Free Guidance (CFG)</li>
+        <li>RePaint (inpainting with diffusion)</li>
+        <li>Visual Anagrams (flip-based diffusion illusion idea)</li>
+        <li>Hybrid images (low-pass/high-pass frequency mixing concept)</li>
+      </ul>
+      <p class="small">
+        Note: This website is a readable explanation layer on top of the implementation work in the project notebook :contentReference[oaicite:2]{index=2}
+      </p>
+    </section>
+
+    <footer>
+      <div>© 2025 · Eduardo Cortes · CS180 Project 5A</div>
+      <div class="small">AI acknowledgment: Drafted and edited with ChatGPT for clarity, structure, and walkthrough explanations. All experimental results and final curation are my own.</div>
+    </footer>
+  </div>
+</body>
+</html>
