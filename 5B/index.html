@@ -1107,7 +1107,10 @@ x_t = x_t + (1/T) * u</code></pre>
       <h3>Unified “pitfalls” checklist (A + B)</h3>
       <ol>
         <li><b>Diffusion outputs (A):</b> DeepFloyd returns (noise, variance) concatenated. If you treat variance as noise, everything looks cursed.</li>
-        <li><b>Normalization:</b> Many diffusion pipelines run in [-1,1]. Make sure you
+        <li><b>Images look washed-out:</b> check normalization. Many pipelines use [-1,1] internally and need mapping to [0,1] for display.</li>
+        <li><b>CFG produces artifacts:</b> lower scale, or use fewer steps. Too strong guidance can “force” texture hallucinations.</li>
+        <li><b>Inpainting won’t respect the background:</b> ensure you overwrite the unmasked region <i>every step</i>, using the correctly noised original.</li>
+        <li><b>Anagrams don’t read both ways:</b> try more steps or choose prompts with compatible visual geometry (two concepts that can share shapes).</li>
         <li><b>Scheduler stepping per iteration</b>: your LR collapses too fast, model stops learning.</li>
         <li><b>Condition shapes</b>: ensure time is (N,1) before FCBlock, and reshape outputs to (N,C,1,1) for broadcasting.</li>
         <li><b>CFG formula</b>: use <span class="mono">u = u_uncond + γ (u_cond − u_uncond)</span> (difference, not sum).</li>
@@ -1125,6 +1128,12 @@ x_t = x_t + (1/T) * u</code></pre>
 <section id="refs" class="section">
   <h1>References</h1>
   <ul>
+    <li>DeepFloyd IF (Diffusers pipeline documentation)</li>
+    <li>DDPM / diffusion model primer (Denoising Diffusion Probabilistic Models)</li>
+    <li>Classifier-Free Guidance (CFG)</li>
+    <li>RePaint (inpainting with diffusion)</li>
+    <li>Visual Anagrams (flip-based diffusion illusion idea)</li>
+    <li>Hybrid images (low-pass/high-pass frequency mixing concept)</li>
     <li>PyTorch: <span class="mono">torch.nn.Conv2d</span>, <span class="mono">ConvTranspose2d</span>, <span class="mono">BatchNorm2d</span></li>
     <li>torchvision MNIST dataset</li>
     <li>UNet architecture idea: encoder-decoder with skip connections</li>
