@@ -7,7 +7,6 @@ The projects progress from **camera geometry and classical vision** to **3D neur
 
 **[View the full project portfolio](https://eduardo1100.github.io/CS180/)**
 
-Open `index.html` in a browser to navigate all projects.
 ---
 
 ## Repository Structure
