@@ -27,15 +27,12 @@ The projects progress from **camera geometry and classical vision** to **3D neur
 ## Projects Overview
 ### Project 0 — Becoming Friends with Your Camera
 
-Topics: Perspective, focal length, center of projection
+#### Topics: Perspective, focal length, center of projection
 
 Three mini-studies exploring how camera geometry affects appearance:
-
-Close-up selfie vs stepped-back zoomed portrait
-
-Perspective compression along a street
-
-A dolly zoom (Vertigo shot) constructed from still images
+- Close-up selfie vs stepped-back zoomed portrait
+- Perspective compression along a street
+- A dolly zoom (Vertigo shot) constructed from still images
 
 Focus: understanding viewing geometry while keeping subject scale roughly constant.
 
