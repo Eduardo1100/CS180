@@ -106,6 +106,6 @@ Two complementary perspectives on the same core problem: noise → image.
   - Train flow matching UNets to learn velocity fields
   - Add time and class conditioning with CFG for digit control
  
-![Time-Conditioned Flow Matching samples](https://eduardo1100.github.io/CS180/5B/images/p23_time_fm_epoch10_samples.png)
+![Time-Conditioned Flow Matching samples](./5B/images/p23_time_fm_epoch10_samples.png)
 
 📂 Canonical: ./5B/index.html
