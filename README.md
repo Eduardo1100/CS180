@@ -6,6 +6,7 @@ Each project is presented as a self-contained website with explanations, figures
 The projects progress from **camera geometry and classical vision** to **3D neural representations** and **modern generative models**, emphasizing both conceptual understanding and implementation.
 
 **[Live Project Index (GitHub Pages)](https://eduardo1100.github.io/CS180/)**
+**[View the full project portfolio](./index.html)**
 
 ---
 
