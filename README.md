@@ -1,6 +1,6 @@
 # CS180 Project Portfolio
 
-This repository contains my project submissions for **CS180 (Computer Vision & Computational Photography)**.  
+This repository contains my project write-ups for **CS180 (Computer Vision & Computational Photography)**.  
 Each project is presented as a self-contained website with explanations, figures, and results.
 
 The projects progress from **camera geometry and classical vision** to **3D neural representations** and **modern generative models**, emphasizing both conceptual understanding and implementation.
