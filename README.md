@@ -97,6 +97,9 @@ Two complementary perspectives on the same core problem: noise → image.
   - Add Classifier-Free Guidance (CFG)
   - Image editing via SDEdit and inpainting
   - Visual anagrams and creative hybrids
+
+![DeepFloyd IF sample](https://eduardo1100.github.io/CS180/5B/images/p0_prompt3_40_40.png)
+
 - Part B (5B): Training the denoiser
   - Train a UNet as a single-step denoiser (σ = 0.5)
   - Test generalization to OOD noise levels
