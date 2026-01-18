@@ -1,4 +1,4 @@
-# CS180: Computer Vision & Computational Photography — Project Portfolio
+# CS180: Computer Vision & Computational Photography: Project Portfolio
 
 This repository contains my project submissions for **CS180 (Computer Vision & Computational Photography)**.  
 Each project is presented as a self-contained website with explanations, figures, and results.
@@ -25,7 +25,7 @@ The projects progress from **camera geometry and classical vision** to **3D neur
 ```
 
 ## Projects Overview
-### Project 0 — Becoming Friends with Your Camera
+### Project 0: Becoming Friends with Your Camera
 
 #### Topics: Perspective, focal length, center of projection
 
@@ -33,12 +33,11 @@ Three mini-studies exploring how camera geometry affects appearance:
 - Close-up selfie vs stepped-back zoomed portrait
 - Perspective compression along a street
 - A dolly zoom (Vertigo shot) constructed from still images
-  
 - Focus: understanding viewing geometry while keeping subject scale roughly constant.
 
 📂 ./0/index.html
 
-### Project 1 — Images of the Russian Empire (Prokudin-Gorskii)
+### Project 1: Images of the Russian Empire (Prokudin-Gorskii)
 
 #### Topics: Image alignment, NCC, image pyramids
 
@@ -51,7 +50,7 @@ Digitized glass-plate photographs are reconstructed into RGB images by:
 
 📂 ./1/index.html
 
-### Project 2 — Fun with Filters & Frequencies
+### Project 2: Fun with Filters & Frequencies
 
 #### Topics: Convolution, edges, frequency decomposition
 
@@ -64,7 +63,7 @@ This project explores:
 
 📂 ./2/index.html
 
-### Project 3 — Planar Rectification, Mosaics & Automatic Stitching
+### Project 3: Planar Rectification, Mosaics & Automatic Stitching
 
 #### Topics: Homographies, feature matching, RANSAC
 
@@ -81,7 +80,7 @@ The final result is an end-to-end panorama stitching system.
 
 📂 Canonical: ./3B/index.html
 
-### Project 4 — Neural Radiance Fields (NeRF)
+### Project 4: Neural Radiance Fields (NeRF)
 
 #### Topics: Continuous 3D representations, volumetric rendering
 
@@ -95,7 +94,7 @@ NeRF represents scenes as a continuous function mapping 3D position and view dir
 
 📂 ./4/index.html
 
-### Project 5 — Diffusion Models & Flow Matching UNets
+### Project 5: Diffusion Models & Flow Matching UNets
 
 #### Topics: Generative modeling, diffusion, UNets
 
