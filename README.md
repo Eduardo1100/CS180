@@ -48,6 +48,8 @@ Digitized glass-plate photographs are reconstructed into RGB images by:
 - Refining alignment using a coarse-to-fine pyramid
 - Displacement vectors for each channel are reported.
 
+![Binarized highpass](https://eduardo1100.github.io/CS180/1/media/binarization/emir_blueplate_binarized.png)
+
 📂 ./1/index.html
 
 ### Project 2: Fun with Filters & Frequencies
@@ -60,6 +62,8 @@ This project explores:
 - Unsharp masking
 - Hybrid images (Oliva–Torralba–Schyns)
 - Multi-resolution blending using Gaussian/Laplacian stacks and mask pyramids
+
+![Multiresolution blending](https://eduardo1100.github.io/CS180/2/media/2.4_results_1.png)
 
 📂 ./2/index.html
 
@@ -113,5 +117,7 @@ Two complementary perspectives on the same core problem: noise → image.
   - Test generalization to OOD noise levels
   - Train flow matching UNets to learn velocity fields
   - Add time and class conditioning with CFG for digit control
+ 
+![Time-Conditioned Flow Matching samples](https://eduardo1100.github.io/CS180/5B/images/p23_time_fm_epoch10_samples.png)
 
 📂 Canonical: ./5B/index.html
