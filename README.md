@@ -78,6 +78,8 @@ A combined write-up covering:
 
 The final result is an end-to-end panorama stitching system.
 
+![Panorama result](https://eduardo1100.github.io/CS180/3B/images_A/a4_mosaic1_final.jpg)
+
 📂 Canonical: ./3B/index.html
 
 ### Project 4: Neural Radiance Fields (NeRF)
