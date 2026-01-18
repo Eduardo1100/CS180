@@ -94,6 +94,8 @@ Starting from raw phone images, this project builds a NeRF pipeline:
 
 NeRF represents scenes as a continuous function mapping 3D position and view direction to color and density, rendered via ray integration.
 
+![NERF result](https://eduardo1100.github.io/CS180/4/images/part2_lego_nerf/lego_spherical.gif)
+
 📂 ./4/index.html
 
 ### Project 5: Diffusion Models & Flow Matching UNets
