@@ -33,7 +33,7 @@ Digitized glass-plate photographs are reconstructed into RGB images by:
 - Refining alignment using a coarse-to-fine pyramid
 - Displacement vectors for each channel are reported.
 
-![Binarized highpass](https://eduardo1100.github.io/CS180/1/media/binarization/emir_blueplate_binarized.png)
+![Binarized highpass](./1/media/binarization/emir_blueplate_binarized.png)
 
 📂 ./1/index.html
 
@@ -48,7 +48,7 @@ This project explores:
 - Hybrid images (Oliva–Torralba–Schyns)
 - Multi-resolution blending using Gaussian/Laplacian stacks and mask pyramids
 
-![Multiresolution blending](https://eduardo1100.github.io/CS180/2/media/2.4_results_1.png)
+![Multiresolution blending](./2/media/2.4_results_1.png)
 
 📂 ./2/index.html
 
@@ -67,7 +67,7 @@ A combined write-up covering:
 
 The final result is an end-to-end panorama stitching system.
 
-![Panorama result](https://eduardo1100.github.io/CS180/3B/images_A/a4_mosaic1_final.jpg)
+![Panorama result](./3B/images_A/a4_mosaic1_final.jpg)
 
 📂 Canonical: ./3B/index.html
 
@@ -83,7 +83,7 @@ Starting from raw phone images, this project builds a NeRF pipeline:
 
 NeRF represents scenes as a continuous function mapping 3D position and view direction to color and density, rendered via ray integration.
 
-![NERF result](https://eduardo1100.github.io/CS180/4/images/part2_lego_nerf/lego_spherical.gif)
+![NERF result](./4/images/part2_lego_nerf/lego_spherical.gif)
 
 📂 ./4/index.html
 
